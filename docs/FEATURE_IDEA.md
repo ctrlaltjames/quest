@@ -105,10 +105,16 @@ const CONFIG = {
         },
         {
             id: 4,
-            title: "Chapter 4: The Treasure of Forever",
-            clue: "You've conquered the zombie lands, survived the dangerous frontier, and proved your love is infinite. All these quests led to this treasure... What do you say?",
-            answer: ["yes", "i do", "yes i do"],
-            pixelArt: "treasure-chest.png",
+            title: "Chapter 4: Player 2 Joined",
+            clue: "You've conquered the zombie lands, survived the dangerous frontier, and proved your love is infinite. The final level requires 2 players... Ready to play forever together?",
+            // Stage 4 uses a co-op mechanic instead of text input
+            // Both players must press their buttons simultaneously to proceed
+            coOp: {
+                player1Label: "Player 1: Press A",
+                player2Label: "Player 2: Press B",
+                timeout: 5000,
+                promptText: "Both players tap together!",
+            },
         },
     ],
 
@@ -218,18 +224,22 @@ const CONFIG = {
 - **Cat easter egg:** A tiny cat emoji (🐱) hidden inside one of the text message bubbles
 - **Background:** Dark phone screen with pixel keyboard at the bottom
 
-#### Stage 4 - Treasure Chest Reveal Theme
-- **Knight (boy) kneeling** before an open treasure chest, holding the lid
-- **Princess/Elf Ranger (girl)** standing beside him, hands clasped in surprise/joy
-- **Treasure chest with 3 compartments** showing symbols from previous stages:
-  - Top-left: 🧟 zombie symbol (Stage 1 - Movie Night)
-  - Top-right: 💋 kiss symbol (Stage 2 - First Kiss)
-  - Bottom: 🏝️ island emoji (Stage 3 - Infinity Counter)
-- **Ring glowing** from within the chest (pulsing golden light effect)
-- **Castle** in the background with pixel torches flickering
-- **Sunny, beautiful day** with bright blue sky, fluffy clouds, and golden sunlight
-- **Pixel flowers** growing from the ground around the chest
-- **Cat easter egg:** A pixel cat walking behind the castle wall in the background
+#### Stage 4 - Player 2 Joined (Co-Op Gaming Theme)
+- **Two pixel characters** (boy and girl) sitting side-by-side on a couch or floor, each holding a game controller
+- **TV screen** in front of them displaying a mini co-op game with pixel art heroes
+- **Warm TV glow** illuminating their faces (subtle blue/purple light pulsing)
+- **Cozy room background:**
+  - Pixel couch or bean bags they're sitting on
+  - Bowl of popcorn and two drinks nearby
+  - Fairy lights or LED strip along the wall
+  - Game shelves in the background with retro game cartridges
+- **Character expressions:**
+  - Boy: Focused but happy, glancing at the girl with a smile
+  - Girl: Engaged in the game, smiling, looking at him curiously
+  - Both: Rosy cheeks (blushing), eyes lit up from the TV screen
+- **TV screen content:** Mini pixel animation cycling (heroes walking, hearts filling)
+- **Scanline overlay** on the TV screen for retro CRT feel
+- **Snacks:** Pixel popcorn bowl and drinks on a small table beside the couch
 
 #### Proposal Screen
 - **Pixel ring** with animated sparkle effect (4-frame sparkle sprite cycling)
