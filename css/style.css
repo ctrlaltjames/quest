@@ -121,8 +121,8 @@ body {
 .stage[style*="background-image"] {
     position: relative;
     /* 'contain' ensures the entire image is visible without any cropping.
-       This creates padding/margins around the image when aspect ratios differ.
-       Those empty areas are filled by the .bg-blur sibling element behind. */
+        This creates padding/margins around the image when aspect ratios differ.
+        Those empty areas are filled by the .bg-blur sibling element behind. */
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
