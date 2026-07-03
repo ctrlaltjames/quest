@@ -1,0 +1,787 @@
+/* ============================================
+   Pixel Proposal Game - Mobile-First Styles
+   ============================================ */
+
+/* --- CSS Custom Properties --- */
+:root {
+    --deep-purple: #1a0a2e;
+    --teal: #0d3b66;
+    --warm-yellow: #f5a623;
+    --pixel-red: #e63946;
+    --dark-red: #8b0000;
+    --gold: #f5a623;
+    --bright-gold: #ffd700;
+    --green: #4ade80;
+    --white: #ffffff;
+    --dark-bg: #0f0f1e;
+    --dialogue-bg: #1a1a2e;
+    --pixel-border: #2a2a4a;
+    --font-primary: 'Press Start 2P', 'Courier New', monospace;
+}
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    overflow: hidden;
+    height: 100%;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--deep-purple);
+    color: var(--white);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* --- Pixel Border Technique (box-shadow method) --- */
+.pixel-border {
+    border: 4px solid var(--pixel-border);
+    box-shadow:
+        inset 2px 2px 0px rgba(255,255,255,0.1),
+        inset -2px -2px 0px rgba(0,0,0,0.3),
+        4px 4px 0px rgba(0,0,0,0.5);
+}
+
+/* --- Screen Management --- */
+.stage {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    z-index: 1;
+}
+
+.stage.active {
+    display: flex;
+    animation: stageEnter 400ms ease-out forwards;
+}
+
+/* Stage enter animation */
+@keyframes stageEnter {
+    from {
+        clip-path: inset(0 100% 0 0);
+    }
+    to {
+        clip-path: inset(0 0 0 0);
+    }
+}
+
+/* --- Title Screen --- */
+.title-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.title-heart {
+    width: 80px;
+    height: 80px;
+    animation: heartBob 2s ease-in-out infinite;
+}
+
+@keyframes heartBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.title-heart canvas {
+    width: 80px;
+    height: 80px;
+    image-rendering: pixelated;
+}
+
+.title-text {
+    font-size: clamp(16px, 5vw, 28px);
+    text-align: center;
+    color: var(--warm-yellow);
+    text-shadow: 2px 2px 0px var(--dark-red);
+    line-height: 1.6;
+}
+
+.title-subtitle {
+    font-size: clamp(8px, 3vw, 14px);
+    text-align: center;
+    opacity: 0.8;
+    margin-bottom: 12px;
+}
+
+.title-ring {
+    width: 48px;
+    height: 48px;
+    animation: ringSpin 8s linear infinite;
+}
+
+@keyframes ringSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.title-ring canvas {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+/* --- Buttons --- */
+.btn-primary, .btn-check, .btn-yes, .btn-no {
+    font-family: var(--font-primary);
+    font-size: clamp(10px, 3vw, 16px);
+    padding: 14px 28px;
+    border: 4px solid var(--white);
+    background: var(--deep-purple);
+    color: var(--white);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 100ms ease, background-color 100ms ease;
+    box-shadow:
+        inset 2px 2px 0px rgba(255,255,255,0.2),
+        inset -2px -2px 0px rgba(0,0,0,0.3),
+        4px 4px 0px rgba(0,0,0,0.5);
+    image-rendering: pixelated;
+}
+
+.btn-primary:hover, .btn-check:hover, .btn-yes:hover, .btn-no:hover {
+    transform: scale(1.05);
+    background-color: #2a1a4e;
+}
+
+.btn-primary:active, .btn-check:active, .btn-yes:active, .btn-no:active {
+    transform: scale(0.95);
+}
+
+.btn-primary {
+    background-color: var(--teal);
+    border-color: var(--warm-yellow);
+}
+
+.btn-yes {
+    background-color: #0a6e2e;
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.btn-no {
+    background-color: #6e0a0a;
+    border-color: var(--pixel-red);
+    color: var(--pixel-red);
+}
+
+.btn-check {
+    width: 100%;
+    margin-top: 12px;
+    background-color: var(--teal);
+    border-color: var(--warm-yellow);
+}
+
+.btn-check:disabled, .btn-yes:disabled, .btn-no:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --- Stage Content Layout --- */
+.stage-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    gap: 12px;
+}
+
+/* --- Progress Dots --- */
+.progress-dots {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.progress-dots .dot {
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.progress-dots .dot.active {
+    background-color: var(--warm-yellow);
+    border-color: var(--warm-yellow);
+    box-shadow: 0 0 8px var(--warm-yellow);
+}
+
+/* --- Art Container --- */
+.art-container {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.pixel-art {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    box-shadow:
+        0 0 10px var(--warm-yellow),
+        0 0 20px rgba(245, 166, 35, 0.3);
+    animation: artGlow 2s ease-in-out infinite;
+}
+
+@keyframes artGlow {
+    0%, 100% { box-shadow: 0 0 10px var(--warm-yellow), 0 0 20px rgba(245, 166, 35, 0.3); }
+    50% { box-shadow: 0 0 15px var(--warm-yellow), 0 0 30px rgba(245, 166, 35, 0.5); }
+}
+
+.emoji-fallback {
+    font-size: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Dialogue Box --- */
+.dialogue-box {
+    width: 100%;
+    background-color: var(--dialogue-bg);
+    padding: 16px;
+    border: 4px solid var(--pixel-border);
+    box-shadow:
+        inset 2px 2px 0px rgba(255,255,255,0.1),
+        inset -2px -2px 0px rgba(0,0,0,0.3),
+        4px 4px 0px rgba(0,0,0,0.5);
+}
+
+.stage-title-text {
+    font-size: clamp(8px, 2.5vw, 12px);
+    color: var(--warm-yellow);
+    margin-bottom: 12px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.clue-text {
+    font-size: clamp(8px, 2.5vw, 11px);
+    line-height: 1.8;
+    margin-bottom: 16px;
+    min-height: 60px;
+    color: #ccc;
+}
+
+/* --- Input Field --- */
+.stage-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    background-color: rgba(0,0,0,0.3);
+    border: 3px solid var(--pixel-border);
+    color: var(--white);
+    outline: none;
+    transition: border-color 200ms ease;
+    box-shadow: inset 2px 2px 0px rgba(0,0,0,0.5);
+}
+
+.stage-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(245, 166, 35, 0.4), inset 2px 2px 0px rgba(0,0,0,0.5);
+}
+
+.stage-input.correct {
+    border-color: var(--green);
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+}
+
+.stage-input.wrong {
+    border-color: var(--pixel-red);
+    box-shadow: 0 0 8px rgba(230, 57, 70, 0.4);
+}
+
+/* --- Stage 3: Chat Bubbles --- */
+.chat-bubbles {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.chat-bubble {
+    padding: 10px 14px;
+    font-family: var(--font-primary);
+    font-size: clamp(7px, 2.2vw, 10px);
+    line-height: 1.6;
+    max-width: 85%;
+    border: 3px solid var(--pixel-border);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.4);
+}
+
+.chat-bubble.left {
+    align-self: flex-start;
+    background-color: rgba(13, 59, 102, 0.6);
+}
+
+.chat-bubble.right {
+    align-self: flex-end;
+    background-color: rgba(26, 10, 46, 0.8);
+}
+
+.chat-bubble.glow {
+    animation: bubbleGlow 1.5s ease-in-out infinite;
+    border-color: var(--warm-yellow);
+}
+
+@keyframes bubbleGlow {
+    0%, 100% { box-shadow: 2px 2px 0px rgba(0,0,0,0.4); }
+    50% { box-shadow: 2px 2px 0px rgba(0,0,0,0.4), 0 0 12px var(--warm-yellow); }
+}
+
+.typing-indicator {
+    font-size: clamp(10px, 3vw, 14px);
+    color: #888;
+    animation: typingPulse 1s ease-in-out infinite;
+    text-align: center;
+}
+
+@keyframes typingPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* --- Proposal Screen --- */
+.proposal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    max-width: 480px;
+}
+
+.ring-sparkle canvas {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+.proposal-message {
+    font-size: clamp(8px, 2.5vw, 12px);
+    line-height: 1.8;
+    color: #ccc;
+    min-height: 40px;
+}
+
+.proposal-question {
+    font-size: clamp(12px, 4vw, 20px);
+    color: var(--bright-gold);
+    text-shadow: 0 0 10px var(--bright-gold), 0 0 20px rgba(255, 215, 0, 0.5);
+    line-height: 1.6;
+    animation: questionGlow 2s ease-in-out infinite;
+}
+
+@keyframes questionGlow {
+    0%, 100% { text-shadow: 0 0 10px var(--bright-gold), 0 0 20px rgba(255, 215, 0, 0.5); }
+    50% { text-shadow: 0 0 15px var(--bright-gold), 0 0 30px rgba(255, 215, 0, 0.7); }
+}
+
+.proposal-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.proposal-buttons .btn-no {
+    position: relative;
+    transition: none;
+}
+
+.after-yes {
+    font-size: clamp(10px, 3vw, 16px);
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+    margin-top: 16px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* --- Confetti Particles --- */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.confetti-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    image-rendering: pixelated;
+}
+
+/* --- Flower Container --- */
+.flower-container {
+    display: flex;
+    gap: 16px;
+    font-size: 24px;
+}
+
+.flower-container .flower {
+    animation: flowerGrow 1s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes flowerGrow {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* --- Heart Burst --- */
+.heart-burst {
+    position: fixed;
+    pointer-events: none;
+    font-size: 16px;
+    z-index: 11;
+}
+
+@keyframes heartBurst {
+    0% { transform: translate(0, 0) scale(0); opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* --- Screen Flash --- */
+.screen-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    pointer-events: none;
+    z-index: 100;
+    animation: flashAnim 150ms ease-out forwards;
+}
+
+@keyframes flashAnim {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* --- Sparkle Effect --- */
+.sparkle-effect {
+    position: absolute;
+    pointer-events: none;
+    font-size: 12px;
+    z-index: 5;
+}
+
+@keyframes sparkleAnim {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+/* --- Shake Animation (wrong answer) --- */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.shake-element {
+    animation: shake 300ms ease-in-out;
+}
+
+/* --- Ambient Particles --- */
+.ambient-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.ambient-particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background-color: var(--white);
+    opacity: 0.3;
+    animation: ambientFloat 4s ease-in-out infinite;
+}
+
+@keyframes ambientFloat {
+    0% { transform: translateY(0); opacity: 0.1; }
+    50% { opacity: 0.6; }
+    100% { transform: translateY(-60px); opacity: 0; }
+}
+
+/* --- Twinkling Stars --- */
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+.star-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background-color: var(--white);
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+}
+
+/* --- Background Patterns --- */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(to bottom, var(--deep-purple), var(--teal), #2a1a4e);
+    z-index: -2;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.03) 2px,
+            rgba(0,0,0,0.03) 4px
+        );
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* --- Error Screen --- */
+.error-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--deep-purple);
+    z-index: 200;
+    text-align: center;
+    padding: 24px;
+}
+
+.error-screen p {
+    font-family: var(--font-primary);
+    font-size: clamp(10px, 3vw, 14px);
+    color: var(--pixel-red);
+    line-height: 1.8;
+}
+
+/* --- Responsive: Tablet (429px+) --- */
+@media (min-width: 429px) {
+    .art-container {
+        width: 160px;
+        height: 160px;
+    }
+
+    .emoji-fallback {
+        font-size: 80px;
+    }
+
+    .title-heart {
+        width: 100px;
+        height: 100px;
+    }
+
+    .title-heart canvas {
+        width: 100px;
+        height: 100px;
+    }
+
+    .stage-content {
+        max-width: 480px;
+    }
+}
+
+/* --- Responsive: Desktop (768px+) --- */
+@media (min-width: 768px) {
+    .art-container {
+        width: 200px;
+        height: 200px;
+    }
+
+    .emoji-fallback {
+        font-size: 100px;
+    }
+
+    .title-heart {
+        width: 120px;
+        height: 120px;
+    }
+
+    .title-heart canvas {
+        width: 120px;
+        height: 120px;
+    }
+
+    .stage-content {
+        max-width: 600px;
+    }
+
+    .dialogue-box {
+        padding: 24px;
+    }
+
+    .proposal-buttons {
+        gap: 24px;
+    }
+}
+
+/* --- Responsive: Large Desktop (1024px+) --- */
+@media (min-width: 1024px) {
+    .art-container {
+        width: 240px;
+        height: 240px;
+    }
+
+    .emoji-fallback {
+        font-size: 120px;
+    }
+}
+
+/* --- Landscape: Short Viewports --- */
+@media (orientation: landscape) and (max-height: 600px) {
+    .stage {
+        padding: 8px;
+        flex-direction: row;
+        gap: 16px;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .art-container {
+        width: 80px;
+        height: 80px;
+    }
+
+    .emoji-fallback {
+        font-size: 48px;
+    }
+
+    .dialogue-box {
+        padding: 12px;
+    }
+
+    .clue-text {
+        max-height: 100px;
+        overflow-y: auto;
+    }
+
+    .title-heart {
+        width: 60px;
+        height: 60px;
+    }
+
+    .title-heart canvas {
+        width: 60px;
+        height: 60px;
+    }
+
+    .title-text {
+        font-size: clamp(12px, 3vw, 20px);
+    }
+
+    .proposal-question {
+        font-size: clamp(10px, 3vw, 16px);
+    }
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+    .stage.active {
+        animation: none;
+    }
+
+    .heartBob, .ringSpin, .artGlow, .bubbleGlow,
+    .questionGlow, .typingPulse, .flowerGrow,
+    .heartBurst, .flashAnim, .sparkleAnim,
+    .shake, .ambientFloat, .twinkle,
+    .heartBob, .ringSpin {
+        animation: none !important;
+    }
+
+    .stage-input.correct {
+        transition: none;
+    }
+
+    .stage-input.wrong {
+        transition: none;
+    }
+
+    .confetti-particle,
+    .heart-burst,
+    .sparkle-effect {
+        animation: none !important;
+    }
+
+    .clue-text {
+        min-height: auto;
+    }
+
+    .ambient-particles,
+    .star-field {
+        display: none;
+    }
+}
+
+/* --- Custom Cursor --- */
+html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
+    cursor: default;
+}

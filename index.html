@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>A Quest For Love</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Title Screen -->
+    <section id="stage-title" class="stage active">
+        <div class="ambient-particles" aria-hidden="true"></div>
+        <div class="title-content">
+            <div class="title-heart" aria-hidden="true">
+                <canvas id="heart-canvas" width="16" height="16"></canvas>
+            </div>
+            <h1 class="title-text">A Quest For Love</h1>
+            <p class="title-subtitle">Will you embark on this adventure?</p>
+            <div class="title-ring" aria-hidden="true">
+                <canvas id="ring-canvas" width="12" height="12"></canvas>
+            </div>
+            <button class="btn-primary" id="btn-start">Begin Adventure</button>
+        </div>
+    </section>
+
+    <!-- Stage 1: Movie Night -->
+    <section id="stage-1" class="stage">
+        <div class="progress-dots" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+        <div class="stage-content">
+            <div class="art-container">
+                <img src="images/clue-art/stage1.png" alt="Movie Night" class="pixel-art" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="emoji-fallback" style="display:none;">🎬</div>
+            </div>
+            <div class="dialogue-box">
+                <h2 class="stage-title-text" id="stage-1-title"></h2>
+                <p class="clue-text" id="stage-1-clue"></p>
+                <input type="text" class="stage-input" id="input-1" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 1">
+                <button class="btn-check" data-stage="1">CHECK</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stage 2: First Kiss -->
+    <section id="stage-2" class="stage">
+        <div class="progress-dots" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+        <div class="stage-content">
+            <div class="art-container">
+                <img src="images/clue-art/stage2.png" alt="First Kiss" class="pixel-art" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="emoji-fallback" style="display:none;">💋</div>
+            </div>
+            <div class="dialogue-box">
+                <h2 class="stage-title-text" id="stage-2-title"></h2>
+                <p class="clue-text" id="stage-2-clue"></p>
+                <input type="text" class="stage-input" id="input-2" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 2">
+                <button class="btn-check" data-stage="2">CHECK</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stage 3: Infinity Counter -->
+    <section id="stage-3" class="stage">
+        <div class="progress-dots" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+        <div class="stage-content">
+            <div class="art-container">
+                <img src="images/clue-art/stage3.png" alt="Infinity Counter" class="pixel-art" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="emoji-fallback" style="display:none;">♾️</div>
+            </div>
+            <div class="dialogue-box">
+                <h2 class="stage-title-text" id="stage-3-title"></h2>
+                <p class="clue-text" id="stage-3-clue"></p>
+                <input type="text" class="stage-input" id="input-3" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 3">
+                <button class="btn-check" data-stage="3">CHECK</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stage 4: Treasure Chest -->
+    <section id="stage-4" class="stage">
+        <div class="progress-dots" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+        <div class="stage-content">
+            <div class="art-container">
+                <img src="images/clue-art/stage4.png" alt="Treasure Chest" class="pixel-art" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="emoji-fallback" style="display:none;">💎</div>
+            </div>
+            <div class="dialogue-box">
+                <h2 class="stage-title-text" id="stage-4-title"></h2>
+                <p class="clue-text" id="stage-4-clue"></p>
+                <input type="text" class="stage-input" id="input-4" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 4">
+                <button class="btn-check" data-stage="4">CHECK</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Proposal Screen -->
+    <section id="stage-proposal" class="stage">
+        <div class="confetti-container" aria-hidden="true"></div>
+        <div class="proposal-content">
+            <div class="ring-sparkle" aria-hidden="true">
+                <canvas id="ring-sparkle-canvas" width="48" height="48"></canvas>
+            </div>
+            <p class="proposal-message" id="proposal-message"></p>
+            <h2 class="proposal-question" id="proposal-question"></h2>
+            <div class="proposal-buttons">
+                <button class="btn-yes" id="btn-yes">YES! 💍</button>
+                <button class="btn-no" id="btn-no">Are you sure? 🥺</button>
+            </div>
+            <div class="flower-container" aria-hidden="true"></div>
+            <p class="after-yes" id="after-yes" style="display:none;"></p>
+        </div>
+    </section>
+
+    <!-- Error boundary container -->
+    <div id="error-boundary" class="error-screen" style="display:none;">
+        <p>Oops! Something went wrong. Please refresh to restart the quest.</p>
+    </div>
+
+    <script src="js/confetti.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
