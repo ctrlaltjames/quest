@@ -180,6 +180,13 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 360px;
+}
+
+.title-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 24px;
 }
 
@@ -213,6 +220,112 @@ body {
     text-align: center;
     opacity: 0.8;
     margin-bottom: 12px;
+}
+
+/* ============================================
+   SUBTLE CLOUDS (Title Screen)
+   ============================================ */
+.title-clouds {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.cloud {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    filter: blur(20px);
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.cloud-1 {
+    width: 200px;
+    height: 80px;
+    top: 15%;
+    left: -200px;
+    animation: cloudDrift 60s linear infinite;
+}
+
+.cloud-1::before {
+    width: 100px;
+    height: 60px;
+    top: -20px;
+    left: 30px;
+}
+
+.cloud-1::after {
+    width: 120px;
+    height: 70px;
+    top: -15px;
+    right: 20px;
+}
+
+.cloud-2 {
+    width: 250px;
+    height: 90px;
+    top: 40%;
+    left: -250px;
+    animation: cloudDrift 80s linear infinite;
+    animation-delay: -25s;
+}
+
+.cloud-2::before {
+    width: 130px;
+    height: 70px;
+    top: -25px;
+    left: 50px;
+}
+
+.cloud-2::after {
+    width: 100px;
+    height: 55px;
+    top: -10px;
+    right: 30px;
+}
+
+.cloud-3 {
+    width: 180px;
+    height: 70px;
+    top: 65%;
+    left: -180px;
+    animation: cloudDrift 70s linear infinite;
+    animation-delay: -40s;
+}
+
+.cloud-3::before {
+    width: 90px;
+    height: 55px;
+    top: -18px;
+    left: 25px;
+}
+
+.cloud-3::after {
+    width: 110px;
+    height: 60px;
+    top: -12px;
+    right: 25px;
+}
+
+@keyframes cloudDrift {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(calc(100vw + 300px));
+    }
 }
 
 .title-ring {
@@ -667,6 +780,41 @@ body {
     animation: twinkle 2s ease-in-out infinite;
 }
 
+/* ============================================
+   SUBTLE STARS (Stage 1 Night Scene)
+   ============================================ */
+.stage1-star-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 35%;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.stage1-star {
+    position: absolute;
+    width: 1.5px;
+    height: 1.5px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    opacity: 0.15;
+    animation: stage1Twinkle 4s ease-in-out infinite;
+}
+
+@keyframes stage1Twinkle {
+    0%, 100% {
+        opacity: 0.15;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.45;
+        transform: scale(1.3);
+    }
+}
+
 /* --- Background Patterns --- */
 body::before {
     content: '';
@@ -720,6 +868,82 @@ body::after {
     font-size: clamp(10px, 3vw, 14px);
     color: var(--pixel-red);
     line-height: 1.8;
+}
+
+/* ============================================
+   MOBILE PORTRAIT IMAGES (≤600px)
+   ============================================
+   On screens ≤600px wide, use portrait-oriented
+   images from images/portrait/ folder.
+   background-size: cover fills the entire screen.
+   The .bg-blur sibling element handles the blur fill.
+*/
+.stage[data-portrait][style*="background-image"],
+.stage[data-portrait].active {
+    /* Default: use landscape image (set via inline style) */
+}
+
+/* When viewport is ≤600px, switch to portrait image */
+@media (max-width: 600px) {
+    /* Override background-image for stages that have a portrait variant */
+    .stage[data-portrait][style*="background-image"] {
+        background-image: var(--portrait-img, none) !important;
+    }
+
+    /* For active stages, set the portrait image via CSS custom property */
+    .stage.active[data-portrait] {
+        background-size: cover !important;
+    }
+
+    /* Title screen portrait mode - anchored to top */
+    #stage-title.active {
+        background-image: url('../images/portrait/intro.jpg') !important;
+        background-size: cover !important;
+        background-position: top center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    /* Stage portrait modes - anchored to top, contain */
+    #stage-1.active {
+        background-image: url('../images/portrait/stage1.jpg') !important;
+        background-size: contain !important;
+        background-position: top center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    #stage-2.active {
+        background-image: url('../images/portrait/stage2.jpg') !important;
+        background-size: contain !important;
+        background-position: top center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    #stage-3.active {
+        background-image: url('../images/portrait/stage3.jpg') !important;
+        background-size: contain !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    #stage-4.active {
+        background-image: url('../images/portrait/stage4.jpg') !important;
+        background-size: contain !important;
+        background-position: top center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    /* Proposal screen portrait mode - anchored to top */
+    #stage-proposal.active {
+        background-image: url('../images/portrait/final.jpg') !important;
+        background-size: cover !important;
+        background-position: top center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    /* Update blurred background wrapper for portrait mode */
+    .bg-blur[data-stage] {
+        /* Image set dynamically via JS */
+    }
 }
 
 /* --- Responsive: Tablet (429px+) --- */
@@ -882,4 +1106,105 @@ body::after {
 /* --- Custom Cursor --- */
 html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     cursor: default;
+}
+
+/* ============================================
+   CO-OP BUTTON STYLES (Stage 4)
+   ============================================ */
+
+.coop-section {
+    margin-top: 24px;
+    text-align: center;
+}
+
+.coop-prompt {
+    font-family: var(--font-primary);
+    font-size: clamp(10px, 3vw, 14px);
+    color: var(--white);
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+.coop-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.coop-btn {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border: 3px solid var(--warm-yellow);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--white);
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    touch-action: manipulation;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.coop-btn:active {
+    transform: scale(0.95);
+}
+
+.coop-btn .coop-label {
+    display: block;
+    font-size: 8px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.coop-btn .coop-key {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.coop-btn.tapped {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.2);
+    animation: coOpPulse 0.5s ease;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.coop-btn.success {
+    border-color: #4ade80;
+    background: rgba(74, 222, 128, 0.3);
+    animation: coOpSuccess 0.8s ease;
+    box-shadow: 0 0 30px rgba(74, 222, 128, 0.5);
+}
+
+@keyframes coOpPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes coOpSuccess {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
+    50% { transform: scale(1.2); box-shadow: 0 0 30px rgba(74, 222, 128, 0.5); }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+/* Mobile adjustments for co-op buttons */
+@media (max-width: 428px) {
+    .coop-btn {
+        width: 70px;
+        height: 70px;
+    }
+
+    .coop-btn .coop-key {
+        font-size: 24px;
+    }
+
+    .coop-buttons {
+        gap: 12px;
+    }
 }

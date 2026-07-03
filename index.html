@@ -11,23 +11,24 @@
 </head>
 <body>
     <!-- Title Screen -->
-    <section id="stage-title" class="stage active">
+    <section id="stage-title" class="stage active" data-portrait="images/portrait/intro.jpg">
         <div class="ambient-particles" aria-hidden="true"></div>
         <div class="title-content">
-            <div class="title-heart" aria-hidden="true">
-                <canvas id="heart-canvas" width="16" height="16"></canvas>
+            <div class="title-clouds" aria-hidden="true">
+                <div class="cloud cloud-1"></div>
+                <div class="cloud cloud-2"></div>
+                <div class="cloud cloud-3"></div>
             </div>
-            <h1 class="title-text">A Quest For Love</h1>
-            <p class="title-subtitle">Will you embark on this adventure?</p>
-            <div class="title-ring" aria-hidden="true">
-                <canvas id="ring-canvas" width="12" height="12"></canvas>
+            <div class="title-group">
+                <h1 class="title-text">A Quest For Love</h1>
+                <p class="title-subtitle">Will you embark on this adventure?</p>
             </div>
             <button class="btn-primary" id="btn-start">Begin Adventure</button>
         </div>
     </section>
 
     <!-- Stage 1: Movie Night -->
-    <section id="stage-1" class="stage" style="background-image: url('images/stage1.jpg');">
+    <section id="stage-1" class="stage" style="background-image: url('images/stage1.jpg');" data-portrait="images/portrait/stage1.jpg">
         <div class="progress-dots" aria-hidden="true">
             <span class="dot"></span>
             <span class="dot"></span>
@@ -45,7 +46,7 @@
     </section>
 
     <!-- Stage 2: First Kiss -->
-    <section id="stage-2" class="stage" style="background-image: url('images/stage2.jpg');">
+    <section id="stage-2" class="stage" style="background-image: url('images/stage2.jpg');" data-portrait="images/portrait/stage2.jpg">
         <div class="progress-dots" aria-hidden="true">
             <span class="dot"></span>
             <span class="dot"></span>
@@ -63,7 +64,7 @@
     </section>
 
     <!-- Stage 3: Infinity Counter -->
-    <section id="stage-3" class="stage" style="background-image: url('images/stage3.jpg');">
+    <section id="stage-3" class="stage" style="background-image: url('images/stage3.jpg');" data-portrait="images/portrait/stage3.jpg">
         <div class="progress-dots" aria-hidden="true">
             <span class="dot"></span>
             <span class="dot"></span>
@@ -80,8 +81,8 @@
         </div>
     </section>
 
-    <!-- Stage 4: Treasure Chest -->
-    <section id="stage-4" class="stage" style="background-image: url('images/stage4.jpg');">
+    <!-- Stage 4: Co-Op Buttons -->
+    <section id="stage-4" class="stage" style="background-image: url('images/stage4.jpg');" data-portrait="images/portrait/stage4.jpg">
         <div class="progress-dots" aria-hidden="true">
             <span class="dot"></span>
             <span class="dot"></span>
@@ -92,14 +93,27 @@
             <div class="dialogue-box">
                 <h2 class="stage-title-text" id="stage-4-title"></h2>
                 <p class="clue-text" id="stage-4-clue"></p>
-                <input type="text" class="stage-input" id="input-4" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 4">
-                <button class="btn-check" data-stage="4">CHECK</button>
+
+                <!-- Co-op section replaces text input -->
+                <div class="coop-section" id="coop-section-4">
+                    <p class="coop-prompt">Both players tap together!</p>
+                    <div class="coop-buttons">
+                        <button class="coop-btn" data-player="1">
+                            <span class="coop-label">Player 1</span>
+                            <span class="coop-key">A</span>
+                        </button>
+                        <button class="coop-btn" data-player="2">
+                            <span class="coop-label">Player 2</span>
+                            <span class="coop-key">B</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Proposal Screen -->
-    <section id="stage-proposal" class="stage">
+    <section id="stage-proposal" class="stage" data-portrait="images/portrait/final.jpg">
         <div class="confetti-container" aria-hidden="true"></div>
         <div class="proposal-content">
             <div class="ring-sparkle" aria-hidden="true">

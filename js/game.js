@@ -18,13 +18,13 @@ const CONFIG = {
         {
             id: 1,
             title: "Chapter 1: Where It All Began",
-            clue: "We both love zombies... remember the movie night? Look at the poster title!",
+            clue: "We both love zombies... remember the movie we saw that night?",
             answer: ["zombieland", "the zombieland", "zombie land", "zombie-land"],
         },
         {
             id: 2,
             title: "Chapter 2: Dangerously Close",
-            clue: "Remember when we got a little too close? That moment changed everything...",
+            clue: "Remember when you got dangerously close? That moment changed everything... it was our:",
             answer: ["first kiss", "our first kiss", "the first kiss"],
         },
         {
@@ -35,9 +35,16 @@ const CONFIG = {
         },
         {
             id: 4,
-            title: "Chapter 4: The Treasure of Forever",
-            clue: "You've conquered the zombie lands, survived the dangerous frontier, and proved your love is infinite. All these quests led to this treasure... What do you say?",
-            answer: ["yes", "i do", "yes i do"],
+            title: "Chapter 4: Player 2 Joined",
+            clue: "You've conquered the zombie lands, survived the dangerous frontier, and proved your love is infinite. The final level requires 2 players... Ready to play forever together?",
+            // Stage 4 uses a co-op mechanic instead of text input.
+            // Both players must press their buttons simultaneously to proceed.
+            coOp: {
+                player1Label: "Player 1: Press A",
+                player2Label: "Player 2: Press B",
+                timeout: 5000,
+                promptText: "Both players tap together!",
+            },
         },
     ],
 
@@ -61,6 +68,62 @@ const state = {
     noButtonEvades: 0,       // 0-3
     confettiActive: false,
 };
+
+/* ============================================
+   CO-OP GAME MECHANIC (Stage 4)
+   ============================================ */
+
+const coOpState = {
+    player1Tapped: false,
+    player2Tapped: false,
+    timeoutId: null,
+};
+
+/**
+ * Handle a co-op button tap for Stage 4
+ */
+function handleCoOpTap(playerNum) {
+    if (state.isTransitioning) return;
+
+    if (playerNum === 1) coOpState.player1Tapped = true;
+    else coOpState.player2Tapped = true;
+
+    // Visual feedback
+    const btn = document.querySelector(`.coop-btn[data-player="${playerNum}"]`);
+    if (btn) btn.classList.add('tapped');
+
+    // Check if both tapped
+    if (coOpState.player1Tapped && coOpState.player2Tapped) {
+        clearTimeout(coOpState.timeoutId);
+
+        // Success animation
+        document.querySelectorAll('.coop-btn').forEach(b => b.classList.add('success'));
+        screenFlash();
+
+        // Proceed to proposal after delay
+        setTimeout(() => {
+            state.currentStage = 5;
+            showStage(5);
+        }, 1000);
+    }
+
+    // Start timeout if first tap (no timeout yet)
+    if (!coOpState.timeoutId) {
+        coOpState.timeoutId = setTimeout(() => {
+            resetCoOp();
+        }, CONFIG.stages[3].coOp.timeout);
+    }
+}
+
+/**
+ * Reset co-op state (called on timeout)
+ */
+function resetCoOp() {
+    coOpState.player1Tapped = false;
+    coOpState.player2Tapped = false;
+    coOpState.timeoutId = null;
+    document.querySelectorAll('.coop-btn').forEach(b => b.classList.remove('tapped'));
+}
 
 /* ============================================
    UTILITY FUNCTIONS
@@ -294,11 +357,21 @@ async function showStage(n) {
             await typewriter(clueEl, clueText, 40);
         }
 
+        // Create twinkling stars for Stage 1
+        if (n === 1) {
+            createStage1Stars();
+        }
+
         // Focus input when entering the stage
         const input = document.getElementById(`input-${n}`);
         if (input) {
             setTimeout(() => input.focus(), 600);
         }
+    }
+
+    // Reset co-op state when entering Stage 4
+    if (n === 4) {
+        resetCoOp();
     }
 
     // Wait for animation to complete
@@ -571,6 +644,16 @@ function bindEvents() {
             adjustForKeyboard();
         });
     }
+
+    // Co-op buttons (Stage 4)
+    document.querySelectorAll('.coop-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const playerNum = parseInt(btn.getAttribute('data-player'), 10);
+            if (playerNum) {
+                handleCoOpTap(playerNum);
+            }
+        });
+    });
 }
 
 /**
@@ -634,6 +717,46 @@ function createStarField() {
     }
 
     document.body.appendChild(container);
+}
+
+/**
+ * Create subtle twinkling stars for Stage 1 night scene
+ */
+function createStage1Stars() {
+    // Remove existing star field if present
+    const existing = document.getElementById('stage1-star-field');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'stage1-star-field';
+    container.className = 'stage1-star-field';
+    container.setAttribute('aria-hidden', 'true');
+
+    // ~30 stars in the upper 300px of the screen
+    const count = 30;
+    const maxHeight = 300; // pixels from top
+
+    for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.className = 'stage1-star';
+        // Spread across full width, within top 300px
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = (Math.random() * maxHeight) + 'px';
+        // Random size variation (1px to 2px)
+        const size = 1 + Math.random();
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        // Staggered animation timing
+        star.style.animationDelay = (Math.random() * 4) + 's';
+        star.style.animationDuration = (3 + Math.random() * 3) + 's';
+        container.appendChild(star);
+    }
+
+    // Insert as first child of stage-1 so it sits above background but below content
+    const stage1 = document.getElementById('stage-1');
+    if (stage1) {
+        stage1.insertBefore(container, stage1.firstChild);
+    }
 }
 
 /**
@@ -781,8 +904,21 @@ function initBgBlurLayers() {
 }
 
 /**
+ * Get the portrait image URL for a stage element.
+ * Returns the data-portrait value if available, otherwise null.
+ */
+function getPortraitImageUrl(stageEl) {
+    const portrait = stageEl.getAttribute('data-portrait');
+    if (portrait) {
+        return portrait;
+    }
+    return null;
+}
+
+/**
  * Show the blurred background for the currently active stage.
  * Hides all other blurred backgrounds to prevent bleed-over.
+ * Uses portrait images on screens ≤600px wide.
  */
 function updateBgBlurVisibility() {
     const activeStage = document.querySelector('.stage.active[style*="background-image"]');
@@ -797,6 +933,14 @@ function updateBgBlurVisibility() {
         const bgBlur = document.querySelector('.bg-blur[data-stage="' + activeStage.id + '"]');
         if (bgBlur) {
             bgBlur.style.display = 'block';
+            
+            // On mobile (≤600px), use portrait image for the blur layer
+            if (window.innerWidth <= 600) {
+                const portraitUrl = getPortraitImageUrl(activeStage);
+                if (portraitUrl) {
+                    bgBlur.style.backgroundImage = 'url("' + portraitUrl + '")';
+                }
+            }
         }
     }
 }
