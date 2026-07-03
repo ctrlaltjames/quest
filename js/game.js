@@ -2,7 +2,7 @@
  * ============================================
  * CONFIG - Edit these values to customize the game
  * ============================================
- * 
+ *
  * The proposer edits this CONFIG object to personalize the game.
  * After editing, deploy to GitHub Pages or any static host.
  */
@@ -79,10 +79,10 @@ function normalizeAnswer(s) {
 function validateAnswer(stageId, input) {
     const stage = CONFIG.stages[stageId - 1];
     if (!stage) return false;
-    
+
     const normalized = normalizeAnswer(input);
     if (normalized === "") return false;
-    
+
     return stage.answer.some(a => normalizeAnswer(a) === normalized);
 }
 
@@ -102,7 +102,7 @@ function screenFlash() {
 function createSparkles(element) {
     const rect = element.getBoundingClientRect();
     const emojis = ['✨', '⭐', '💫', '✦'];
-    
+
     for (let i = 0; i < 6; i++) {
         const sparkle = document.createElement('div');
         sparkle.className = 'sparkle-effect';
@@ -111,7 +111,7 @@ function createSparkles(element) {
         sparkle.style.top = (rect.top + Math.random() * rect.height) + 'px';
         sparkle.style.animation = `sparkleAnim ${0.5 + Math.random() * 0.5}s ease-out forwards`;
         document.body.appendChild(sparkle);
-        
+
         sparkle.addEventListener('animationend', () => sparkle.remove());
     }
 }
@@ -123,7 +123,7 @@ function createHeartBurst() {
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     const emojis = ['❤️', '💕', '💖', '💗'];
-    
+
     for (let i = 0; i < 8; i++) {
         const angle = (i * 45) * (Math.PI / 180);
         const distance = 80 + Math.random() * 60;
@@ -133,12 +133,12 @@ function createHeartBurst() {
         heart.style.left = centerX + 'px';
         heart.style.top = centerY + 'px';
         heart.style.animation = `heartBurst ${1 + Math.random() * 0.5}s ease-out forwards`;
-        
+
         const tx = Math.cos(angle) * distance;
         const ty = Math.sin(angle) * distance;
         heart.style.setProperty('--tx', tx + 'px');
         heart.style.setProperty('--ty', ty + 'px');
-        
+
         document.body.appendChild(heart);
         heart.addEventListener('animationend', () => heart.remove());
     }
@@ -151,7 +151,7 @@ function typewriter(element, text, speed) {
     return new Promise((resolve) => {
         let i = 0;
         element.textContent = '';
-        
+
         function typeChar() {
             if (i < text.length) {
                 element.textContent += text[i];
@@ -161,7 +161,7 @@ function typewriter(element, text, speed) {
                 resolve();
             }
         }
-        
+
         typeChar();
     });
 }
@@ -188,20 +188,20 @@ function shakeElement(element) {
  */
 function renderStage(n) {
     if (n === 0) return; // Title screen
-    
+
     if (n >= 1 && n <= 4) {
         const stage = CONFIG.stages[n - 1];
         const titleEl = document.getElementById(`stage-${n}-title`);
         const clueEl = document.getElementById(`stage-${n}-clue`);
-        
+
         if (titleEl) titleEl.textContent = stage.title;
         if (clueEl) clueEl.textContent = stage.clue;
     }
-    
+
     if (n === 5) {
         const msgEl = document.getElementById('proposal-message');
         const qEl = document.getElementById('proposal-question');
-        
+
         if (msgEl) msgEl.textContent = CONFIG.proposal.message;
         if (qEl) qEl.textContent = CONFIG.proposal.question;
     }
@@ -218,17 +218,17 @@ async function showStage(n) {
         }
         return;
     }
-    
+
     // Guard: valid range
     if (n < 0 || n > 5) return;
-    
+
     state.isTransitioning = true;
-    
-    // Hide all stages
+
+    // Hide all stages (preserve background-image styles)
     document.querySelectorAll('.stage').forEach(s => {
         s.classList.remove('active');
     });
-    
+
     // Determine target element ID
     let targetId;
     if (n === 0) {
@@ -238,96 +238,99 @@ async function showStage(n) {
     } else {
         targetId = `stage-${n}`;
     }
-    
+
     const target = document.getElementById(targetId);
     if (!target) {
         state.isTransitioning = false;
         return;
     }
-    
+
     // Render stage content
     renderStage(n);
-    
+
     // Activate stage
     target.classList.add('active');
-    
+
+    // Update blurred background visibility for stages with images
+    updateBgBlurVisibility();
+
     // Update progress dots
     updateProgressDots(n);
-    
+
     // Handle stage-specific initialization
     if (n === 5) {
         // Proposal screen init
         startConfetti();
         createHeartBurst();
-        
+
         // Typewriter for proposal
         const msgEl = document.getElementById('proposal-message');
         const qEl = document.getElementById('proposal-question');
-        
+
         if (msgEl) {
             await typewriter(msgEl, CONFIG.proposal.message, 50);
         }
         if (qEl) {
             await typewriter(qEl, CONFIG.proposal.question, 60);
         }
-        
+
         // Start confetti
         Confetti.start();
-        
+
         state.isTransitioning = false;
         return;
     }
-    
+
     if (n >= 1 && n <= 4) {
         // Stage-specific: typewriter clue text
         const clueEl = document.getElementById(`stage-${n}-clue`);
         if (clueEl) {
             const clueText = clueEl.textContent;
             clueEl.textContent = '';
-            
+
             // Wait for fonts to load before starting typewriter
             await document.fonts.ready.catch(() => {});
-            
+
             await typewriter(clueEl, clueText, 40);
         }
-        
+
         // Focus input when entering the stage
         const input = document.getElementById(`input-${n}`);
         if (input) {
             setTimeout(() => input.focus(), 600);
         }
     }
-    
+
     // Wait for animation to complete
     await new Promise(resolve => {
         let settled = false;
-        
+
         const onAnimationEnd = () => {
             if (settled) return;
             settled = true;
             cleanup();
             resolve();
         };
-        
+
         const onTimeout = () => {
             if (settled) return;
             settled = true;
             cleanup();
             resolve();
         };
-        
+
         const cleanup = () => {
             target.removeEventListener('animationend', onAnimationEnd);
             clearTimeout(fallbackTimer);
         };
-        
+
         // Fallback timeout in case animationend doesn't fire
         const fallbackTimer = setTimeout(onTimeout, 450);
-        
+
         // Listen for animationend
         target.addEventListener('animationend', onAnimationEnd, { once: true });
     });
-    
+
     // Unset transitioning after animation completes
     state.isTransitioning = false;
 }
@@ -338,7 +341,7 @@ async function showStage(n) {
 function updateProgressDots(currentStage) {
     const dotsContainer = document.querySelector('.stage.active .progress-dots');
     if (!dotsContainer) return;
-    
+
     const dots = dotsContainer.querySelectorAll('.dot');
     dots.forEach((dot, i) => {
         if (i < currentStage - 1) {
@@ -359,12 +362,12 @@ function updateProgressDots(currentStage) {
 async function handleCheck(stageId) {
     // Guard: don't process during transition
     if (state.isTransitioning) return;
-    
+
     const input = document.getElementById(`input-${stageId}`);
     if (!input) return;
-    
+
     const value = input.value.trim();
-    
+
     // Guard: empty input → shake
     if (value === "") {
         input.classList.add('wrong');
@@ -374,23 +377,23 @@ async function handleCheck(stageId) {
         }, 300);
         return;
     }
-    
+
     // Validate answer
     const correct = validateAnswer(stageId, value);
-    
+
     if (correct) {
         // CORRECT ANSWER
         input.classList.add('correct');
         createSparkles(input);
         screenFlash();
-        
+
         // Wait for sparkle animation
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // Advance to next stage (showStage manages isTransitioning)
         state.currentStage = stageId + 1;
         await showStage(state.currentStage);
-        
+
         // Reset input after transition completes
         input.classList.remove('correct');
         input.value = '';
@@ -423,28 +426,28 @@ function handleEnter(event, stageId) {
  */
 async function handleYes() {
     if (state.isTransitioning) return;
-    
+
     state.isTransitioning = true;
-    
+
     // Disable both buttons
     const btnYes = document.getElementById('btn-yes');
     const btnNo = document.getElementById('btn-no');
     if (btnYes) btnYes.disabled = true;
     if (btnNo) btnNo.disabled = true;
-    
+
     // Intensify confetti
     Confetti.intensify();
-    
+
     // Heart burst
     createHeartBurst();
-    
+
     // Show after-yes message
     const afterYesEl = document.getElementById('after-yes');
     if (afterYesEl) {
         afterYesEl.style.display = 'block';
         await typewriter(afterYesEl, CONFIG.proposal.afterYes, 60);
     }
-    
+
     state.isTransitioning = false;
 }
 
@@ -453,7 +456,7 @@ async function handleYes() {
  */
 function handleNo() {
     state.noButtonEvades++;
-    
+
     if (state.noButtonEvades >= 3) {
         // After 3 evades, convert to YES button
         const btnNo = document.getElementById('btn-no');
@@ -474,26 +477,26 @@ function handleNo() {
 function repositionNoButton() {
     const btn = document.getElementById('btn-no');
     if (!btn) return;
-    
+
     const btnWidth = btn.offsetWidth + 20; // padding
     const btnHeight = btn.offsetHeight + 20;
-    
+
     // Clamp to safe viewport area
     const maxX = window.innerWidth - btnWidth;
     const maxY = window.innerHeight - btnHeight;
-    
+
     // Ensure minimum bounds
     const clampedMaxX = Math.max(60, maxX);
     const clampedMaxY = Math.max(60, maxY);
-    
+
     const newX = Math.max(10, Math.random() * clampedMaxX);
     const newY = Math.max(10, Math.random() * clampedMaxY);
-    
+
     btn.style.position = 'fixed';
     btn.style.left = newX + 'px';
     btn.style.top = newY + 'px';
     btn.style.zIndex = '50';
-    
+
     // Add wiggle animation
     btn.style.animation = 'none';
     btn.offsetHeight; // Force reflow
@@ -529,7 +532,7 @@ function bindEvents() {
             }
         });
     }
-    
+
     // CHECK buttons (event delegation)
     document.querySelectorAll('.btn-check').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -539,7 +542,7 @@ function bindEvents() {
             }
         });
     });
-    
+
     // Input Enter key handlers
     for (let i = 1; i <= 4; i++) {
         const input = document.getElementById(`input-${i}`);
@@ -549,19 +552,19 @@ function bindEvents() {
             });
         }
     }
-    
+
     // YES button
     const btnYes = document.getElementById('btn-yes');
     if (btnYes) {
         btnYes.addEventListener('click', handleYes);
     }
-    
+
     // NO button
     const btnNo = document.getElementById('btn-no');
     if (btnNo) {
         btnNo.addEventListener('click', handleNo);
     }
-    
+
     // Keyboard detection for mobile input
     if ('visualViewport' in window) {
         window.visualViewport.addEventListener('resize', () => {
@@ -576,10 +579,10 @@ function bindEvents() {
 function adjustForKeyboard() {
     const activeEl = document.activeElement;
     if (!activeEl || activeEl.className !== 'stage-input') return;
-    
+
     const viewportHeight = window.visualViewport.height;
     const windowHeight = window.innerHeight;
-    
+
     // If keyboard is open (viewport shrunk)
     if (viewportHeight < windowHeight - 100) {
         activeEl.scrollIntoView({ block: 'center' });
@@ -596,9 +599,9 @@ function adjustForKeyboard() {
 function createAmbientParticles() {
     const container = document.querySelector('.ambient-particles');
     if (!container) return;
-    
+
     const count = window.innerWidth < 768 ? 15 : 30;
-    
+
     for (let i = 0; i < count; i++) {
         const particle = document.createElement('div');
         particle.className = 'ambient-particle';
@@ -617,9 +620,9 @@ function createStarField() {
     const container = document.createElement('div');
     container.className = 'star-field';
     container.setAttribute('aria-hidden', 'true');
-    
+
     const count = window.innerWidth < 768 ? 20 : 50;
-    
+
     for (let i = 0; i < count; i++) {
         const star = document.createElement('div');
         star.className = 'star';
@@ -629,7 +632,7 @@ function createStarField() {
         star.style.animationDuration = (2 + Math.random() * 2) + 's';
         container.appendChild(star);
     }
-    
+
     document.body.appendChild(container);
 }
 
@@ -639,9 +642,9 @@ function createStarField() {
 function createFlowers() {
     const container = document.querySelector('.flower-container');
     if (!container) return;
-    
+
     const emojis = ['🌸', '🌺', '🌹', '🌻', '🌼'];
-    
+
     for (let i = 0; i < 5; i++) {
         const flower = document.createElement('span');
         flower.className = 'flower';
@@ -663,7 +666,7 @@ function renderHeartCanvas(canvasEl) {
     const size = 16;
     canvasEl.width = size;
     canvasEl.height = size;
-    
+
     // 16x16 heart pixel grid
     const grid = [
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -683,13 +686,13 @@ function renderHeartCanvas(canvasEl) {
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     ];
-    
+
     const palette = {
         0: null,
         1: '#e63946',
         2: '#8b0000',
     };
-    
+
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
             const color = palette[grid[y][x]];
@@ -709,7 +712,7 @@ function renderRingCanvas(canvasEl) {
     const size = 12;
     canvasEl.width = size;
     canvasEl.height = size;
-    
+
     // 12x12 ring pixel grid
     const grid = [
         [0,0,0,1,1,1,1,1,0,0,0,0],
@@ -725,14 +728,14 @@ function renderRingCanvas(canvasEl) {
         [0,0,0,1,1,1,1,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0,0,0],
     ];
-    
+
     const palette = {
         0: null,
         1: '#f5a623',
         2: '#ffd700',
         3: '#ffffff',
     };
-    
+
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
             const color = palette[grid[y][x]];
@@ -745,29 +748,82 @@ function renderRingCanvas(canvasEl) {
 }
 
 /* ============================================
-   INITIALIZATION
-   ============================================ */
+    INITIALIZATION
+    ============================================ */
+
+/**
+ * Initialize blurred background fill for all stages with background images.
+ * Copies the parent's background-image to the .bg-blur element so the
+ * blur layer can use background-size: cover while the parent uses contain.
+ */
+function initBgBlurLayers() {
+    document.querySelectorAll('.stage[style*="background-image"]').forEach(stage => {
+        // Get the computed background-image from the stage (inline style)
+        const bgImage = window.getComputedStyle(stage, null).getPropertyValue('background-image');
+
+        // Find or create the .bg-blur element as a SIBLING (before the stage)
+        // This ensures the blurred background is painted BELOW the stage's background
+        let bgBlur = document.querySelector('.bg-blur[data-stage="' + stage.id + '"]');
+        if (!bgBlur) {
+            bgBlur = document.createElement('div');
+            bgBlur.className = 'bg-blur';
+            bgBlur.setAttribute('data-stage', stage.id);
+            bgBlur.setAttribute('aria-hidden', 'true');
+            stage.parentNode.insertBefore(bgBlur, stage);
+        }
+
+        // Apply the same background-image to the blur layer
+        bgBlur.style.backgroundImage = bgImage;
+        
+        // Start hidden - only show when the stage is active
+        bgBlur.style.display = 'none';
+    });
+}
+
+/**
+ * Show the blurred background for the currently active stage.
+ * Hides all other blurred backgrounds to prevent bleed-over.
+ */
+function updateBgBlurVisibility() {
+    const activeStage = document.querySelector('.stage.active[style*="background-image"]');
+    
+    // Hide all blurred backgrounds first
+    document.querySelectorAll('.bg-blur').forEach(bgBlur => {
+        bgBlur.style.display = 'none';
+    });
+    
+    // Show the blurred background for the active stage
+    if (activeStage) {
+        const bgBlur = document.querySelector('.bg-blur[data-stage="' + activeStage.id + '"]');
+        if (bgBlur) {
+            bgBlur.style.display = 'block';
+        }
+    }
+}
 
 function init() {
     try {
         // Bind all events
         bindEvents();
-        
+
         // Create ambient effects
         createAmbientParticles();
         createStarField();
         createFlowers();
-        
+
         // Render pixel art
         const heartCanvas = document.getElementById('heart-canvas');
         if (heartCanvas) renderHeartCanvas(heartCanvas);
-        
+
         const ringCanvas = document.getElementById('ring-canvas');
         if (ringCanvas) renderRingCanvas(ringCanvas);
-        
+
+        // Initialize blurred background layers for each stage
+        initBgBlurLayers();
+
         // Show title screen
         showStage(0);
-        
+
     } catch (err) {
         console.error('Game initialization error:', err);
         // Show error boundary

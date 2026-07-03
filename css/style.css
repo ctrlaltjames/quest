@@ -68,6 +68,98 @@ body {
     z-index: 1;
 }
 
+/* ============================================
+   Multi-Stage Image Layout with Blurred Fill
+   ============================================
+
+   Each stage has a background image that uses a two-layer technique:
+
+   Layer 1 (.bg-blur wrapper):
+     - Duplicate of the same background image
+     - background-size: cover (fills entire container, may crop edges)
+     - filter: blur() creates the soft padding effect
+     - Positioned fixed behind the stage element
+
+   Layer 2 (main element):
+     - background-size: contain (entire image visible, no cropping)
+     - background-position: center (centered in container)
+     - Remains sharp and unaffected by blur
+     - Empty space around image filled by Layer 1's blurred edges
+
+   Key properties:
+     - object-fit: contain equivalent via background-size: contain
+     - The blurred background naturally extends its edges to fill empty space
+     - The main image stays sharp, centered, and fully visible
+     - Blur only applies to .bg-blur, never to the main background
+     - .bg-blur is a sibling element (NOT a pseudo-element) to avoid
+       stacking context conflicts with the parent's background
+*/
+
+/* Blurred background wrapper - sits behind the stage as a SIBLING */
+.bg-blur[data-stage] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* background-image is set dynamically via JS */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Blur fills the empty space around the contain image.
+       brightness(0.4) darkens it so foreground content stays readable.
+       saturate(1.3) boosts color slightly to counteract blur desaturation. */
+    filter: blur(30px) brightness(0.4) saturate(1.3);
+    -webkit-filter: blur(30px) brightness(0.4) saturate(1.3);
+    z-index: 0;
+    /* Ensure the blur extends beyond the visible area to avoid hard edges */
+    transform: scale(1.02);
+    pointer-events: none;
+}
+
+/* Layer 2: Sharp full image on top (no cropping, contains the whole image) */
+.stage[style*="background-image"] {
+    position: relative;
+    /* 'contain' ensures the entire image is visible without any cropping.
+       This creates padding/margins around the image when aspect ratios differ.
+       Those empty areas are filled by the .bg-blur sibling element behind. */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Push content to bottom (dialogue box area) */
+    justify-content: flex-end;
+    /* Preserve pixel art crispness */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    z-index: 1;
+}
+
+/* Ensure child elements render above the blurred background */
+.stage[style*="background-image"] .progress-dots,
+.stage[style*="background-image"] .stage-content,
+.stage[style*="background-image"] .dialogue-box {
+    position: relative;
+    z-index: 1;
+}
+
+.stage[style*="background-image"] .stage-content {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    max-height: 45%;
+    gap: 0;
+}
+
+.stage[style*="background-image"] .progress-dots {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
 .stage.active {
     display: flex;
     animation: stageEnter 400ms ease-out forwards;
@@ -205,6 +297,12 @@ body {
     width: 100%;
     max-width: 480px;
     gap: 12px;
+}
+
+/* Dialogue box for image stages - make it more compact */
+.stage[style*="background-image"] .dialogue-box {
+    width: 100%;
+    padding: 12px;
 }
 
 /* --- Progress Dots --- */
