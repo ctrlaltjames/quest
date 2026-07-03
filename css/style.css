@@ -580,13 +580,20 @@ body {
 }
 
 /* --- Proposal Screen --- */
+#stage-proposal {
+    justify-content: flex-end !important;
+    padding-bottom: 0 !important;
+}
+
 .proposal-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
     text-align: center;
     max-width: 480px;
+    width: 100%;
+    margin-top: auto;
+    padding-bottom: 5vh;
 }
 
 .ring-sparkle canvas {
@@ -600,6 +607,13 @@ body {
     line-height: 1.8;
     color: #ccc;
     min-height: 40px;
+    /* Pixel-art text shadow - blocky, no blur for authentic 16-bit feel */
+    text-shadow:
+        2px 0 0 rgba(0, 0, 0, 0.7),
+        -2px 0 0 rgba(0, 0, 0, 0.7),
+        0 -2px 0 rgba(0, 0, 0, 0.7),
+        0 2px 0 rgba(0, 0, 0, 0.7),
+        3px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
 .proposal-question {
@@ -620,6 +634,7 @@ body {
     gap: 16px;
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
 }
 
 .proposal-buttons .btn-no {
@@ -1149,8 +1164,8 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
 }
 
 /* ============================================
-   CO-OP BUTTON STYLES (Stage 4)
-   ============================================ */
+    CO-OP ARCADE BUTTON STYLES (Stage 4)
+    ============================================ */
 
 .coop-section {
     margin-top: 24px;
@@ -1161,90 +1176,380 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     font-family: var(--font-primary);
     font-size: clamp(10px, 3vw, 14px);
     color: var(--white);
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     opacity: 0.8;
 }
 
 .coop-buttons {
     display: flex;
-    gap: 16px;
+    gap: 40px;
     justify-content: center;
     margin: 16px 0;
 }
 
-.coop-btn {
-    position: relative;
-    width: 80px;
-    height: 80px;
-    border: 3px solid var(--warm-yellow);
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.3);
-    color: var(--white);
-    font-family: var(--font-primary);
-    cursor: pointer;
-    transition: all 0.1s ease;
-    touch-action: manipulation;
+/* Player column - stacks title above button */
+.coop-player-column {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
 }
 
-.coop-btn:active {
-    transform: scale(0.95);
-}
-
-.coop-btn .coop-label {
-    display: block;
-    font-size: 8px;
-    opacity: 0.7;
-    margin-bottom: 4px;
+/* Player title above the button */
+.coop-player-title {
+    font-family: var(--font-primary);
+    font-size: clamp(8px, 2.5vw, 11px);
+    color: var(--white);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px currentColor, 0 0 20px rgba(255, 255, 255, 0.3);
+    opacity: 0.9;
 }
 
-.coop-btn .coop-key {
-    font-size: 28px;
+/* ============================================
+    BASE ARCADE BUTTON
+    ============================================ */
+.arcade-btn {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    /* Main dome gradient + outer shadow for 3D raised look */
+    background: transparent;
+}
+
+/* Arcane button base dome via pseudo-element */
+.arcade-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    z-index: 1;
+    transition: all 0.15s ease;
+}
+
+/* Metallic rim/bezel ring */
+.arcade-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    z-index: 0;
+    transition: all 0.15s ease;
+}
+
+/* Key letter styling */
+.arcade-key {
+    font-family: var(--font-primary);
+    font-size: 32px;
     font-weight: bold;
+    color: var(--white);
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.5),
+        0 -1px 1px rgba(255, 255, 255, 0.2);
+    z-index: 2;
+    user-select: none;
+    pointer-events: none;
 }
 
-.coop-btn.tapped {
-    border-color: #ffd700;
-    background: rgba(255, 215, 0, 0.2);
-    animation: coOpPulse 0.5s ease;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+/* ============================================
+    PLAYER 1 - RED ARCADE BUTTON
+    ============================================ */
+
+/* Metallic bezel ring */
+.arcade-btn-p1::after {
+    background:
+        radial-gradient(ellipse at 35% 30%, #a0a0a0 0%, transparent 50%),
+        radial-gradient(ellipse at 65% 70%, #5a5a5a 0%, transparent 50%),
+        conic-gradient(
+            from 0deg,
+            #8a8a8a, #c0c0c0, #808080, #a8a8a8,
+            #707070, #909090, #b0b0b0, #7a7a7a,
+            #8a8a8a
+        );
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 4px rgba(255, 255, 255, 0.1);
 }
 
-.coop-btn.success {
-    border-color: #4ade80;
-    background: rgba(74, 222, 128, 0.3);
-    animation: coOpSuccess 0.8s ease;
-    box-shadow: 0 0 30px rgba(74, 222, 128, 0.5);
+/* Dome button surface */
+.arcade-btn-p1::before {
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #ff6b6b 0%,
+            #ff4444 25%,
+            #e63946 45%,
+            #c1121f 65%,
+            #8b0000 85%,
+            #5c0000 100%
+        );
+    box-shadow:
+        /* Inner highlight top-left */
+        inset 0 -8px 16px rgba(0, 0, 0, 0.35),
+        /* Inner shadow bottom */
+        inset 0 4px 8px rgba(255, 150, 150, 0.2),
+        /* Outer glow */
+        0 0 20px rgba(230, 57, 70, 0.3),
+        0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
+.arcade-btn-p1:hover::before {
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #ff8787 0%,
+            #ff5555 25%,
+            #f04050 45%,
+            #d41a2a 65%,
+            #9b1010 85%,
+            #6c0000 100%
+        );
+}
+
+.arcade-btn-p1:hover::after {
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 4px rgba(255, 255, 255, 0.15),
+        0 0 25px rgba(230, 57, 70, 0.4);
+}
+
+/* Tapped state */
+.arcade-btn-p1.tapped::before {
+    background:
+        radial-gradient(
+            ellipse at 50% 50%,
+            #ff5555 0%,
+            #e63946 30%,
+            #c1121f 55%,
+            #8b0000 75%,
+            #5c0000 100%
+        );
+    box-shadow:
+        inset 0 -4px 10px rgba(0, 0, 0, 0.4),
+        inset 0 6px 12px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(230, 57, 70, 0.5);
+}
+
+/* Success state */
+.arcade-btn-p1.success::before {
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #ff9999 0%,
+            #ff6666 25%,
+            #ff4444 45%,
+            #e63946 65%,
+            #a81822 85%,
+            #6c0000 100%
+        );
+    box-shadow:
+        inset 0 -8px 16px rgba(0, 0, 0, 0.25),
+        inset 0 4px 8px rgba(255, 200, 200, 0.3),
+        0 0 40px rgba(230, 57, 70, 0.6),
+        0 0 60px rgba(230, 57, 70, 0.3),
+        0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+    PLAYER 2 - BLUE ARCADE BUTTON
+    ============================================ */
+
+/* Metallic bezel ring */
+.arcade-btn-p2::after {
+    background:
+        radial-gradient(ellipse at 35% 30%, #a0a0a0 0%, transparent 50%),
+        radial-gradient(ellipse at 65% 70%, #5a5a5a 0%, transparent 50%),
+        conic-gradient(
+            from 0deg,
+            #8a8a8a, #c0c0c0, #808080, #a8a8a8,
+            #707070, #909090, #b0b0b0, #7a7a7a,
+            #8a8a8a
+        );
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+/* Dome button surface */
+.arcade-btn-p2::before {
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #6bb5ff 0%,
+            #4a9eff 25%,
+            #2196F3 45%,
+            #1565C0 65%,
+            #0D47A1 85%,
+            #0a2a6a 100%
+        );
+    box-shadow:
+        /* Inner highlight top-left */
+        inset 0 -8px 16px rgba(0, 0, 0, 0.35),
+        /* Inner shadow bottom */
+        inset 0 4px 8px rgba(150, 200, 255, 0.2),
+        /* Outer glow */
+        0 0 20px rgba(33, 150, 243, 0.3),
+        0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.arcade-btn-p2:hover::before {
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #85c5ff 0%,
+            #60aaff 25%,
+            #3aa8ff 45%,
+            #2a75d0 65%,
+            #1a55c0 85%,
+            #0a3a7a 100%
+        );
+}
+
+.arcade-btn-p2:hover::after {
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 4px rgba(255, 255, 255, 0.15),
+        0 0 25px rgba(33, 150, 243, 0.4);
+}
+
+/* Tapped state */
+.arcade-btn-p2.tapped::before {
+    background:
+        radial-gradient(
+            ellipse at 50% 50%,
+            #60aaff 0%,
+            #4a9eff 30%,
+            #2196F3 55%,
+            #1565C0 75%,
+            #0a3a7a 100%
+        );
+    box-shadow:
+        inset 0 -4px 10px rgba(0, 0, 0, 0.4),
+        inset 0 6px 12px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(33, 150, 243, 0.5);
+}
+
+/* Success state */
+.arcade-btn-p2.success::before {
+    background:
+        radial-gradient(
+            ellipse at 35% 25%,
+            #99ccff 0%,
+            #77b8ff 25%,
+            #55a8ff 45%,
+            #3399f0 65%,
+            #1a65c0 85%,
+            #0a3a7a 100%
+        );
+    box-shadow:
+        inset 0 -8px 16px rgba(0, 0, 0, 0.25),
+        inset 0 4px 8px rgba(200, 230, 255, 0.3),
+        0 0 40px rgba(33, 150, 243, 0.6),
+        0 0 60px rgba(33, 150, 243, 0.3),
+        0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Shared press animation */
+.arcade-btn:active {
+    transform: scale(0.93);
+}
+
+/* Tapped pulse animation */
 @keyframes coOpPulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.08); }
 }
 
+.arcade-btn.tapped {
+    animation: coOpPulse 0.4s ease;
+}
+
+/* Success flash animation */
 @keyframes coOpSuccess {
-    0% { transform: scale(1); box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
-    50% { transform: scale(1.2); box-shadow: 0 0 30px rgba(74, 222, 128, 0.5); }
-    100% { transform: scale(1); box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
+    0% { transform: scale(1); }
+    30% { transform: scale(1.12); }
+    60% { transform: scale(0.97); }
+    100% { transform: scale(1); }
 }
 
-/* Mobile adjustments for co-op buttons */
-@media (max-width: 428px) {
-    .coop-btn {
-        width: 70px;
-        height: 70px;
+.arcade-btn.success {
+    animation: coOpSuccess 0.7s ease;
+}
+
+/* ============================================
+    RESPONSIVE SIZING
+    ============================================ */
+
+/* Tablet sizing */
+@media (max-width: 768px) {
+    .arcade-btn {
+        width: 90px;
+        height: 90px;
     }
 
-    .coop-btn .coop-key {
-        font-size: 24px;
+    .arcade-key {
+        font-size: 28px;
     }
 
     .coop-buttons {
-        gap: 12px;
+        gap: 32px;
+    }
+}
+
+/* Mobile sizing */
+@media (max-width: 428px) {
+    .arcade-btn {
+        width: 76px;
+        height: 76px;
+    }
+
+    .arcade-key {
+        font-size: 24px;
+    }
+
+    .coop-player-title {
+        font-size: 7px;
+        letter-spacing: 1px;
+    }
+
+    .coop-buttons {
+        gap: 24px;
+    }
+
+    .coop-player-column {
+        gap: 8px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+    .arcade-btn {
+        width: 68px;
+        height: 68px;
+    }
+
+    .arcade-key {
+        font-size: 22px;
+    }
+
+    .coop-buttons {
+        gap: 20px;
     }
 }
