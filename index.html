@@ -99,14 +99,20 @@
                 <div class="coop-section" id="coop-section-4">
                     <p class="coop-prompt">Both players tap together!</p>
                     <div class="coop-buttons">
-                        <button class="coop-btn" data-player="1">
-                            <span class="coop-label">Player 1</span>
-                            <span class="coop-key">A</span>
-                        </button>
-                        <button class="coop-btn" data-player="2">
-                            <span class="coop-label">Player 2</span>
-                            <span class="coop-key">B</span>
-                        </button>
+                        <!-- Player 1 Column -->
+                        <div class="coop-player-column">
+                            <span class="coop-player-title">Player 1</span>
+                            <button class="arcade-btn arcade-btn-p1" data-player="1">
+                                <span class="arcade-key">A</span>
+                            </button>
+                        </div>
+                        <!-- Player 2 Column -->
+                        <div class="coop-player-column">
+                            <span class="coop-player-title">Player 2</span>
+                            <button class="arcade-btn arcade-btn-p2" data-player="2">
+                                <span class="arcade-key">B</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -121,7 +127,6 @@
                 <canvas id="ring-sparkle-canvas" width="48" height="48"></canvas>
             </div>
             <p class="proposal-message" id="proposal-message"></p>
-            <h2 class="proposal-question" id="proposal-question"></h2>
             <div class="proposal-buttons">
                 <button class="btn-yes" id="btn-yes">YES! 💍</button>
                 <button class="btn-no" id="btn-no">Are you sure? 🥺</button>

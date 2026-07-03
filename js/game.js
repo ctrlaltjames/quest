@@ -89,7 +89,7 @@ function handleCoOpTap(playerNum) {
     else coOpState.player2Tapped = true;
 
     // Visual feedback
-    const btn = document.querySelector(`.coop-btn[data-player="${playerNum}"]`);
+    const btn = document.querySelector(`.arcade-btn[data-player="${playerNum}"]`);
     if (btn) btn.classList.add('tapped');
 
     // Check if both tapped
@@ -97,7 +97,7 @@ function handleCoOpTap(playerNum) {
         clearTimeout(coOpState.timeoutId);
 
         // Success animation
-        document.querySelectorAll('.coop-btn').forEach(b => b.classList.add('success'));
+        document.querySelectorAll('.arcade-btn').forEach(b => b.classList.add('success'));
         screenFlash();
 
         // Proceed to proposal after delay
@@ -122,7 +122,7 @@ function resetCoOp() {
     coOpState.player1Tapped = false;
     coOpState.player2Tapped = false;
     coOpState.timeoutId = null;
-    document.querySelectorAll('.coop-btn').forEach(b => b.classList.remove('tapped'));
+    document.querySelectorAll('.arcade-btn').forEach(b => b.classList.remove('tapped', 'success'));
 }
 
 /* ============================================
@@ -263,10 +263,8 @@ function renderStage(n) {
 
     if (n === 5) {
         const msgEl = document.getElementById('proposal-message');
-        const qEl = document.getElementById('proposal-question');
 
         if (msgEl) msgEl.textContent = CONFIG.proposal.message;
-        if (qEl) qEl.textContent = CONFIG.proposal.question;
     }
 }
 
@@ -326,15 +324,11 @@ async function showStage(n) {
         startConfetti();
         createHeartBurst();
 
-        // Typewriter for proposal
+        // Typewriter for proposal message
         const msgEl = document.getElementById('proposal-message');
-        const qEl = document.getElementById('proposal-question');
 
         if (msgEl) {
             await typewriter(msgEl, CONFIG.proposal.message, 50);
-        }
-        if (qEl) {
-            await typewriter(qEl, CONFIG.proposal.question, 60);
         }
 
         // Start confetti
@@ -645,8 +639,8 @@ function bindEvents() {
         });
     }
 
-    // Co-op buttons (Stage 4)
-    document.querySelectorAll('.coop-btn').forEach(btn => {
+    // Co-op arcade buttons (Stage 4)
+    document.querySelectorAll('.arcade-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const playerNum = parseInt(btn.getAttribute('data-player'), 10);
             if (playerNum) {
