@@ -847,10 +847,18 @@ function bindEvents() {
             const clueId = btn.getAttribute('data-clue');
             const clueEl = document.getElementById(clueId);
             const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+            // Find clue-wrapper as a sibling within the same toggle wrapper
+            const clueWrapper = btn.parentElement.querySelector('.clue-wrapper');
 
             if (clueEl) {
                 clueEl.classList.toggle('collapsed');
                 btn.setAttribute('aria-expanded', !isExpanded);
+            }
+
+            // Toggle wrapper visibility to free/hide space
+            // When isExpanded is true (currently visible), add collapsed to hide it
+            if (clueWrapper) {
+                clueWrapper.classList.toggle('collapsed', isExpanded);
             }
         });
     });
