@@ -40,7 +40,7 @@
             <div class="dialogue-box">
                 <h2 class="stage-title-text" id="stage-1-title"></h2>
                 <p class="clue-text" id="stage-1-clue"></p>
-                <input type="text" class="stage-input" id="input-1" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 1">
+                <input type="text" class="stage-input" id="input-1" placeholder="Enter your answer.." autocomplete="off" aria-label="Answer input for stage 1">
                 <button class="btn-check" data-stage="1">CHECK</button>
             </div>
         </div>
@@ -58,7 +58,7 @@
             <div class="dialogue-box">
                 <h2 class="stage-title-text" id="stage-2-title"></h2>
                 <p class="clue-text" id="stage-2-clue"></p>
-                <input type="text" class="stage-input" id="input-2" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 2">
+                <input type="text" class="stage-input" id="input-2" placeholder="Enter your answer.." autocomplete="off" aria-label="Answer input for stage 2">
                 <button class="btn-check" data-stage="2">CHECK</button>
             </div>
         </div>
@@ -76,7 +76,7 @@
             <div class="dialogue-box">
                 <h2 class="stage-title-text" id="stage-3-title"></h2>
                 <p class="clue-text" id="stage-3-clue"></p>
-                <input type="text" class="stage-input" id="input-3" placeholder="Enter your answer..." autocomplete="off" aria-label="Answer input for stage 3">
+                <input type="text" class="stage-input" id="input-3" placeholder="Enter your answer.." autocomplete="off" aria-label="Answer input for stage 3">
                 <button class="btn-check" data-stage="3">CHECK</button>
             </div>
         </div>
@@ -133,8 +133,12 @@
             </div>
             <div class="flower-container" aria-hidden="true"></div>
             <p class="after-yes" id="after-yes" style="display:none;"></p>
+            <p class="countdown-number" id="countdown" style="display:none;"></p>
         </div>
     </section>
+
+    <!-- Fade overlay for final transition -->
+    <div id="fade-overlay" class="fade-overlay" aria-hidden="true"></div>
 
     <!-- Error boundary container -->
     <div id="error-boundary" class="error-screen" style="display:none;">

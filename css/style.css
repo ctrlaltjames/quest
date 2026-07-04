@@ -220,6 +220,12 @@ body {
     text-align: center;
     opacity: 0.8;
     margin-bottom: 12px;
+    text-shadow:
+        2px 0 0 rgba(0, 0, 0, 0.7),
+        -2px 0 0 rgba(0, 0, 0, 0.7),
+        0 -2px 0 rgba(0, 0, 0, 0.7),
+        0 2px 0 rgba(0, 0, 0, 0.7),
+        3px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================
@@ -511,6 +517,7 @@ body {
     outline: none;
     transition: border-color 200ms ease;
     box-shadow: inset 2px 2px 0px rgba(0,0,0,0.5);
+    text-align: center;
 }
 
 .stage-input:focus {
@@ -645,7 +652,13 @@ body {
 .after-yes {
     font-size: clamp(10px, 3vw, 16px);
     color: var(--green);
-    text-shadow: 0 0 10px var(--green);
+    /* Pixel-art text shadow - blocky, no blur for authentic 16-bit feel */
+    text-shadow:
+        2px 0 0 rgba(0, 0, 0, 0.7),
+        -2px 0 0 rgba(0, 0, 0, 0.7),
+        0 -2px 0 rgba(0, 0, 0, 0.7),
+        0 2px 0 rgba(0, 0, 0, 0.7),
+        3px 3px 0 rgba(0, 0, 0, 0.5);
     margin-top: 16px;
     text-align: center;
     line-height: 1.6;
@@ -921,7 +934,20 @@ body::after {
 }
 
 /* ============================================
-   MOBILE PORTRAIT IMAGES (≤600px)
+    NON-MOBILE TITLE SCREEN (≥601px)
+    Use intro.jpg as background with cover sizing
+    ============================================ */
+@media (min-width: 601px) {
+    #stage-title.active {
+        background-image: url('../images/intro.jpg') !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+    }
+}
+
+/* ============================================
+    MOBILE PORTRAIT IMAGES (≤600px)
    ============================================
    On screens ≤600px wide, use portrait-oriented
    images from images/portrait/ folder.
@@ -993,6 +1019,19 @@ body::after {
     /* Update blurred background wrapper for portrait mode */
     .bg-blur[data-stage] {
         /* Image set dynamically via JS */
+    }
+}
+
+/* ============================================
+    NON-MOBILE PROPOSAL SCREEN (>600px)
+    Use final.jpg as background with cover sizing
+    ============================================ */
+@media (min-width: 601px) {
+    #stage-proposal.active {
+        background-image: url('../images/final.jpg') !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
     }
 }
 
@@ -1164,8 +1203,11 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
 }
 
 /* ============================================
-    CO-OP ARCADE BUTTON STYLES (Stage 4)
-    ============================================ */
+
+/* ============================================
+     CO-OP ARCADE BUTTON STYLES (Stage 4)
+     SNES 16-Bit In-Game UI Theme
+     ============================================ */
 
 .coop-section {
     margin-top: 24px;
@@ -1175,9 +1217,14 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
 .coop-prompt {
     font-family: var(--font-primary);
     font-size: clamp(10px, 3vw, 14px);
-    color: var(--white);
+    color: var(--warm-yellow);
     margin-bottom: 20px;
-    opacity: 0.8;
+    text-shadow:
+        2px 0 0 rgba(0, 0, 0, 0.7),
+        -2px 0 0 rgba(0, 0, 0, 0.7),
+        0 -2px 0 rgba(0, 0, 0, 0.7),
+        0 2px 0 rgba(0, 0, 0, 0.7),
+        3px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
 .coop-buttons {
@@ -1202,13 +1249,18 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     color: var(--white);
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: 0 0 10px currentColor, 0 0 20px rgba(255, 255, 255, 0.3);
-    opacity: 0.9;
+    text-shadow:
+        2px 0 0 rgba(0, 0, 0, 0.7),
+        -2px 0 0 rgba(0, 0, 0, 0.7),
+        0 -2px 0 rgba(0, 0, 0, 0.7),
+        0 2px 0 rgba(0, 0, 0, 0.7),
+        3px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================
-    BASE ARCADE BUTTON
-    ============================================ */
+     BASE SNES-ERA CIRCULAR BUTTON
+     Inspired by SNES in-game UI (EarthBound, FF6, etc.)
+     ============================================ */
 .arcade-btn {
     position: relative;
     width: 100px;
@@ -1217,33 +1269,32 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     border-radius: 50%;
     cursor: pointer;
     touch-action: manipulation;
-    transition: all 0.15s ease;
+    transition: transform 100ms ease, filter 100ms ease;
     display: flex;
     align-items: center;
     justify-content: center;
     outline: none;
-    /* Main dome gradient + outer shadow for 3D raised look */
     background: transparent;
 }
 
-/* Arcane button base dome via pseudo-element */
+/* Dark ring border (SNES game UI style) */
+.arcade-btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    z-index: 0;
+    transition: all 100ms ease;
+}
+
+/* Circular button face with pixel shading */
 .arcade-btn::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: 50%;
     z-index: 1;
-    transition: all 0.15s ease;
-}
-
-/* Metallic rim/bezel ring */
-.arcade-btn::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    z-index: 0;
-    transition: all 0.15s ease;
+    transition: all 100ms ease;
 }
 
 /* Key letter styling */
@@ -1252,218 +1303,294 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     font-size: 32px;
     font-weight: bold;
     color: var(--white);
+    /* Pixel-art text shadow - blocky, no blur */
     text-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.5),
-        0 -1px 1px rgba(255, 255, 255, 0.2);
+        3px 0 0 rgba(0, 0, 0, 0.7),
+        -3px 0 0 rgba(0, 0, 0, 0.7),
+        0 3px 0 rgba(0, 0, 0, 0.7),
+        0 -3px 0 rgba(0, 0, 0, 0.7),
+        3px 3px 0 rgba(0, 0, 0, 0.5);
     z-index: 2;
     user-select: none;
     pointer-events: none;
 }
 
 /* ============================================
-    PLAYER 1 - RED ARCADE BUTTON
-    ============================================ */
+     PLAYER 1 - RED SNES-STYLE BUTTON
+     Inspired by EarthBound "Fight" buttons
+     ============================================ */
 
-/* Metallic bezel ring */
+/* Dark ring border */
 .arcade-btn-p1::after {
-    background:
-        radial-gradient(ellipse at 35% 30%, #a0a0a0 0%, transparent 50%),
-        radial-gradient(ellipse at 65% 70%, #5a5a5a 0%, transparent 50%),
-        conic-gradient(
-            from 0deg,
-            #8a8a8a, #c0c0c0, #808080, #a8a8a8,
-            #707070, #909090, #b0b0b0, #7a7a7a,
-            #8a8a8a
-        );
+    background: #1a1a2e;
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
-        inset 0 0 0 4px rgba(255, 255, 255, 0.1);
+        /* Thin dark outline */
+        0 0 0 3px #0a0a1a,
+        /* Subtle outer shadow */
+        0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
-/* Dome button surface */
+/* Red button face with SNES-era pixel shading
+   Uses stepped gradients to simulate the 256-color palette dithering */
 .arcade-btn-p1::before {
+    /* Circular gradient with pixel-art stepped shading */
     background:
+        /* Top highlight arc (light from above) */
         radial-gradient(
-            ellipse at 35% 25%,
-            #ff6b6b 0%,
-            #ff4444 25%,
-            #e63946 45%,
-            #c1121f 65%,
-            #8b0000 85%,
+            ellipse at 50% 25%,
+            #ff9999 0%,
+            #ff9999 6%,
+            #ff6666 6%,
+            #ff6666 14%,
+            #e63946 14%,
+            #e63946 30%,
+            #c1121f 30%,
+            #c1121f 50%,
+            #8b0000 50%,
+            #8b0000 70%,
+            #5c0000 70%,
             #5c0000 100%
         );
     box-shadow:
-        /* Inner highlight top-left */
-        inset 0 -8px 16px rgba(0, 0, 0, 0.35),
-        /* Inner shadow bottom */
-        inset 0 4px 8px rgba(255, 150, 150, 0.2),
-        /* Outer glow */
-        0 0 20px rgba(230, 57, 70, 0.3),
-        0 8px 24px rgba(0, 0, 0, 0.5);
+        /* Pixel inner highlight (top arc) */
+        inset 0 -6px 0 rgba(255, 150, 150, 0.15),
+        /* Pixel inner shadow (bottom arc) */
+        inset 0 6px 0 rgba(0, 0, 0, 0.25);
 }
 
+/* Hover state - brighter red */
 .arcade-btn-p1:hover::before {
     background:
         radial-gradient(
-            ellipse at 35% 25%,
-            #ff8787 0%,
-            #ff5555 25%,
-            #f04050 45%,
-            #d41a2a 65%,
-            #9b1010 85%,
-            #6c0000 100%
+            ellipse at 50% 25%,
+            #ffbbbb 0%,
+            #ffbbbb 6%,
+            #ff8888 6%,
+            #ff8888 14%,
+            #f04050 14%,
+            #f04050 30%,
+            #d41a2a 30%,
+            #d41a2a 50%,
+            #9b1010 50%,
+            #9b1010 70%,
+            #7a0a0a 70%,
+            #7a0a0a 100%
         );
 }
 
 .arcade-btn-p1:hover::after {
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
-        inset 0 0 0 4px rgba(255, 255, 255, 0.15),
-        0 0 25px rgba(230, 57, 70, 0.4);
+        0 0 0 3px #2a2a4a,
+        0 4px 8px rgba(0, 0, 0, 0.5),
+        0 0 12px rgba(230, 57, 70, 0.25);
 }
 
-/* Tapped state */
+/* Tapped/active state - pressed look */
+.arcade-btn-p1:active::before,
 .arcade-btn-p1.tapped::before {
     background:
         radial-gradient(
-            ellipse at 50% 50%,
-            #ff5555 0%,
-            #e63946 30%,
-            #c1121f 55%,
-            #8b0000 75%,
+            ellipse at 50% 40%,
+            #ff8888 0%,
+            #ff8888 8%,
+            #e63946 8%,
+            #e63946 20%,
+            #c1121f 20%,
+            #c1121f 45%,
+            #8b0000 45%,
+            #8b0000 65%,
+            #5c0000 65%,
             #5c0000 100%
         );
     box-shadow:
-        inset 0 -4px 10px rgba(0, 0, 0, 0.4),
-        inset 0 6px 12px rgba(0, 0, 0, 0.3),
-        0 0 30px rgba(230, 57, 70, 0.5);
+        /* Reversed shadows for pressed effect */
+        inset 0 6px 0 rgba(0, 0, 0, 0.2),
+        inset 0 -6px 0 rgba(255, 150, 150, 0.1);
 }
 
-/* Success state */
+.arcade-btn-p1.tapped::after {
+    box-shadow:
+        0 0 0 3px #2a2a4a,
+        0 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(230, 57, 70, 0.4);
+}
+
+/* Success state - bright glowing red */
 .arcade-btn-p1.success::before {
     background:
         radial-gradient(
-            ellipse at 35% 25%,
-            #ff9999 0%,
-            #ff6666 25%,
-            #ff4444 45%,
-            #e63946 65%,
-            #a81822 85%,
-            #6c0000 100%
+            ellipse at 50% 25%,
+            #ffdddd 0%,
+            #ffdddd 6%,
+            #ffbbbb 6%,
+            #ffbbbb 14%,
+            #ff9999 14%,
+            #ff9999 30%,
+            #ff6666 30%,
+            #ff6666 50%,
+            #cc3333 50%,
+            #cc3333 70%,
+            #992222 70%,
+            #992222 100%
         );
     box-shadow:
-        inset 0 -8px 16px rgba(0, 0, 0, 0.25),
-        inset 0 4px 8px rgba(255, 200, 200, 0.3),
-        0 0 40px rgba(230, 57, 70, 0.6),
-        0 0 60px rgba(230, 57, 70, 0.3),
-        0 8px 24px rgba(0, 0, 0, 0.4);
+        inset 0 -6px 0 rgba(255, 200, 200, 0.25),
+        inset 0 6px 0 rgba(0, 0, 0, 0.15),
+        0 0 20px rgba(230, 57, 70, 0.5),
+        0 0 40px rgba(230, 57, 70, 0.25);
 }
 
 /* ============================================
-    PLAYER 2 - BLUE ARCADE BUTTON
-    ============================================ */
+     PLAYER 2 - BLUE SNES-STYLE BUTTON
+     Inspired by FF6 "Magic" menu buttons
+     ============================================ */
 
-/* Metallic bezel ring */
+/* Dark ring border */
 .arcade-btn-p2::after {
-    background:
-        radial-gradient(ellipse at 35% 30%, #a0a0a0 0%, transparent 50%),
-        radial-gradient(ellipse at 65% 70%, #5a5a5a 0%, transparent 50%),
-        conic-gradient(
-            from 0deg,
-            #8a8a8a, #c0c0c0, #808080, #a8a8a8,
-            #707070, #909090, #b0b0b0, #7a7a7a,
-            #8a8a8a
-        );
+    background: #1a1a2e;
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
-        inset 0 0 0 4px rgba(255, 255, 255, 0.1);
+        0 0 0 3px #0a0a1a,
+        0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
-/* Dome button surface */
+/* Blue button face with SNES-era pixel shading */
 .arcade-btn-p2::before {
     background:
         radial-gradient(
-            ellipse at 35% 25%,
-            #6bb5ff 0%,
-            #4a9eff 25%,
-            #2196F3 45%,
-            #1565C0 65%,
-            #0D47A1 85%,
-            #0a2a6a 100%
+            ellipse at 50% 25%,
+            #99ccdd 0%,
+            #99ccdd 6%,
+            #6bb0cc 6%,
+            #6bb0cc 14%,
+            #4a99b8 14%,
+            #4a99b8 30%,
+            #2d7a9a 30%,
+            #2d7a9a 50%,
+            #1a5a7a 50%,
+            #1a5a7a 70%,
+            #0d3b5a 70%,
+            #0d3b5a 100%
         );
     box-shadow:
-        /* Inner highlight top-left */
-        inset 0 -8px 16px rgba(0, 0, 0, 0.35),
-        /* Inner shadow bottom */
-        inset 0 4px 8px rgba(150, 200, 255, 0.2),
-        /* Outer glow */
-        0 0 20px rgba(33, 150, 243, 0.3),
-        0 8px 24px rgba(0, 0, 0, 0.5);
+        inset 0 -6px 0 rgba(150, 220, 255, 0.15),
+        inset 0 6px 0 rgba(0, 0, 0, 0.25);
 }
 
+/* Hover state - brighter blue */
 .arcade-btn-p2:hover::before {
     background:
         radial-gradient(
-            ellipse at 35% 25%,
-            #85c5ff 0%,
-            #60aaff 25%,
-            #3aa8ff 45%,
-            #2a75d0 65%,
-            #1a55c0 85%,
-            #0a3a7a 100%
+            ellipse at 50% 25%,
+            #aadd ee 0%,
+            #aadd ee 6%,
+            #77bbdd 6%,
+            #77bbdd 14%,
+            #55a8cc 14%,
+            #55a8cc 30%,
+            #3a95b8 30%,
+            #3a95b8 50%,
+            #2a7a9a 50%,
+            #2a7a9a 70%,
+            #1a5a7a 70%,
+            #1a5a7a 100%
         );
 }
 
 .arcade-btn-p2:hover::after {
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 2px rgba(0, 0, 0, 0.3),
-        inset 0 0 0 4px rgba(255, 255, 255, 0.15),
-        0 0 25px rgba(33, 150, 243, 0.4);
+        0 0 0 3px #2a2a4a,
+        0 4px 8px rgba(0, 0, 0, 0.5),
+        0 0 12px rgba(74, 153, 184, 0.25);
 }
 
-/* Tapped state */
+/* Tapped/active state - pressed look */
+.arcade-btn-p2:active::before,
 .arcade-btn-p2.tapped::before {
     background:
         radial-gradient(
-            ellipse at 50% 50%,
-            #60aaff 0%,
-            #4a9eff 30%,
-            #2196F3 55%,
-            #1565C0 75%,
-            #0a3a7a 100%
+            ellipse at 50% 40%,
+            #77bbdd 0%,
+            #77bbdd 8%,
+            #55a8cc 8%,
+            #55a8cc 20%,
+            #4a99b8 20%,
+            #4a99b8 45%,
+            #2d7a9a 45%,
+            #2d7a9a 65%,
+            #1a5a7a 65%,
+            #1a5a7a 100%
         );
     box-shadow:
-        inset 0 -4px 10px rgba(0, 0, 0, 0.4),
-        inset 0 6px 12px rgba(0, 0, 0, 0.3),
-        0 0 30px rgba(33, 150, 243, 0.5);
+        inset 0 6px 0 rgba(0, 0, 0, 0.2),
+        inset 0 -6px 0 rgba(150, 220, 255, 0.1);
 }
 
-/* Success state */
+.arcade-btn-p2.tapped::after {
+    box-shadow:
+        0 0 0 3px #2a2a4a,
+        0 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(74, 153, 184, 0.4);
+}
+
+/* Success state - bright glowing blue */
 .arcade-btn-p2.success::before {
     background:
         radial-gradient(
-            ellipse at 35% 25%,
-            #99ccff 0%,
-            #77b8ff 25%,
-            #55a8ff 45%,
-            #3399f0 65%,
-            #1a65c0 85%,
-            #0a3a7a 100%
+            ellipse at 50% 25%,
+            #ccf0ff 0%,
+            #ccf0ff 6%,
+            #aaeeff 6%,
+            #aaEEff 14%,
+            #88ddee 14%,
+            #88ddee 30%,
+            #55ccdd 30%,
+            #55ccdd 50%,
+            #33aabb 50%,
+            #33aabb 70%,
+            #228899 70%,
+            #228899 100%
         );
     box-shadow:
-        inset 0 -8px 16px rgba(0, 0, 0, 0.25),
-        inset 0 4px 8px rgba(200, 230, 255, 0.3),
-        0 0 40px rgba(33, 150, 243, 0.6),
-        0 0 60px rgba(33, 150, 243, 0.3),
-        0 8px 24px rgba(0, 0, 0, 0.4);
+        inset 0 -6px 0 rgba(200, 240, 255, 0.25),
+        inset 0 6px 0 rgba(0, 0, 0, 0.15),
+        0 0 20px rgba(74, 153, 184, 0.5),
+        0 0 40px rgba(74, 153, 184, 0.25);
+}
+
+/* ============================================
+     TREASURE SCREEN SPARKLE PARTICLES
+     1-2px pixel sparkles floating upward from center
+     ============================================ */
+.treasure-sparkle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    background: var(--bright-gold);
+    box-shadow:
+        0 0 2px rgba(255, 215, 0, 0.8),
+        0 0 4px rgba(255, 215, 0, 0.4);
+}
+
+@keyframes sparkleFloat {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+    }
+    10% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--drift), var(--rise)) scale(0.2);
+    }
 }
 
 /* Shared press animation */
@@ -1494,8 +1621,130 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
 }
 
 /* ============================================
-    RESPONSIVE SIZING
+    SIDE-BY-SIDE LAYOUT (Very Large Screens)
     ============================================ */
+
+/* At 1400px+, place stage-content side by side with the background image */
+@media (min-width: 1400px) {
+    .stage[style*="background-image"] {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding-left: 5vw;
+        padding-right: 5vw;
+    }
+
+    .stage[style*="background-image"] .stage-content {
+        max-width: 400px;
+        max-height: none;
+        text-align: left;
+    }
+
+    .stage[style*="background-image"] .dialogue-box {
+        width: 100%;
+    }
+}
+
+/* ============================================
+    COUNTDOWN NUMBER STYLES
+    ============================================ */
+.countdown-number {
+    font-size: clamp(48px, 15vw, 80px);
+    color: var(--bright-gold);
+    /* Strong text shadow so countdown is visible on any background */
+    text-shadow:
+        3px 0 0 rgba(0, 0, 0, 0.85),
+        -3px 0 0 rgba(0, 0, 0, 0.85),
+        0 3px 0 rgba(0, 0, 0, 0.85),
+        0 -3px 0 rgba(0, 0, 0, 0.85),
+        4px 4px 0 rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(255, 215, 0, 0.5),
+        0 0 40px rgba(255, 215, 0, 0.3);
+    position: fixed;
+    bottom: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    animation: countdownPulse 1s ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes countdownPulse {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+    }
+}
+
+/* ============================================
+    FADE OVERLAY FOR FINAL TRANSITION
+    ============================================ */
+.fade-overlay {
+    position: fixed;
+    inset: 0;
+    background: black;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 200;
+    transition: opacity 1s ease;
+}
+
+.fade-overlay.active {
+    opacity: 1;
+}
+
+/* ============================================
+    BUTTON FADE OUT
+    ============================================ */
+.proposal-buttons.fading-out {
+    animation: buttonsFadeOut 800ms ease forwards;
+}
+
+@keyframes buttonsFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+    }
+}
+
+.flower-container.fading-out {
+    animation: flowersFadeOut 800ms ease forwards;
+}
+
+@keyframes flowersFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.after-yes.fading-out {
+    animation: afterYesFadeOut 800ms ease forwards;
+}
+
+@keyframes afterYesFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ============================================
+     RESPONSIVE SIZING
+     ============================================ */
 
 /* Tablet sizing */
 @media (max-width: 768px) {
