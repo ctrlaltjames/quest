@@ -315,6 +315,11 @@ async function showStage(n) {
     // Update blurred background visibility for stages with images
     updateBgBlurVisibility();
 
+    // Update parallax background for the active stage
+    if (typeof ParallaxBG !== 'undefined') {
+        ParallaxBG.setActiveStage(target);
+    }
+
     // Update progress dots
     updateProgressDots(n);
 

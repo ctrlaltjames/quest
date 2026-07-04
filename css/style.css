@@ -1032,15 +1032,15 @@ body::after {
     /* Stage portrait modes - anchored to top, contain */
     #stage-1.active {
         background-image: url('../images/portrait/stage1.jpg') !important;
-        background-size: contain !important;
-        background-position: top center !important;
+        background-size: cover !important;
+        background-position: center !important;
         background-repeat: no-repeat !important;
     }
 
     #stage-2.active {
         background-image: url('../images/portrait/stage2.jpg') !important;
-        background-size: contain !important;
-        background-position: top center !important;
+        background-size: cover !important;
+        background-position: center !important;
         background-repeat: no-repeat !important;
     }
 
@@ -1053,8 +1053,8 @@ body::after {
 
     #stage-4.active {
         background-image: url('../images/portrait/stage4.jpg') !important;
-        background-size: contain !important;
-        background-position: top center !important;
+        background-size: cover !important;
+        background-position: center !important;
         background-repeat: no-repeat !important;
     }
 
