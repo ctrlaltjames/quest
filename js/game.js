@@ -356,10 +356,12 @@ async function showStage(n) {
             createStage1Stars();
         }
 
-        // Focus input when entering the stage
-        const input = document.getElementById(`input-${n}`);
-        if (input) {
-            setTimeout(() => input.focus(), 600);
+        // Focus input when entering the stage (desktop only)
+        if (window.innerWidth > 768) {
+            const input = document.getElementById(`input-${n}`);
+            if (input) {
+                setTimeout(() => input.focus(), 600);
+            }
         }
     }
 
