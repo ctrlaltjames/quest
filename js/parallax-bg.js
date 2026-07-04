@@ -11,8 +11,8 @@
     // === Configuration ===
     const MAX_OFFSET_PERCENT = 15; // Maximum background shift as % of container height
     const DAMPING_FACTOR = 0.12; // Lower = smoother/heavier feel (0.01 - 1.0)
-    const TILT_SENSITIVITY = 12; // Beta range multiplier
-    const TILT_DEADZONE = 2; // Ignore small beta values near center
+    const TILT_SENSITIVITY = 6; // Beta range multiplier (lower = more sensitive)
+    const TILT_DEADZONE = 1; // Ignore small beta values near center
     const TOUCH_SENSITIVITY = 0.6; // How far the background follows finger (1.0 = 1:1)
     const RESET_DELAY = 1500; // ms before auto-reset after touch ends
 
@@ -151,8 +151,9 @@
         // Clamp
         touchOffsetY = Math.max(-MAX_OFFSET_PERCENT, Math.min(MAX_OFFSET_PERCENT, touchOffsetY));
 
-        // Prevent scrolling if it's a horizontal-ish drag on background
-        if (Math.abs(deltaY) > 5) {
+        // Only prevent default on horizontal-ish drags (not vertical scroll)
+        const deltaX = e.touches[0].clientX - (e.touches.length > 1 ? 0 : 0);
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
             e.preventDefault();
         }
     }
@@ -225,7 +226,7 @@
     }
 
     function updateBackgroundPosition(offsetY) {
-        if (!bgBlurEl || !activeStageEl) return;
+        if (!bgBlurEl) return;
 
         // Calculate the actual background position
         // Center is 50% 50%, we offset the Y component
@@ -234,9 +235,13 @@
 
         const bgPos = 'center ' + adjustedY.toFixed(2) + '%';
 
-        // Update both the bg-blur and the active stage background
-        bgBlurEl.style.backgroundPositionY = bgPos;
-        activeStageEl.style.backgroundPositionY = bgPos;
+        // Update the bg-blur background position
+        bgBlurEl.style.backgroundPosition = bgPos;
+
+        // Update the active stage background position (if available)
+        if (activeStageEl) {
+            activeStageEl.style.backgroundPosition = bgPos;
+        }
     }
 
     // === Public API ===
