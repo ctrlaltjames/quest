@@ -1666,6 +1666,76 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
 }
 
 /* ============================================
+    CLUE COLLAPSE TOGGLE STYLES
+    Mobile-only clue collapse for background visibility
+    ============================================ */
+.clue-wrapper {
+    position: relative;
+    margin: 8px 0;
+}
+
+.clue-toggle {
+    position: absolute;
+    top: -12px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--warm-yellow);
+    border-radius: 4px;
+    background: rgba(26, 26, 46, 0.85);
+    color: var(--warm-yellow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 150ms ease;
+    z-index: 10;
+    /* Pixel-art style */
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.clue-toggle:hover {
+    background: rgba(230, 57, 70, 0.3);
+    border-color: var(--bright-gold);
+    color: var(--bright-gold);
+}
+
+.clue-toggle:active {
+    transform: scale(0.92);
+}
+
+.clue-toggle:focus-visible {
+    outline: 2px solid var(--bright-gold);
+    outline-offset: 2px;
+}
+
+.clue-toggle .toggle-icon {
+    font-size: 12px;
+    line-height: 1;
+    transition: transform 200ms ease;
+    display: inline-block;
+}
+
+/* Collapsed state - smooth transition */
+.clue-text.collapsed {
+    max-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+    opacity: 0;
+    padding: 0;
+    border: none;
+}
+
+/* Rotate icon when collapsed */
+.clue-toggle[aria-expanded="false"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* ============================================
     COUNTDOWN NUMBER STYLES
     ============================================ */
 .countdown-number {

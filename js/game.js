@@ -840,6 +840,20 @@ function bindEvents() {
             }
         });
     });
+
+    // Clue collapse toggle buttons
+    document.querySelectorAll('.clue-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const clueId = btn.getAttribute('data-clue');
+            const clueEl = document.getElementById(clueId);
+            const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+            if (clueEl) {
+                clueEl.classList.toggle('collapsed');
+                btn.setAttribute('aria-expanded', !isExpanded);
+            }
+        });
+    });
 }
 
 /**
