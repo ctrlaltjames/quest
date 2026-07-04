@@ -515,7 +515,197 @@ async function handleYes() {
         await typewriter(afterYesEl, CONFIG.proposal.afterYes, 60);
     }
 
-    state.isTransitioning = false;
+    // Wait a moment after the message completes
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Fade out buttons
+    const proposalButtons = document.querySelector('.proposal-buttons');
+    if (proposalButtons) {
+        proposalButtons.classList.add('fading-out');
+    }
+
+    // Fade out flowers
+    const flowerContainer = document.querySelector('.flower-container');
+    if (flowerContainer) {
+        flowerContainer.classList.add('fading-out');
+    }
+
+    // Wait for fade-out to complete
+    await new Promise(resolve => setTimeout(resolve, 900));
+
+    // Hide the faded-out elements from layout (CSS opacity is 0 but they're still in the flow)
+    if (proposalButtons) {
+        proposalButtons.style.display = 'none';
+    }
+    if (flowerContainer) {
+        flowerContainer.style.display = 'none';
+    }
+    // NOTE: afterYesEl is NOT hidden - it remains visible during countdown
+
+    // Start countdown
+    await startCountdown();
+}
+
+/**
+ * Run countdown from 5 to 1, then trigger final transition
+ */
+async function startCountdown() {
+    const countdownEl = document.getElementById('countdown');
+    if (!countdownEl) return;
+
+    for (let i = 5; i >= 1; i--) {
+        countdownEl.style.display = 'block';
+        countdownEl.textContent = i;
+        // Reset animation
+        countdownEl.style.animation = 'none';
+        countdownEl.offsetHeight; // Force reflow
+        countdownEl.style.animation = 'countdownPulse 1s ease-in-out forwards';
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    // Hide countdown
+    countdownEl.style.display = 'none';
+
+    // Trigger final screen transition
+    await triggerFinalTransition();
+}
+
+/**
+ * Fade to black, then reveal final2.jpg
+ */
+async function triggerFinalTransition() {
+    const overlay = document.getElementById('fade-overlay');
+    if (!overlay) return;
+
+    // Stop confetti
+    stopConfetti();
+
+    // Fade to black
+    overlay.classList.add('active');
+
+    // Wait for fade to complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Change proposal screen background to treasure.jpg
+    const proposalStage = document.getElementById('stage-proposal');
+    if (proposalStage) {
+        // Determine portrait image based on viewport width
+        const isMobile = window.innerWidth <= 600;
+        const finalImage = isMobile
+            ? 'images/portrait/treasure.jpg'
+            : 'images/treasure.jpg';
+
+        // Use setProperty with 'important' to override CSS !important rules
+        proposalStage.style.setProperty('background-image', `url('${finalImage}')`, 'important');
+
+        // Update the data-portrait for blur layer consistency
+        proposalStage.setAttribute('data-portrait', finalImage);
+    }
+
+    // Update the blurred background layer
+    updateFinalBgBlur();
+
+    // Fade from black (remove overlay)
+    overlay.classList.remove('active');
+
+    // Hide proposal message (it's no longer needed on treasure screen)
+    const proposalMessage = document.getElementById('proposal-message');
+    if (proposalMessage) {
+        proposalMessage.style.transition = 'opacity 600ms ease, transform 600ms ease';
+        proposalMessage.style.opacity = '0';
+        proposalMessage.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            proposalMessage.style.display = 'none';
+            proposalMessage.style.opacity = '';
+            proposalMessage.style.transform = '';
+            proposalMessage.style.transition = '';
+        }, 700);
+    }
+
+    // Spawn treasure sparkle particles
+    spawnTreasureSparkles();
+
+    // Start infinite particle loop
+    if (!window.__treasureParticleInterval) {
+        window.__treasureParticleInterval = setInterval(() => {
+            spawnTreasureSparkles();
+        }, 2000);
+    }
+
+    // Clean up overlay after fade completes
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 1100);
+}
+
+/**
+ * Spawn 1-2px golden sparkle particles floating upward from center
+ */
+function spawnTreasureSparkles() {
+    const count = 35;
+
+    for (let i = 0; i < count; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'treasure-sparkle';
+
+        // Random size: 1px, 2px, or 3px
+        const sizes = [1, 2, 3];
+        const size = sizes[Math.floor(Math.random() * sizes.length)];
+        sparkle.style.width = size + 'px';
+        sparkle.style.height = size + 'px';
+
+        // Spawn position: horizontal center ± 40% of screen width
+        const centerX = window.innerWidth / 2;
+        const xOffset = (Math.random() - 0.5) * window.innerWidth * 0.8;
+        const startX = centerX + xOffset;
+
+        // Vertical spawn: 45%-55% from top (centered vertically)
+        const startY = window.innerHeight * (0.45 + Math.random() * 0.1);
+
+        sparkle.style.left = startX + 'px';
+        sparkle.style.top = startY + 'px';
+        sparkle.style.transform = 'translate(-50%, -50%)';
+
+        // Random gold tint
+        const goldTints = [
+            'rgba(255, 215, 0, 0.9)',
+            'rgba(255, 223, 0, 0.85)',
+            'rgba(255, 230, 50, 0.8)',
+            'rgba(255, 200, 0, 0.95)',
+            'rgba(255, 240, 100, 0.85)',
+        ];
+        sparkle.style.background = goldTints[Math.floor(Math.random() * goldTints.length)];
+
+        // Random drift direction and upward rise (higher float)
+        const drift = (Math.random() - 0.5) * 60; // -30px to +30px horizontal
+        const rise = -(60 + Math.random() * 100); // -60px to -160px upward
+        sparkle.style.setProperty('--drift', drift + 'px');
+        sparkle.style.setProperty('--rise', rise + 'px');
+
+        // Random animation duration and delay
+        const duration = 1.5 + Math.random() * 2;
+        const delay = Math.random() * 2;
+        sparkle.style.animation = `sparkleFloat ${duration}s ease-in-out ${delay}s forwards`;
+
+        document.body.appendChild(sparkle);
+    }
+}
+
+/**
+ * Update the blurred background for the final screen
+ */
+function updateFinalBgBlur() {
+    const proposalStage = document.getElementById('stage-proposal');
+    if (!proposalStage) return;
+
+    const bgBlur = document.querySelector('.bg-blur[data-stage="stage-proposal"]');
+    if (!bgBlur) return;
+
+    const bgImage = proposalStage.style.getPropertyValue('background-image');
+    if (bgImage) {
+        bgBlur.style.setProperty('background-image', bgImage, 'important');
+    }
 }
 
 /**
