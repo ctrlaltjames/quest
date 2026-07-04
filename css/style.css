@@ -147,10 +147,13 @@ body {
 .stage[style*="background-image"] .stage-content {
     max-width: 100%;
     width: 100%;
-    height: auto;
-    max-height: 36%;
     gap: 0;
-    /* Allow content to grow upwards, not push off-screen */
+    /* Anchor to bottom of the stage */
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    /* Allow content to grow upward naturally */
     overflow: visible;
 }
 
@@ -490,9 +493,8 @@ body {
         inset 2px 2px 0px rgba(255,255,255,0.1),
         inset -2px -2px 0px rgba(0,0,0,0.3),
         4px 4px 0px rgba(0,0,0,0.5);
-    /* Allow internal scrolling instead of pushing off-screen */
-    max-height: 80dvh;
-    overflow-y: auto;
+    /* Allow container to grow naturally without scrollbar */
+    overflow: visible;
 }
 
 .stage-title-text {
