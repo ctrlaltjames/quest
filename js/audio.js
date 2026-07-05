@@ -430,7 +430,8 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 1 music - Spooky zombie theme
+     * Start Stage 1 music - Psychological drone horror theme
+     * Slow, menacing atmospheric dread with shifting drones and metallic textures
      */
     function startStage1Music() {
         if (!audioCtx || currentStage === 1) return;
@@ -440,93 +441,231 @@ const AudioSystem = (function () {
         // Stop previous music
         stopAllMusic();
 
-        // More dissonant horror scale (includes tritones and half-steps)
-        const eerieNotes = [
-            82.41,    // E2
-            87.31,    // F2 (half-step up - tense)
-            92.50,    // F#2 (chromatic movement)
-            98.00,    // G2
-            103.83,   // G#2/Ab2 (tritone below E3)
-            110.00,   // A2
-            116.54,   // A#2/Bb2
-            123.47,   // B2
-            130.81,   // C3
-            138.59,   // C#3/Db3
-            146.83,   // D3
-            155.56,   // D#3/Eb3
-            164.81,   // E3
-            174.61,   // F3
-            185.00,   // F#3
-            196.00,   // G3
-        ];
+        // ========================================
+        // LAYER 1: Sub-bass rumble (physical tension)
+        // ========================================
+        const subBass = audioCtx.createOscillator();
+        const subBassGain = audioCtx.createGain();
+        const subBassFilter = audioCtx.createBiquadFilter();
+        subBass.type = 'sine';
+        subBass.frequency.setValueAtTime(32.70, audioCtx.currentTime); // C1 - very low
+        subBassFilter.type = 'lowpass';
+        subBassFilter.frequency.value = 50;
+        subBassGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        subBassGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 4); // Slow fade in
+        subBass.connect(subBassFilter);
+        subBassFilter.connect(subBassGain);
+        subBassGain.connect(audioCtx.destination);
+        subBass.start();
+        currentMusicNodes.push({ osc: subBass, gain: subBassGain });
 
-        // Dissonant intervals - sometimes play two notes that clash
-        const dissonantIntervals = [
-            { base: 82.41, interval: 87.31 },  // E + F (minor 2nd - very tense)
-            { base: 110.00, interval: 116.54 }, // A + A# (minor 2nd)
-            { base: 146.83, interval: 155.56 }, // D + D# (minor 2nd)
-            { base: 82.41, interval: 123.47 },  // E + Bb (tritone - maximum tension)
-        ];
+        // Sub-bass LFO modulation for rumbling effect
+        const subBassLFO = audioCtx.createOscillator();
+        const subBassLFOGain = audioCtx.createGain();
+        subBassLFO.type = 'sine';
+        subBassLFO.frequency.setValueAtTime(0.15, audioCtx.currentTime); // Very slow
+        subBassLFOGain.gain.setValueAtTime(3, audioCtx.currentTime); // ±3 Hz modulation
+        subBassLFO.connect(subBassLFOGain);
+        subBassLFOGain.connect(subBass.frequency);
+        subBassLFO.start();
+        currentMusicNodes.push({ osc: subBassLFO, gain: subBassLFOGain });
 
-        let noteIndex = 0;
-        const noteDuration = 2.0;
+        // ========================================
+        // LAYER 2: Mid drone with slow filter sweep (breathing effect)
+        // ========================================
+        const droneOsc1 = audioCtx.createOscillator();
+        const droneGain1 = audioCtx.createGain();
+        const droneFilter1 = audioCtx.createBiquadFilter();
+        droneOsc1.type = 'sawtooth';
+        droneOsc1.frequency.setValueAtTime(55.00, audioCtx.currentTime); // A1
+        droneFilter1.type = 'lowpass';
+        droneFilter1.frequency.setValueAtTime(200, audioCtx.currentTime);
+        droneFilter1.Q.setValueAtTime(5, audioCtx.currentTime); // Resonant filter
+        droneGain1.gain.setValueAtTime(0, audioCtx.currentTime);
+        droneGain1.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 5);
+        droneOsc1.connect(droneFilter1);
+        droneFilter1.connect(droneGain1);
+        droneGain1.connect(audioCtx.destination);
+        droneOsc1.start();
+        currentMusicNodes.push({ osc: droneOsc1, gain: droneGain1, filter: droneFilter1 });
 
-        // Very quiet ambient drone with low-pass filter
-        const droneOsc = audioCtx.createOscillator();
-        const droneGain = audioCtx.createGain();
-        const droneFilter = audioCtx.createBiquadFilter();
-        droneOsc.type = 'sawtooth';
-        droneOsc.frequency.setValueAtTime(55.00, audioCtx.currentTime); // Lower E1 drone
-        droneFilter.type = 'lowpass';
-        droneFilter.frequency.setValueAtTime(150, audioCtx.currentTime); // Very muffled
-        droneGain.gain.setValueAtTime(0.02, audioCtx.currentTime); // Much quieter
-        droneOsc.connect(droneFilter);
-        droneFilter.connect(droneGain);
-        droneGain.connect(audioCtx.destination);
-        droneOsc.start();
-        currentMusicNodes.push({ osc: droneOsc, gain: droneGain });
-
-        // Second drone layer - subtle detuned oscillator
+        // Second drone - detuned fifth above (creates dissonance)
         const droneOsc2 = audioCtx.createOscillator();
         const droneGain2 = audioCtx.createGain();
         const droneFilter2 = audioCtx.createBiquadFilter();
         droneOsc2.type = 'sawtooth';
-        droneOsc2.frequency.setValueAtTime(55.50, audioCtx.currentTime); // Slightly detuned (beating effect)
+        droneOsc2.frequency.setValueAtTime(82.50, audioCtx.currentTime); // E#2 (tritone above A1 - dissonant)
         droneFilter2.type = 'lowpass';
-        droneFilter2.frequency.setValueAtTime(120, audioCtx.currentTime); // Even more muffled
-        droneGain2.gain.setValueAtTime(0.015, audioCtx.currentTime);
+        droneFilter2.frequency.setValueAtTime(150, audioCtx.currentTime);
+        droneFilter2.Q.setValueAtTime(3, audioCtx.currentTime);
+        droneGain2.gain.setValueAtTime(0, audioCtx.currentTime);
+        droneGain2.gain.linearRampToValueAtTime(0.025, audioCtx.currentTime + 6);
         droneOsc2.connect(droneFilter2);
         droneFilter2.connect(droneGain2);
         droneGain2.connect(audioCtx.destination);
         droneOsc2.start();
-        currentMusicNodes.push({ osc: droneOsc2, gain: droneGain2 });
+        currentMusicNodes.push({ osc: droneOsc2, gain: droneGain2, filter: droneFilter2 });
 
-        // Eerie random notes loop - slower, more sparse
-        const noteDuration2 = 2.5;
-        typingInterval = setInterval(() => {
-            const freq = eerieNotes[noteIndex % eerieNotes.length];
+        // Third drone - higher harmonic, very quiet
+        const droneOsc3 = audioCtx.createOscillator();
+        const droneGain3 = audioCtx.createGain();
+        const droneFilter3 = audioCtx.createBiquadFilter();
+        droneOsc3.type = 'sine';
+        droneOsc3.frequency.setValueAtTime(165.00, audioCtx.currentTime); // E3
+        droneFilter3.type = 'lowpass';
+        droneFilter3.frequency.setValueAtTime(300, audioCtx.currentTime);
+        droneGain3.gain.setValueAtTime(0, audioCtx.currentTime);
+        droneGain3.gain.linearRampToValueAtTime(0.012, audioCtx.currentTime + 8);
+        droneOsc3.connect(droneFilter3);
+        droneFilter3.connect(droneGain3);
+        droneGain3.connect(audioCtx.destination);
+        droneOsc3.start();
+        currentMusicNodes.push({ osc: droneOsc3, gain: droneGain3, filter: droneFilter3 });
 
-            // Random pitch variation for eerie effect
-            const variation = 0.97 + Math.random() * 0.06;
-            playNote(freq * variation, noteDuration2 * 0.6, 'sawtooth', 0.025);
+        // ========================================
+        // LAYER 3: Filter sweep LFOs (breathing, unsettling)
+        // ========================================
+        // Slow filter sweep - opens and closes like breathing
+        const filterLFO = audioCtx.createOscillator();
+        const filterLFOGain = audioCtx.createGain();
+        filterLFO.type = 'sine';
+        filterLFO.frequency.setValueAtTime(0.08, audioCtx.currentTime); // Very slow - 12 second cycle
+        filterLFOGain.gain.setValueAtTime(120, audioCtx.currentTime); // Sweeps ±120 Hz
+        filterLFO.connect(filterLFOGain);
+        filterLFOGain.connect(droneFilter1.frequency);
+        filterLFOGain.connect(droneFilter2.frequency);
+        filterLFO.start();
+        currentMusicNodes.push({ osc: filterLFO, gain: filterLFOGain });
 
-            // Occasional high shriek - less frequent, softer
-            if (Math.random() < 0.15) {
-                const highFreq = 600 + Math.random() * 1200;
-                playNote(highFreq, 0.8, 'square', 0.008);
+        // Secondary filter sweep - offset timing for complexity
+        const filterLFO2 = audioCtx.createOscillator();
+        const filterLFOGain2 = audioCtx.createGain();
+        filterLFO2.type = 'sine';
+        filterLFO2.frequency.setValueAtTime(0.05, audioCtx.currentTime); // Even slower
+        filterLFOGain2.gain.setValueAtTime(80, audioCtx.currentTime);
+        filterLFO2.connect(filterLFOGain2);
+        filterLFOGain2.connect(droneFilter1.frequency);
+        filterLFO2.start();
+        currentMusicNodes.push({ osc: filterLFO2, gain: filterLFOGain2 });
+
+        // ========================================
+        // LAYER 4: Metallic resonant tones (irregular intervals)
+        // ========================================
+        const metallicFreqs = [
+            800, 1200, 1600, 2400, 3200, 4800, // Harmonic series
+            932.33, 1396.91, 2093.00,            // Inharmonic (E5, F#5, C#6)
+            1174.66, 1567.98, 2349.32,            // D#5, G#5, B6
+        ];
+
+        const metallicInterval = setInterval(() => {
+            // Pick 1-2 metallic frequencies
+            const numTones = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < numTones; i++) {
+                const freq = metallicFreqs[Math.floor(Math.random() * metallicFreqs.length)];
+                const duration = 1 + Math.random() * 3; // 1-4 seconds sustain
+                const volume = 0.008 + Math.random() * 0.012; // Very quiet
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                // Slight random detuning for metallic quality
+                osc.detune.setValueAtTime((Math.random() - 0.5) * 20, audioCtx.currentTime);
+
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                filter.Q.setValueAtTime(50 + Math.random() * 100, audioCtx.currentTime); // Very narrow
+
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.3); // Slow attack
+                gain.gain.linearRampToValueAtTime(volume * 0.5, audioCtx.currentTime + duration * 0.5);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration + 0.1);
+
+                currentMusicNodes.push({ osc: osc, gain: gain });
             }
+        }, 3000 + Math.random() * 4000); // Every 3-7 seconds, irregular
+        currentMusicNodes.push({ type: 'interval', id: metallicInterval });
 
-            // Occasionally play a dissonant interval (two notes at once)
-            if (Math.random() < 0.2) {
-                const interval = dissonantIntervals[Math.floor(Math.random() * dissonantIntervals.length)];
-                playNote(interval.base, noteDuration2 * 0.4, 'sawtooth', 0.015);
-                playNote(interval.interval, noteDuration2 * 0.4, 'sawtooth', 0.015);
+        // ========================================
+        // LAYER 5: Sharp high-frequency stabs
+        // ========================================
+        const stabInterval = setInterval(() => {
+            // Only stab sometimes - unpredictable tension
+            if (Math.random() < 0.4) {
+                const stabFreq = 4000 + Math.random() * 6000; // 4-10 kHz range
+                const stabDuration = 0.3 + Math.random() * 0.5;
+                const stabVolume = 0.015 + Math.random() * 0.02;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(stabFreq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(stabFreq * 0.5, audioCtx.currentTime + stabDuration); // Pitch drop
+
+                gain.gain.setValueAtTime(stabVolume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + stabDuration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + stabDuration + 0.1);
+
+                currentMusicNodes.push({ osc: osc, gain: gain });
             }
+        }, 4000 + Math.random() * 5000); // Every 4-9 seconds
+        currentMusicNodes.push({ type: 'interval', id: stabInterval });
 
-            noteIndex++;
-        }, noteDuration2 * 1000);
+        // ========================================
+        // LAYER 6: Slow pitch drift on main drone
+        // ========================================
+        // Continuously drift the main drone frequency for unease
+        let driftTime = 0;
+        const driftInterval = setInterval(() => {
+            driftTime += 0.1;
+            // Slow sine wave pitch drift ±8 Hz around base frequency
+            const drift = Math.sin(driftTime * 0.3) * 8;
+            droneOsc1.frequency.linearRampToValueAtTime(55.00 + drift, audioCtx.currentTime + 0.1);
+            droneOsc2.frequency.linearRampToValueAtTime(82.50 + drift * 1.5, audioCtx.currentTime + 0.1);
+        }, 100);
+        currentMusicNodes.push({ type: 'interval', id: driftInterval });
 
-        currentMusicNodes.push({ type: 'interval', id: typingInterval });
+        // ========================================
+        // LAYER 7: Occasional sub-bass pulse
+        // ========================================
+        const pulseInterval = setInterval(() => {
+            if (Math.random() < 0.5) {
+                const pulseOsc = audioCtx.createOscillator();
+                const pulseGain = audioCtx.createGain();
+                const pulseFilter = audioCtx.createBiquadFilter();
+
+                pulseOsc.type = 'sine';
+                pulseOsc.frequency.setValueAtTime(28, audioCtx.currentTime); // Below sub-bass
+                pulseFilter.type = 'lowpass';
+                pulseFilter.frequency.value = 40;
+
+                pulseGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                pulseGain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.05); // Fast attack
+                pulseGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2 + Math.random() * 3); // Long decay
+
+                pulseOsc.connect(pulseFilter);
+                pulseFilter.connect(pulseGain);
+                pulseGain.connect(audioCtx.destination);
+                pulseOsc.start();
+                pulseOsc.stop(audioCtx.currentTime + 5);
+
+                currentMusicNodes.push({ osc: pulseOsc, gain: pulseGain });
+            }
+        }, 5000 + Math.random() * 6000); // Every 5-11 seconds
+        currentMusicNodes.push({ type: 'interval', id: pulseInterval });
     }
 
     /**
