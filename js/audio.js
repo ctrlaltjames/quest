@@ -430,9 +430,10 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 1 music - Walking Dead-style haunting cello theme
-     * Slow, mournful solo cello melody with bow-on-string texture
-     * Sparse, emotional atmosphere - sad and contemplative rather than scary
+     * Start Stage 1 music - Resident Evil-style pipe organ drone
+     * Deep, dissonant organ tones with slow volume swells
+     * Mimics the RE mansion atmosphere: heavy, oppressive, with sudden tension spikes
+     * Based on Christopher Young's score: organ drones + distant screams
      */
     function startStage1Music() {
         if (!audioCtx || currentStage === 1) return;
@@ -451,183 +452,186 @@ const AudioSystem = (function () {
         currentMusicNodes.push({ gain: masterGain });
 
         // ========================================
-        // AMBIENT DRONE - Low E2 foundation
-        // Emotional weight beneath the melody
+        // LAYER 1: Pipe Organ (F1 + G1 minor 2nd)
+        // Multiple harmonics filtered to sound like pipe organ
         // ========================================
-        const droneOsc = audioCtx.createOscillator();
-        const droneGain = audioCtx.createGain();
-        const droneFilter = audioCtx.createBiquadFilter();
-        droneOsc.type = 'sine';
-        droneOsc.frequency.setValueAtTime(82.41, audioCtx.currentTime); // E2
-        droneFilter.type = 'lowpass';
-        droneFilter.frequency.value = 120;
-        droneGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        droneGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 3);
-        droneOsc.connect(droneFilter);
-        droneFilter.connect(droneGain);
-        droneGain.connect(masterGain);
-        droneOsc.start();
-        currentMusicNodes.push({ osc: droneOsc, gain: droneGain });
-
-        // Sub-octave drone for depth
-        const subDrone = audioCtx.createOscillator();
-        const subDroneGain = audioCtx.createGain();
-        subDrone.type = 'sine';
-        subDrone.frequency.setValueAtTime(41.20, audioCtx.currentTime); // E1
-        subDroneGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        subDroneGain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 4);
-        subDrone.connect(subDroneGain);
-        subDroneGain.connect(masterGain);
-        subDrone.start();
-        currentMusicNodes.push({ osc: subDrone, gain: subDroneGain });
-
-        // ========================================
-        // CELLO MELODY ENGINE
-        // Mournful melody using triangle + sine layers
-        // ========================================
-
-        // Melody: Slow, sparse cello phrases in A minor / E minor
-        // Each note: triangle (body) + sine (sub-body) + vibrato
-        const melodyPhrases = [
-            // Phrase 1: Mourning theme (E-G-A-G-E)
-            [
-                { freq: 164.81, dur: 5.0, hold: true },  // E3
-                { freq: 196.00, dur: 3.0 },               // G3
-                { freq: 220.00, dur: 4.0 },               // A3
-                { freq: 196.00, dur: 3.0 },               // G3
-                { freq: 164.81, dur: 5.0, hold: true },   // E3
-            ],
-            // Phrase 2: Response (D-E-G-A-G)
-            [
-                { freq: 146.83, dur: 4.0 },               // D3
-                { freq: 164.81, dur: 3.0 },               // E3
-                { freq: 196.00, dur: 4.0 },               // G3
-                { freq: 220.00, dur: 3.0 },               // A3
-                { freq: 196.00, dur: 5.0, hold: true },   // G3
-            ],
-            // Phrase 3: Resolution (E-D-C-D-E)
-            [
-                { freq: 164.81, dur: 3.0 },               // E3
-                { freq: 146.83, dur: 3.0 },               // D3
-                { freq: 130.81, dur: 4.0 },               // C3
-                { freq: 146.83, dur: 3.0 },               // D3
-                { freq: 164.81, dur: 6.0, hold: true },   // E3
-            ],
+        const organFrequencies = [
+            // F1 fundamental + harmonics
+            43.65,    // F1 (fundamental)
+            87.30,    // F2 (1st harmonic)
+            130.81,   // C3 (2nd harmonic)
+            174.61,   // F3 (3rd harmonic)
+            220.00,   // A3 (4th harmonic)
+            261.63,   // C4 (5th harmonic)
+            349.23,   // F4 (6th harmonic)
+            // G1 fundamental + harmonics (dissonant minor 2nd)
+            49.00,    // G1 (fundamental)
+            98.00,    // G2 (1st harmonic)
+            146.83,   // D3 (2nd harmonic)
+            196.00,   // G3 (3rd harmonic)
+            246.94,   // Bb3 (4th harmonic)
+            293.66,   // D4 (5th harmonic)
+            392.00,   // G4 (6th harmonic)
         ];
 
-        let phraseIndex = 0;
-        let noteIndex = 0;
+        const organOscillators = [];
+        const organGains = [];
 
-        function playCelloNote(freq, duration, isHold) {
+        organFrequencies.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            // Lowpass filter to mimic pipe organ tone
+            filter.type = 'lowpass';
+            // Higher harmonics get more filtered
+            const cutoff = Math.max(400, 2000 - (i * 250));
+            filter.frequency.setValueAtTime(cutoff, audioCtx.currentTime);
+            filter.Q.setValueAtTime(1, audioCtx.currentTime);
+
+            // Lower volume for higher harmonics
+            const vol = i < 6 ? 0.025 : (i < 12 ? 0.015 : 0.008);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            currentMusicNodes.push({ osc, gain, filter });
+            organOscillators.push(osc);
+            organGains.push(gain);
+        });
+
+        // ========================================
+        // LAYER 2: Sub-bass foundation (F0)
+        // Deep rumble below hearing range
+        // ========================================
+        const subOsc = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        const subFilter = audioCtx.createBiquadFilter();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(21.83, audioCtx.currentTime); // F0
+        subFilter.type = 'lowpass';
+        subFilter.frequency.value = 35;
+        subGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        subOsc.connect(subFilter);
+        subFilter.connect(subGain);
+        subGain.connect(masterGain);
+        subOsc.start();
+        currentMusicNodes.push({ osc: subOsc, gain: subGain });
+
+        // ========================================
+        // LAYER 3: Sub-bass LFO (rolling thunder effect)
+        // ========================================
+        const subLFO = audioCtx.createOscillator();
+        const subLFOGain = audioCtx.createGain();
+        subLFO.type = 'sine';
+        subLFO.frequency.setValueAtTime(0.15, audioCtx.currentTime); // ~7 second cycle
+        subLFOGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
+        subLFO.connect(subLFOGain);
+        subLFOGain.connect(subOsc.frequency);
+        subLFO.start();
+        currentMusicNodes.push({ osc: subLFO, gain: subLFOGain });
+
+        // ========================================
+        // LAYER 4: Organ "breathing" modulation
+        // Slow volume pulse on organ layer
+        // ========================================
+        const breatheOsc = audioCtx.createOscillator();
+        const breatheGain = audioCtx.createGain();
+        breatheOsc.type = 'sine';
+        breatheOsc.frequency.setValueAtTime(0.07, audioCtx.currentTime); // ~14 second cycle
+        breatheGain.gain.setValueAtTime(0.008, audioCtx.currentTime);
+        breatheOsc.connect(breatheGain);
+        // Modulate each organ gain slightly
+        organGains.forEach(g => {
+            breatheGain.connect(g.gain);
+        });
+        breatheOsc.start();
+        currentMusicNodes.push({ osc: breatheOsc, gain: breatheGain });
+
+        // ========================================
+        // LAYER 5: Distant "scream" screeches
+        // Random high-pitched dissonant bursts
+        // ========================================
+        function playDistantScream() {
+            if (currentStage !== 1) return;
+
             const now = audioCtx.currentTime;
-            const vol = isHold ? 0.10 : 0.09;
-            const sustain = isHold ? duration * 0.9 : duration * 0.85;
+            // Random pitch between F5 and A5 (dissonant high range)
+            const pitch = 698.46 + Math.random() * 197.53;
+            const duration = 0.5 + Math.random() * 1.5;
 
-            // Layer 1: Triangle wave - cello body
-            const celloOsc = audioCtx.createOscillator();
-            const celloGain = audioCtx.createGain();
-            celloOsc.type = 'triangle';
-            celloOsc.frequency.setValueAtTime(freq, now);
+            const screamOsc = audioCtx.createOscillator();
+            const screamGain = audioCtx.createGain();
+            const screamFilter = audioCtx.createBiquadFilter();
 
-            // Vibrato LFO
-            const vibrato = audioCtx.createOscillator();
-            const vibratoGain = audioCtx.createGain();
-            vibrato.type = 'sine';
-            vibrato.frequency.setValueAtTime(5.5, now); // Natural vibrato speed
-            vibratoGain.gain.setValueAtTime(freq * 0.003, now); // Small detuning amount
-            vibrato.connect(vibratoGain);
-            vibratoGain.connect(celloOsc.frequency);
-            vibrato.start(now);
-            currentMusicNodes.push({ osc: vibrato, gain: vibratoGain });
+            screamOsc.type = 'sawtooth';
+            screamOsc.frequency.setValueAtTime(pitch, now);
+            screamOsc.frequency.exponentialRampToValueAtTime(
+                pitch * 1.02, now + duration * 0.5
+            );
+            screamOsc.frequency.exponentialRampToValueAtTime(
+                pitch * 0.98, now + duration
+            );
 
-            // Envelope: soft attack (bow coming in) → sustain → fade out
-            celloGain.gain.setValueAtTime(0, now);
-            celloGain.gain.linearRampToValueAtTime(vol, now + 0.4); // Slow bow attack
-            celloGain.gain.setValueAtTime(vol, now + sustain);
-            celloGain.gain.linearRampToValueAtTime(0, now + duration);
+            screamFilter.type = 'bandpass';
+            screamFilter.frequency.value = pitch;
+            screamFilter.Q.value = 8;
 
-            celloOsc.connect(celloGain);
-            celloGain.connect(masterGain);
-            celloOsc.start(now);
-            celloOsc.stop(now + duration + 0.1);
-            currentMusicNodes.push({ osc: celloOsc, gain: celloGain });
+            screamGain.gain.setValueAtTime(0, now);
+            screamGain.gain.linearRampToValueAtTime(0.015, now + 0.1);
+            screamGain.gain.setValueAtTime(0.015, now + duration * 0.6);
+            screamGain.gain.linearRampToValueAtTime(0, now + duration);
 
-            // Layer 2: Sine wave an octave below - bow body warmth
-            const subOsc = audioCtx.createOscillator();
-            const subOscGain = audioCtx.createGain();
-            subOsc.type = 'sine';
-            subOsc.frequency.setValueAtTime(freq / 2, now);
-            subOscGain.gain.setValueAtTime(0, now);
-            subOscGain.gain.linearRampToValueAtTime(vol * 0.6, now + 0.5);
-            subOscGain.gain.setValueAtTime(vol * 0.6, now + sustain);
-            subOscGain.gain.linearRampToValueAtTime(0, now + duration);
-            subOsc.connect(subOscGain);
-            subOscGain.connect(masterGain);
-            subOsc.start(now);
-            subOsc.stop(now + duration + 0.1);
-            currentMusicNodes.push({ osc: subOsc, gain: subOscGain });
+            screamOsc.connect(screamFilter);
+            screamFilter.connect(screamGain);
+            screamGain.connect(masterGain);
+            screamOsc.start(now);
+            screamOsc.stop(now + duration + 0.1);
+            currentMusicNodes.push({ osc: screamOsc, gain: screamGain });
 
-            // Layer 3: Subtle bow noise (bow-on-string texture)
-            if (Math.random() > 0.3) {
-                const noiseDuration = 0.15;
-                const bufferSize = audioCtx.sampleRate * noiseDuration;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = (Math.random() * 2 - 1) * 0.005;
-                }
-                const noiseSource = audioCtx.createBufferSource();
-                noiseSource.buffer = buffer;
-                const noiseGain = audioCtx.createGain();
-                const noiseFilter = audioCtx.createBiquadFilter();
-                noiseFilter.type = 'bandpass';
-                noiseFilter.frequency.value = freq * 0.5; // Center on note frequency
-                noiseFilter.Q.value = 3;
-                noiseGain.gain.setValueAtTime(0, now);
-                noiseGain.gain.linearRampToValueAtTime(0.008, now + 0.1);
-                noiseGain.gain.linearRampToValueAtTime(0, now + 0.3);
-                noiseSource.connect(noiseFilter);
-                noiseFilter.connect(noiseGain);
-                noiseGain.connect(masterGain);
-                noiseSource.start(now);
-                currentMusicNodes.push({ source: noiseSource, gain: noiseGain });
-            }
+            // Schedule next scream
+            const nextScream = 8000 + Math.random() * 15000; // 8-23 seconds
+            setTimeout(playDistantScream, nextScream);
         }
 
-        function playPhrase(phrase) {
-            let time = 0;
-            phrase.forEach((note, i) => {
-                setTimeout(() => {
-                    playCelloNote(note.freq, note.dur, note.hold);
-                }, time * 1000);
-                time += note.dur;
-            });
-            // Wait for phrase to finish, then play next
+        // Start first scream after 3 seconds
+        setTimeout(playDistantScream, 3000);
+
+        // ========================================
+        // LAYER 6: Slow volume swell cycle
+        // The signature RE organ effect
+        // ========================================
+        function startVolumeCycle(startTime) {
+            const buildTime = 8;   // 8 seconds building up
+            const peakTime = 3;    // 3 seconds at peak
+            const releaseTime = 4; // 4 seconds releasing
+
+            // Build from quiet to loud
+            masterGain.gain.setValueAtTime(0.01, startTime);
+            masterGain.gain.linearRampToValueAtTime(0.5, startTime + buildTime);
+
+            // Hold at peak
+            masterGain.gain.setValueAtTime(0.5, startTime + buildTime);
+            masterGain.gain.setValueAtTime(0.5, startTime + buildTime + peakTime);
+
+            // Release back to quiet
+            masterGain.gain.setValueAtTime(0.5, startTime + buildTime + peakTime);
+            masterGain.gain.linearRampToValueAtTime(0.01, startTime + buildTime + peakTime + releaseTime);
+
+            // Schedule next cycle (15 seconds total)
             setTimeout(() => {
                 if (currentStage === 1) {
-                    phraseIndex = (phraseIndex + 1) % melodyPhrases.length;
-                    playPhrase(melodyPhrases[phraseIndex]);
+                    startVolumeCycle(audioCtx.currentTime);
                 }
-            }, time * 1000 + 2000); // 2 second pause between phrases
+            }, (buildTime + peakTime + releaseTime) * 1000 - 500);
         }
 
-        // Start the melody loop after 1 second
-        setTimeout(() => {
-            playPhrase(melodyPhrases[0]);
-        }, 1000);
-
-        // ========================================
-        // GENTLE SWELL on drone (emotional breathing)
-        // ========================================
-        const swellOsc = audioCtx.createOscillator();
-        const swellGain = audioCtx.createGain();
-        swellOsc.type = 'sine';
-        swellOsc.frequency.setValueAtTime(0.08, audioCtx.currentTime); // ~12 second cycle
-        swellGain.gain.setValueAtTime(0.015, audioCtx.currentTime);
-        swellOsc.connect(swellGain);
-        swellGain.connect(droneGain.gain);
-        swellOsc.start();
-        currentMusicNodes.push({ osc: swellOsc, gain: swellGain });
+        startVolumeCycle(audioCtx.currentTime + 1);
     }
 
     /**
