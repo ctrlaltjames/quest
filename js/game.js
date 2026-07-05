@@ -1114,12 +1114,8 @@ function init() {
         // Show title screen
         showStage(0);
 
-        // Start intro music on page load (after user interaction for autoplay policy)
-        // The audio context will be resumed on first click/keydown
-        setTimeout(() => {
-            AudioSystem.ensureInitialized();
-            AudioSystem.startStageMusic(0);
-        }, 500);
+        // Set up the "tap anywhere to begin" overlay for AudioContext
+        initAudioWaitingOverlay();
 
     } catch (err) {
         console.error('Game initialization error:', err);
@@ -1136,5 +1132,46 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
+}
+
+/* ============================================
+   AUDIO WAITING OVERLAY
+   Handles the "tap anywhere to begin" overlay
+   ============================================ */
+
+/**
+ * Initialize the audio waiting overlay on the title screen.
+ * When the user taps/clicks anywhere, it starts the intro music
+ * and hides the overlay.
+ */
+function initAudioWaitingOverlay() {
+    const overlay = document.getElementById('audio-waiting');
+    if (!overlay) return;
+
+    let audioStarted = false;
+
+    function startAudio() {
+        if (audioStarted) return;
+        audioStarted = true;
+
+        // Initialize and resume AudioContext
+        AudioSystem.ensureInitialized();
+
+        // Start intro music (stage 0 = title screen)
+        AudioSystem.startStageMusic(0);
+
+        // Hide the overlay
+        overlay.classList.add('hidden');
+        // Remove event listeners after hiding
+        setTimeout(() => {
+            overlay.removeEventListener('click', startAudio);
+            overlay.removeEventListener('touchstart', startAudio);
+            overlay.style.display = 'none';
+        }, 500);
+    }
+
+    // Support both click and touch events
+    overlay.addEventListener('click', startAudio);
+    overlay.addEventListener('touchstart', startAudio, { passive: true });
 }
 

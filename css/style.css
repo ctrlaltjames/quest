@@ -2056,3 +2056,47 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
         gap: 20px;
     }
 }
+
+/* ============================================
+   Audio Waiting Overlay
+   ============================================ */
+.audio-waiting-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 5, 20, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    cursor: pointer;
+    animation: pulseOverlay 2s ease-in-out infinite;
+}
+
+.audio-waiting-text {
+    font-family: var(--font-primary);
+    color: var(--warm-yellow);
+    font-size: clamp(14px, 4vw, 24px);
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    padding: 20px;
+}
+
+@keyframes pulseOverlay {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.audio-waiting-overlay.hidden {
+    display: none;
+    animation: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
