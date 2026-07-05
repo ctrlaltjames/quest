@@ -116,44 +116,46 @@
     </section>
 
     <!-- Stage 4: Co-Op Buttons -->
-    <section id="stage-4" class="stage" style="background-image: url('images/stage4.jpg');" data-portrait="images/portrait/stage4.jpg">
-        <div class="progress-dots" aria-hidden="true">
+    <section id="stage-4" class="stage stage-4" style="background-image: url('images/stage4.jpg');" data-portrait="images/portrait/stage4.jpg">
+        <!-- Progress dots hidden (commented out for future use) -->
+        <!-- <div class="progress-dots" aria-hidden="true">
             <span class="dot"></span>
             <span class="dot"></span>
             <span class="dot"></span>
             <span class="dot"></span>
-        </div>
-        <div class="stage-content">
+        </div> -->
+
+        <!-- Dialogue box at the top -->
+        <div class="stage-content-top">
             <div class="dialogue-box">
                 <h2 class="stage-title-text" id="stage-4-title"></h2>
-                <div class="clue-wrapper">
+                <div class="clue-wrapper clue-wrapper-4">
                     <p class="clue-text" id="stage-4-clue"></p>
                 </div>
+                <button class="clue-toggle clue-toggle-4" aria-label="Toggle clue visibility" aria-expanded="true" data-clue="stage-4-clue">
+                    <span class="toggle-icon">▼</span>
+                </button>
+        </div>
 
-                <!-- Co-op section replaces text input -->
-                <div class="coop-section" id="coop-section-4">
-                    <p class="coop-prompt">Both players tap together!</p>
-                    <div class="coop-buttons">
-                        <!-- Player 1 Column -->
-                        <div class="coop-player-column">
-                            <span class="coop-player-title">Player 1</span>
-                            <button class="arcade-btn arcade-btn-p1" data-player="1">
-                                <span class="arcade-key">A</span>
-                            </button>
-                        </div>
-                        <!-- Player 2 Column -->
-                        <div class="coop-player-column">
-                            <span class="coop-player-title">Player 2</span>
-                            <button class="arcade-btn arcade-btn-p2" data-player="2">
-                                <span class="arcade-key">B</span>
-                            </button>
-                        </div>
-                    </div>
+        <!-- Co-op section at the bottom -->
+        <div class="coop-section-bottom" id="coop-section-4">
+            <p class="coop-prompt">Both players tap together!</p>
+            <div class="coop-buttons">
+                <!-- Player 1 Column -->
+                <div class="coop-player-column">
+                    <span class="coop-player-title">Player 1</span>
+                    <button class="arcade-btn arcade-btn-p1" data-player="1">
+                        <span class="arcade-key">A</span>
+                    </button>
+                </div>
+                <!-- Player 2 Column -->
+                <div class="coop-player-column">
+                    <span class="coop-player-title">Player 2</span>
+                    <button class="arcade-btn arcade-btn-p2" data-player="2">
+                        <span class="arcade-key">B</span>
+                    </button>
                 </div>
             </div>
-            <button class="clue-toggle clue-toggle-4" aria-label="Toggle clue visibility" aria-expanded="true" data-clue="stage-4-clue">
-                <span class="toggle-icon">▼</span>
-            </button>
         </div>
     </section>
 

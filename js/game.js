@@ -36,7 +36,7 @@ const CONFIG = {
         {
             id: 4,
             title: "Chapter 4: Player 2 Joined",
-            clue: "You've conquered the zombie lands, survived the dangerous frontier, and proved your love is infinite. The final level requires 2 players... Ready to play forever together?",
+            clue: "You've conquered the zombie lands, survived the dangerous frontier, and proved your love is infinite. The final level requires 2 players...",
             // Stage 4 uses a co-op mechanic instead of text input.
             // Both players must press their buttons simultaneously to proceed.
             coOp: {
@@ -799,12 +799,41 @@ function bindEvents() {
         });
     });
 
-    // Input Enter key handlers
+    // Input Enter key handlers and auto-toggle clue visibility
     for (let i = 1; i <= 4; i++) {
         const input = document.getElementById(`input-${i}`);
         if (input) {
             input.addEventListener('keydown', (e) => {
                 handleEnter(e, i);
+            });
+            // Auto-toggle clue visibility based on input content
+            input.addEventListener('input', () => {
+                // Find clue-wrapper as a sibling within the same dialogue-box
+                const dialogueBox = input.closest('.dialogue-box');
+                const clueWrapper = dialogueBox ? dialogueBox.querySelector('.clue-wrapper') : null;
+                const clueEl = document.getElementById(`stage-${i}-clue`);
+                const toggleBtn = document.querySelector(`.clue-toggle[data-clue="stage-${i}-clue"]`);
+                const isEmpty = input.value.trim() === '';
+
+                if (isEmpty) {
+                    // Show clue when input is empty
+                    if (clueEl && clueEl.classList.contains('collapsed')) {
+                        clueEl.classList.remove('collapsed');
+                        toggleBtn?.setAttribute('aria-expanded', 'true');
+                    }
+                    if (clueWrapper && clueWrapper.classList.contains('collapsed')) {
+                        clueWrapper.classList.remove('collapsed');
+                    }
+                } else {
+                    // Hide clue when input has content
+                    if (clueEl && !clueEl.classList.contains('collapsed')) {
+                        clueEl.classList.add('collapsed');
+                        toggleBtn?.setAttribute('aria-expanded', 'false');
+                    }
+                    if (clueWrapper && !clueWrapper.classList.contains('collapsed')) {
+                        clueWrapper.classList.add('collapsed');
+                    }
+                }
             });
         }
     }
