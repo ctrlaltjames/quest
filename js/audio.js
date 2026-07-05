@@ -126,6 +126,8 @@ const AudioSystem = (function () {
         filter.connect(gain);
         gain.connect(audioCtx.destination);
 
+        source.start();
+
         return { source, gain };
     }
 
@@ -678,7 +680,7 @@ const AudioSystem = (function () {
             melodyInterval = setTimeout(scheduleMelodyLoop, melodyLoopDuration * 1000);
         }
 
-        setTimeout(scheduleMelodyLoop, 200);
+        scheduleMelodyLoop();
 
         // ==========================================
         // ZOMBIE GROANS - Periodic eerie sounds
@@ -1099,10 +1101,10 @@ const AudioSystem = (function () {
         // For game stages, quick crossfade between music
         if (fromStage !== toStage && toStage >= 1 && toStage <= 4) {
             stopAllMusic();
-            // Start new music after brief pause
+            // Start new music after very brief pause
             setTimeout(() => {
                 startStageMusic(toStage);
-            }, 200);
+            }, 50);
         }
     }
 
