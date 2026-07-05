@@ -58,7 +58,10 @@
             return;
         }
 
-        console.log('[Parallax] No tilt sensor available, using touch-drag only');
+        console.log('[Parallax] No tilt sensor available, using touch-drag + mouse fallback');
+        
+        // Always bind mouse tilt as universal fallback when no sensor is available
+        setupMouseTiltFallback();
     }
 
     // === Accelerometer API (Primary) ===
@@ -201,6 +204,20 @@
         }, 2000);
     }
 
+    // === Mouse Tilt Fallback (Desktop) ===
+    function setupMouseTiltFallback() {
+        // Map horizontal mouse position to tilt offset
+        // Center (50%) = 0 offset, left = -MAX, right = +MAX
+        window.addEventListener('mousemove', function (e) {
+            // Only apply when no tilt sensor is active
+            if (sensorActive) return;
+
+            const normalizedX = (e.clientX / window.innerWidth) - 0.5;
+            targetY = normalizedX * 2 * MAX_OFFSET_PERCENT;
+            targetY = Math.max(-MAX_OFFSET_PERCENT, Math.min(MAX_OFFSET_PERCENT, targetY));
+        }, { passive: true });
+    }
+
     // === Touch-Drag (on stage element, not bg-blur) ===
     function setupTouchListeners() {
         // Only enable touch on mobile screens
@@ -223,17 +240,21 @@
         if (typeof MutationObserver !== 'undefined') {
             const observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
-                    // When a stage loses .active, detach listeners from it
+                    // When a stage's class changes, re-attach listeners to the new active stage
                     if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                         const target = mutation.target;
                         if (target.classList && target.classList.contains('stage')) {
+                            // Guard: skip if element is no longer in DOM (parentNode is null)
+                            if (!target.parentNode) return;
+
                             // Remove existing listeners by cloning node
                             const newStage = target.cloneNode(true);
                             target.parentNode.replaceChild(newStage, target);
-                            if (target.classList.contains('active')) {
+                            if (newStage.classList.contains('active')) {
                                 attachTouchListeners(newStage);
                             }
                         }
+                        return;
                     }
                     // When a new stage is added
                     mutation.addedNodes.forEach(function (node) {
