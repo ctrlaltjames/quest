@@ -476,7 +476,7 @@
         diagOverlayEl.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99999;' +
             'background:rgba(0,0,0,0.85);color:#0f0;font:11px/1.4 monospace;' +
             'padding:10px;border-radius:6px;max-width:280px;pointer-events:auto;' +
-            'cursor:move;user-select:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+            'cursor:move;user-select:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:block;';
 
         diagOverlayEl.innerHTML = `
             <div style="text-align:center;margin-bottom:6px;">
