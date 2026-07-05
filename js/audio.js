@@ -430,10 +430,9 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 1 music - 28 Days Later theme inspired horror drone
-     * Slowly building, intensely dissonant string cluster with exponential volume sweep
-     * Inspired by Jon Hopkins' iconic score: close-interval clusters that build to crushing
-     * crescendos, creating a sense of inevitable dread
+     * Start Stage 1 music - Walking Dead-style haunting cello theme
+     * Slow, mournful solo cello melody with bow-on-string texture
+     * Sparse, emotional atmosphere - sad and contemplative rather than scary
      */
     function startStage1Music() {
         if (!audioCtx || currentStage === 1) return;
@@ -444,200 +443,191 @@ const AudioSystem = (function () {
         stopAllMusic();
 
         // ========================================
-        // MASTER VOLUME CONTROL for exponential sweep
+        // MASTER VOLUME
         // ========================================
         const masterGain = audioCtx.createGain();
-        masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
         masterGain.connect(audioCtx.destination);
         currentMusicNodes.push({ gain: masterGain });
 
         // ========================================
-        // LAYER 1: String cluster - ~10 detuned oscillators
-        // Mimics the close-interval string wall of sound
-        // Base pitch around A1 (55 Hz) range
+        // AMBIENT DRONE - Low E2 foundation
+        // Emotional weight beneath the melody
         // ========================================
-        const clusterBaseFreq = 55.00; // A1
-        // Close intervals mimicking string cluster (semitones above base)
-        // These create beating, dissonance when detuned and played together
-        const clusterSemitones = [
-            0,      // A1 (unison)
-            0.08,   // Slightly detuned unison
-            -0.06,  // Slightly detuned unison (beating)
-            1.2,    // Very close to Bb1 - crushing minor 2nd
-            1.8,    // Slightly flat Bb1
-            3.5,    // Between B1 and C2 - dissonant
-            5.0,    // C#2
-            7.0,    // D2
-            9.0,    // E2
-            11.0,   // F#2 (fifth above - adds depth)
+        const droneOsc = audioCtx.createOscillator();
+        const droneGain = audioCtx.createGain();
+        const droneFilter = audioCtx.createBiquadFilter();
+        droneOsc.type = 'sine';
+        droneOsc.frequency.setValueAtTime(82.41, audioCtx.currentTime); // E2
+        droneFilter.type = 'lowpass';
+        droneFilter.frequency.value = 120;
+        droneGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        droneGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 3);
+        droneOsc.connect(droneFilter);
+        droneFilter.connect(droneGain);
+        droneGain.connect(masterGain);
+        droneOsc.start();
+        currentMusicNodes.push({ osc: droneOsc, gain: droneGain });
+
+        // Sub-octave drone for depth
+        const subDrone = audioCtx.createOscillator();
+        const subDroneGain = audioCtx.createGain();
+        subDrone.type = 'sine';
+        subDrone.frequency.setValueAtTime(41.20, audioCtx.currentTime); // E1
+        subDroneGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        subDroneGain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 4);
+        subDrone.connect(subDroneGain);
+        subDroneGain.connect(masterGain);
+        subDrone.start();
+        currentMusicNodes.push({ osc: subDrone, gain: subDroneGain });
+
+        // ========================================
+        // CELLO MELODY ENGINE
+        // Mournful melody using triangle + sine layers
+        // ========================================
+
+        // Melody: Slow, sparse cello phrases in A minor / E minor
+        // Each note: triangle (body) + sine (sub-body) + vibrato
+        const melodyPhrases = [
+            // Phrase 1: Mourning theme (E-G-A-G-E)
+            [
+                { freq: 164.81, dur: 5.0, hold: true },  // E3
+                { freq: 196.00, dur: 3.0 },               // G3
+                { freq: 220.00, dur: 4.0 },               // A3
+                { freq: 196.00, dur: 3.0 },               // G3
+                { freq: 164.81, dur: 5.0, hold: true },   // E3
+            ],
+            // Phrase 2: Response (D-E-G-A-G)
+            [
+                { freq: 146.83, dur: 4.0 },               // D3
+                { freq: 164.81, dur: 3.0 },               // E3
+                { freq: 196.00, dur: 4.0 },               // G3
+                { freq: 220.00, dur: 3.0 },               // A3
+                { freq: 196.00, dur: 5.0, hold: true },   // G3
+            ],
+            // Phrase 3: Resolution (E-D-C-D-E)
+            [
+                { freq: 164.81, dur: 3.0 },               // E3
+                { freq: 146.83, dur: 3.0 },               // D3
+                { freq: 130.81, dur: 4.0 },               // C3
+                { freq: 146.83, dur: 3.0 },               // D3
+                { freq: 164.81, dur: 6.0, hold: true },   // E3
+            ],
         ];
 
-        const clusterOscillators = [];
-        const clusterGains = [];
+        let phraseIndex = 0;
+        let noteIndex = 0;
 
-        clusterSemitones.forEach((semitoneOffset, i) => {
-            const freq = clusterBaseFreq * Math.pow(2, semitoneOffset / 12);
+        function playCelloNote(freq, duration, isHold) {
+            const now = audioCtx.currentTime;
+            const vol = isHold ? 0.10 : 0.09;
+            const sustain = isHold ? duration * 0.9 : duration * 0.85;
 
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            const filter = audioCtx.createBiquadFilter();
+            // Layer 1: Triangle wave - cello body
+            const celloOsc = audioCtx.createOscillator();
+            const celloGain = audioCtx.createGain();
+            celloOsc.type = 'triangle';
+            celloOsc.frequency.setValueAtTime(freq, now);
 
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            // Vibrato LFO
+            const vibrato = audioCtx.createOscillator();
+            const vibratoGain = audioCtx.createGain();
+            vibrato.type = 'sine';
+            vibrato.frequency.setValueAtTime(5.5, now); // Natural vibrato speed
+            vibratoGain.gain.setValueAtTime(freq * 0.003, now); // Small detuning amount
+            vibrato.connect(vibratoGain);
+            vibratoGain.connect(celloOsc.frequency);
+            vibrato.start(now);
+            currentMusicNodes.push({ osc: vibrato, gain: vibratoGain });
 
-            // Low-pass filter to muffle into string-like quality
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
-            filter.Q.setValueAtTime(2, audioCtx.currentTime);
+            // Envelope: soft attack (bow coming in) → sustain → fade out
+            celloGain.gain.setValueAtTime(0, now);
+            celloGain.gain.linearRampToValueAtTime(vol, now + 0.4); // Slow bow attack
+            celloGain.gain.setValueAtTime(vol, now + sustain);
+            celloGain.gain.linearRampToValueAtTime(0, now + duration);
 
-            // Individual gain (will be overridden by master sweep)
-            gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+            celloOsc.connect(celloGain);
+            celloGain.connect(masterGain);
+            celloOsc.start(now);
+            celloOsc.stop(now + duration + 0.1);
+            currentMusicNodes.push({ osc: celloOsc, gain: celloGain });
 
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(masterGain);
-            osc.start();
+            // Layer 2: Sine wave an octave below - bow body warmth
+            const subOsc = audioCtx.createOscillator();
+            const subOscGain = audioCtx.createGain();
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(freq / 2, now);
+            subOscGain.gain.setValueAtTime(0, now);
+            subOscGain.gain.linearRampToValueAtTime(vol * 0.6, now + 0.5);
+            subOscGain.gain.setValueAtTime(vol * 0.6, now + sustain);
+            subOscGain.gain.linearRampToValueAtTime(0, now + duration);
+            subOsc.connect(subOscGain);
+            subOscGain.connect(masterGain);
+            subOsc.start(now);
+            subOsc.stop(now + duration + 0.1);
+            currentMusicNodes.push({ osc: subOsc, gain: subOscGain });
 
-            clusterOscillators.push(osc);
-            clusterGains.push(gain);
-            currentMusicNodes.push({ osc: osc, gain: gain, filter: filter });
-        });
-
-        // ========================================
-        // LAYER 2: Sub-bass foundation
-        // Deep rumble below the cluster for physical impact
-        // ========================================
-        const subOsc = audioCtx.createOscillator();
-        const subGain = audioCtx.createGain();
-        const subFilter = audioCtx.createBiquadFilter();
-        subOsc.type = 'sine';
-        subOsc.frequency.setValueAtTime(36.71, audioCtx.currentTime); // D1
-        subFilter.type = 'lowpass';
-        subFilter.frequency.value = 55;
-        subGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        subOsc.connect(subFilter);
-        subFilter.connect(subGain);
-        subGain.connect(masterGain);
-        subOsc.start();
-        currentMusicNodes.push({ osc: subOsc, gain: subGain });
-
-        // ========================================
-        // LAYER 3: High harmonic shimmer
-        // Quiet overtone that adds ethereal quality
-        // ========================================
-        const highOsc = audioCtx.createOscillator();
-        const highGain = audioCtx.createGain();
-        const highFilter = audioCtx.createBiquadFilter();
-        highOsc.type = 'sine';
-        highOsc.frequency.setValueAtTime(clusterBaseFreq * 6, audioCtx.currentTime); // A4 (6 octaves up)
-        highFilter.type = 'lowpass';
-        highFilter.frequency.value = 1500;
-        highGain.gain.setValueAtTime(0.003, audioCtx.currentTime);
-        highOsc.connect(highFilter);
-        highFilter.connect(highGain);
-        highGain.connect(masterGain);
-        highOsc.start();
-        currentMusicNodes.push({ osc: highOsc, gain: highGain });
-
-        // ========================================
-        // LAYER 4: Slow pitch climb (the "inevitable approach")
-        // The entire cluster slowly shifts up in pitch
-        // ========================================
-        let climbStartTime = audioCtx.currentTime;
-        const climbDuration = 30; // Full climb takes 30 seconds
-        const climbRange = 3.0;   // Total climb range: 3 semitones (minor 3rd)
-
-        // ========================================
-        // THE EXPONENTIAL VOLUME SWEEP
-        // Core of 28 Days Later theme: near-silent → deafening → near-silent
-        // Loop cycle: ~20 seconds
-        // ========================================
-        const cycleDuration = 20; // Full cycle time
-        const buildPhase = 0.65;   // 65% of cycle building up
-        const releasePhase = 0.15; // 15% releasing to silence
-        const restPhase = 0.20;    // 20% resting in silence
-
-        function startVolumeCycle(startTime) {
-            const phaseBuild = cycleDuration * buildPhase;  // 13 seconds
-            const phaseRelease = cycleDuration * releasePhase; // 3 seconds
-            const phaseRest = cycleDuration * restPhase;      // 4 seconds
-            const phaseRecovery = 1.0;                         // 1 second fade back to start
-
-            const totalCycle = phaseBuild + phaseRelease + phaseRest + phaseRecovery;
-
-            // Phase 1: Exponential build from near-silence to peak
-            masterGain.gain.cancelScheduledValuesAtTime(startTime);
-            masterGain.gain.setValueAtTime(0.0001, startTime); // Nearly silent start
-            masterGain.gain.exponentialRampToValueAtTime(0.35, startTime + phaseBuild); // Build to loud!
-
-            // Phase 2: Release back to silence (abrupt cut, then fade)
-            masterGain.gain.setValueAtTime(0.35, startTime + phaseBuild);
-            masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + phaseBuild + phaseRelease);
-
-            // Phase 3: Rest in silence
-            masterGain.gain.setValueAtTime(0.0001, startTime + phaseBuild + phaseRelease);
-
-            // Phase 4: Quick recovery to start
-            masterGain.gain.setValueAtTime(0.0001, startTime + phaseBuild + phaseRelease + phaseRest);
-            masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + totalCycle);
-
-            // Schedule next cycle
-            setTimeout(() => {
-                if (currentStage === 1) {
-                    startVolumeCycle(audioCtx.currentTime);
+            // Layer 3: Subtle bow noise (bow-on-string texture)
+            if (Math.random() > 0.3) {
+                const noiseDuration = 0.15;
+                const bufferSize = audioCtx.sampleRate * noiseDuration;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.005;
                 }
-            }, (totalCycle - phaseRecovery) * 1000);
+                const noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = buffer;
+                const noiseGain = audioCtx.createGain();
+                const noiseFilter = audioCtx.createBiquadFilter();
+                noiseFilter.type = 'bandpass';
+                noiseFilter.frequency.value = freq * 0.5; // Center on note frequency
+                noiseFilter.Q.value = 3;
+                noiseGain.gain.setValueAtTime(0, now);
+                noiseGain.gain.linearRampToValueAtTime(0.008, now + 0.1);
+                noiseGain.gain.linearRampToValueAtTime(0, now + 0.3);
+                noiseSource.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(masterGain);
+                noiseSource.start(now);
+                currentMusicNodes.push({ source: noiseSource, gain: noiseGain });
+            }
         }
 
-        startVolumeCycle(audioCtx.currentTime + 1); // Start after 1 second delay
-
-        // ========================================
-        // LAYER 5: Slow pitch climb on cluster
-        // ========================================
-        let climbTime = 0;
-        const climbInterval = setInterval(() => {
-            climbTime += 0.1;
-            // Sine wave climb: goes up and down slowly
-            const climbAmount = Math.sin(climbTime * 0.15) * (climbRange / 2);
-            const currentClimb = ((climbTime % 30) / 30) * climbRange; // Gradual climb over 30s
-
-            clusterOscillators.forEach((osc, i) => {
-                const baseFreq = clusterBaseFreq * Math.pow(2, clusterSemitones[i] / 12);
-                osc.frequency.linearRampToValueAtTime(
-                    baseFreq * Math.pow(2, currentClimb / 12),
-                    audioCtx.currentTime + 0.1
-                );
+        function playPhrase(phrase) {
+            let time = 0;
+            phrase.forEach((note, i) => {
+                setTimeout(() => {
+                    playCelloNote(note.freq, note.dur, note.hold);
+                }, time * 1000);
+                time += note.dur;
             });
-        }, 100);
-        currentMusicNodes.push({ type: 'interval', id: climbInterval });
+            // Wait for phrase to finish, then play next
+            setTimeout(() => {
+                if (currentStage === 1) {
+                    phraseIndex = (phraseIndex + 1) % melodyPhrases.length;
+                    playPhrase(melodyPhrases[phraseIndex]);
+                }
+            }, time * 1000 + 2000); // 2 second pause between phrases
+        }
+
+        // Start the melody loop after 1 second
+        setTimeout(() => {
+            playPhrase(melodyPhrases[0]);
+        }, 1000);
 
         // ========================================
-        // LAYER 6: Sub-bass LFO modulation
-        // Deep rumbling/rolling effect
+        // GENTLE SWELL on drone (emotional breathing)
         // ========================================
-        const subLFO = audioCtx.createOscillator();
-        const subLFOGain = audioCtx.createGain();
-        subLFO.type = 'sine';
-        subLFO.frequency.setValueAtTime(0.2, audioCtx.currentTime);
-        subLFOGain.gain.setValueAtTime(2, audioCtx.currentTime);
-        subLFO.connect(subLFOGain);
-        subLFOGain.connect(subOsc.frequency);
-        subLFO.start();
-        currentMusicNodes.push({ osc: subLFO, gain: subLFOGain });
-
-        // ========================================
-        // LAYER 7: Cluster "breathing" - secondary volume modulation
-        // Subtle pulsing within the main sweep
-        // ========================================
-        const breatheOsc = audioCtx.createOscillator();
-        const breatheGain = audioCtx.createGain();
-        breatheOsc.type = 'sine';
-        breatheOsc.frequency.setValueAtTime(0.06, audioCtx.currentTime); // Very slow - ~17 second cycle
-        breatheGain.gain.setValueAtTime(0.008, audioCtx.currentTime);
-        breatheOsc.connect(breatheGain);
-        breatheGain.connect(masterGain.gain); // Modulate master volume subtly
-        breatheOsc.start();
-        currentMusicNodes.push({ osc: breatheOsc, gain: breatheGain });
+        const swellOsc = audioCtx.createOscillator();
+        const swellGain = audioCtx.createGain();
+        swellOsc.type = 'sine';
+        swellOsc.frequency.setValueAtTime(0.08, audioCtx.currentTime); // ~12 second cycle
+        swellGain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+        swellOsc.connect(swellGain);
+        swellGain.connect(droneGain.gain);
+        swellOsc.start();
+        currentMusicNodes.push({ osc: swellOsc, gain: swellGain });
     }
 
     /**
