@@ -1,8 +1,8 @@
 /**
  * Parallax Background Controller
  * Provides hybrid tilt-based + touch-drag parallax for mobile portrait backgrounds.
- * - Tilt (Android/permission granted): Uses DeviceOrientation API beta value
- * - Touch-drag (iOS/fallback): Uses touchmove events on the background layer
+ * - Tilt (Android/iOS/permission granted): Uses Accelerometer API z-axis for forward/backward tilt
+ * - Touch-drag (fallback): Uses touchmove events on the stage element
  * - Both stack additively when both are available
  */
 (function () {
@@ -11,8 +11,6 @@
     // === Configuration ===
     const MAX_OFFSET_PERCENT = 15; // Maximum background shift as % of container height
     const DAMPING_FACTOR = 0.12; // Lower = smoother/heavier feel (0.01 - 1.0)
-    const TILT_SENSITIVITY = 6; // Beta range multiplier (lower = more sensitive)
-    const TILT_DEADZONE = 1; // Ignore small beta values near center
     const TOUCH_SENSITIVITY = 0.6; // How far the background follows finger (1.0 = 1:1)
     const RESET_DELAY = 1500; // ms before auto-reset after touch ends
 
@@ -22,10 +20,10 @@
     let touchStartY = 0;
     let touchOffsetY = 0;
     let isTouching = false;
-    let iosPermissionGranted = false;
-    let orientationSensorAvailable = false;
+    let sensorActive = false;
     let animationFrameId = null;
     let resetTimer = null;
+    let tiltButtonEl = null;
 
     // === DOM References ===
     let bgBlurEl = null; // .bg-blur element
@@ -34,106 +32,233 @@
     // === Initialization ===
     function init() {
         bgBlurEl = document.querySelector('.bg-blur');
-        setupOrientation();
+        setupTiltSensor();
         setupTouchListeners();
         startAnimationLoop();
     }
 
-    // === Device Orientation (Tilt) ===
-    function setupOrientation() {
-        // Check if DeviceOrientationEvent exists
-        if (typeof DeviceOrientationEvent === 'undefined') {
-            console.log('[Parallax] DeviceOrientation not supported');
+    // === Tilt Sensor Setup ===
+    function setupTiltSensor() {
+        // Check if Accelerometer API is available (modern Android/iOS)
+        if (typeof Accelerometer !== 'undefined') {
+            setupAccelerometer();
             return;
         }
 
-        // iOS 13+ requires permission
-        if (isIOS13Plus()) {
-            requestIOSPermission();
+        // Check if DeviceOrientationEvent.requestPermission exists (iOS 13+/Android Chrome)
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            createTiltButton();
             return;
         }
 
-        // Android/non-iOS: bind directly
-        bindOrientation();
+        // Fallback: try direct deviceorientation binding (older Android)
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+            bindOrientationFallback();
+            return;
+        }
+
+        console.log('[Parallax] No tilt sensor available, using touch-drag only');
     }
 
-    function isIOS13Plus() {
-        const ua = navigator.userAgent;
-        return /iPhone|iPad|iPod/.test(ua) && ua.includes('MacIntel') && /OS [1-9]_|OS 1[3-9]_/.test(ua);
+    // === Accelerometer API (Primary) ===
+    function setupAccelerometer() {
+        // Check if permission is already granted
+        if (permissionGranted()) {
+            bindAccelerometer();
+            return;
+        }
+
+        // Need permission button
+        createTiltButton();
     }
 
-    function requestIOSPermission() {
-        const event = DeviceOrientationEvent;
-        if (typeof event.requestPermission === 'function') {
-            // Only request on user gesture
-            const grant = function grantPermission(e) {
-                e.preventDefault();
-                event.requestPermission()
-                    .then(function (permissionState) {
-                        if (permissionState === 'granted') {
-                            iosPermissionGranted = true;
-                            bindOrientation();
-                        } else {
-                            console.log('[Parallax] iOS permission denied');
-                        }
-                    })
-                    .catch(function (err) {
-                        console.log('[Parallax] iOS permission error:', err);
-                    })
-                    .finally(function () {
-                        // Remove the listener after it fires once
-                        document.removeEventListener('touchstart', grant, { capture: true });
-                        document.removeEventListener('click', grant, { capture: true });
-                    });
-            };
-            // Listen for first touch/click to request permission
-            document.addEventListener('touchstart', grant, { capture: true, once: false });
-            document.addEventListener('click', grant, { capture: true, once: false });
+    function permissionGranted() {
+        // Check if the sensor is already active
+        if (typeof Accelerometer !== 'undefined') {
+            // Create a test instance to check if it works
+            try {
+                const test = new Accelerometer({ frequency: 1 });
+                test.stop();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function requestSensorPermission() {
+        if (typeof Accelerometer !== 'undefined') {
+            // Try to create an accelerometer - this will trigger permission prompt on some devices
+            try {
+                bindAccelerometer();
+            } catch (e) {
+                console.log('[Parallax] Sensor permission denied, using touch-drag');
+            }
+        } else if (typeof DeviceOrientationEvent !== 'undefined' &&
+                   typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(function (permissionState) {
+                    if (permissionState === 'granted') {
+                        bindAccelerometer();
+                    } else {
+                        console.log('[Parallax] Permission denied, using touch-drag');
+                    }
+                })
+                .catch(function (err) {
+                    console.log('[Parallax] Permission error:', err);
+                });
         }
     }
 
-    function bindOrientation() {
-        const handler = function (e) {
-            const beta = e.beta; // Front-to-back tilt: -180 to 180
-            if (beta === null || beta === undefined) return;
+    function bindAccelerometer() {
+        if (typeof Accelerometer === 'undefined') return;
 
-            orientationSensorAvailable = true;
+        const accelerometer = new Accelerometer({ frequency: 30 });
 
-            // Apply deadzone
-            let adjustedBeta = beta;
-            if (adjustedBeta > -TILT_DEADZONE && adjustedBeta < TILT_DEADZONE) {
-                adjustedBeta = 0;
+        accelerometer.addEventListener('reading', function () {
+            // z-axis: when phone is flat (screen up), z ≈ 9.8 (gravity pointing into screen)
+            // when phone is vertical (screen facing user), z ≈ 0
+            // We use -z because we want: flat = 0 offset, vertical = max offset
+            const z = -accelerometer.z;
+
+            // Clamp: z ranges from ~0 (vertical) to ~9.8 (flat on table)
+            // Only respond when phone is held in hand (z < 8, i.e., tilted up enough)
+            if (z < 1 || z > 8) {
+                // Phone is flat on table or moving too fast, skip
+                return;
             }
 
-            // Map beta (-30 to 30 degrees) to offset percentage (-MAX to +MAX)
-            // Beta: positive = tilted forward (top toward you), negative = tilted back
-            let offsetPercent = (adjustedBeta / TILT_SENSITIVITY) * MAX_OFFSET_PERCENT;
+            sensorActive = true;
 
-            // Clamp to max
+            // Map z to angle: z=1 → ~83°, z=8 → ~46°
+            const angle = Math.asin(Math.max(0, Math.min(1, z / 9.8))) * (180 / Math.PI);
+
+            // Map angle to offset percentage
+            // When angle ≈ 83° (phone nearly flat): offset = 0% (center)
+            // When angle ≈ 46° (phone tilted up): offset = -MAX to +MAX
+            const normalizedAngle = (angle - 46) / (83 - 46); // 0 (flat) to 1 (vertical)
+            let offsetPercent = normalizedAngle * MAX_OFFSET_PERCENT;
+
+            // Clamp
             offsetPercent = Math.max(-MAX_OFFSET_PERCENT, Math.min(MAX_OFFSET_PERCENT, offsetPercent));
 
-            // When tilting forward (positive beta), shift background down (positive Y)
-            // When tilting back (negative beta), shift background up (negative Y)
+            // When tilting phone forward (top away from you), shift background down
+            // When tilting phone back (top toward you), shift background up
+            targetY = offsetPercent;
+        });
+
+        accelerometer.start();
+    }
+
+    // === Orientation Fallback (older Android) ===
+    function bindOrientationFallback() {
+        const handler = function (e) {
+            const beta = e.beta;
+            if (beta === null || beta === undefined) return;
+
+            sensorActive = true;
+
+            // Use gamma (left-right tilt) as secondary indicator
+            const gamma = e.gamma || 0;
+
+            // Map gamma (-90 to 90) to offset
+            let offsetPercent = (gamma / 90) * MAX_OFFSET_PERCENT;
+            offsetPercent = Math.max(-MAX_OFFSET_PERCENT, Math.min(MAX_OFFSET_PERCENT, offsetPercent));
+
             targetY = offsetPercent;
         };
 
         window.addEventListener('deviceorientation', handler, true);
     }
 
-    // === Touch-Drag ===
+    // === "Enable Tilt" Permission Button ===
+    function createTiltButton() {
+        // Check if button already exists
+        if (document.getElementById('tilt-enable-btn')) return;
+
+        tiltButtonEl = document.createElement('button');
+        tiltButtonEl.id = 'tilt-enable-btn';
+        tiltButtonEl.textContent = '🎮 Enable tilt effect';
+        tiltButtonEl.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);' +
+            'z-index:10000;padding:12px 24px;background:#f5a623;color:#000;border:none;' +
+            'border-radius:8px;font-family:sans-serif;font-size:14px;cursor:pointer;' +
+            'box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;';
+
+        tiltButtonEl.addEventListener('click', function () {
+            requestSensorPermission();
+            tiltButtonEl.style.display = 'none';
+        });
+
+        document.body.appendChild(tiltButtonEl);
+
+        // Show button after a delay if no sensor data received
+        setTimeout(function () {
+            if (!sensorActive) {
+                tiltButtonEl.style.display = 'block';
+            }
+        }, 2000);
+    }
+
+    // === Touch-Drag (on stage element, not bg-blur) ===
     function setupTouchListeners() {
         // Only enable touch on mobile screens
         if (window.innerWidth > 600) return;
 
-        // We attach to the bg-blur element so touches on it move the background
-        if (bgBlurEl) {
-            bgBlurEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-            bgBlurEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-            bgBlurEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+        // Attach to the active stage only (bg-blur has pointer-events: none)
+        function attachTouchListeners(stageEl) {
+            stageEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+            stageEl.addEventListener('touchmove', handleTouchMove, { passive: true });
+            stageEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
+
+        // Attach to currently active stage
+        const activeStage = document.querySelector('.stage.active');
+        if (activeStage) {
+            attachTouchListeners(activeStage);
+        }
+
+        // Watch for stages becoming active
+        if (typeof MutationObserver !== 'undefined') {
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    // When a stage loses .active, detach listeners from it
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const target = mutation.target;
+                        if (target.classList && target.classList.contains('stage')) {
+                            // Remove existing listeners by cloning node
+                            const newStage = target.cloneNode(true);
+                            target.parentNode.replaceChild(newStage, target);
+                            if (target.classList.contains('active')) {
+                                attachTouchListeners(newStage);
+                            }
+                        }
+                    }
+                    // When a new stage is added
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node.nodeType === 1 && node.classList && node.classList.contains('stage')) {
+                            if (node.classList.contains('active')) {
+                                attachTouchListeners(node);
+                            }
+                        }
+                        if (node.nodeType === 1) {
+                            node.querySelectorAll('.stage').forEach(function(s) {
+                                if (s.classList.contains('active')) {
+                                    attachTouchListeners(s);
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
         }
     }
 
     function handleTouchStart(e) {
+        // Only respond to touches on the stage element itself
+        if (e.target.closest('.stage') === null) return;
         touchStartY = e.touches[0].clientY;
         touchOffsetY = 0;
         isTouching = true;
@@ -150,12 +275,6 @@
 
         // Clamp
         touchOffsetY = Math.max(-MAX_OFFSET_PERCENT, Math.min(MAX_OFFSET_PERCENT, touchOffsetY));
-
-        // Only prevent default on horizontal-ish drags (not vertical scroll)
-        const deltaX = e.touches[0].clientX - (e.touches.length > 1 ? 0 : 0);
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
-            e.preventDefault();
-        }
     }
 
     function handleTouchEnd() {
