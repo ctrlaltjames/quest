@@ -327,6 +327,9 @@ async function showStage(n) {
         // Heart burst
         createHeartBurst();
 
+        // Stop all music when entering proposal screen
+        AudioSystem.onStageChange(state.currentStage, 5);
+
         // Typewriter for proposal message
         const msgEl = document.getElementById('proposal-message');
 
@@ -361,6 +364,9 @@ async function showStage(n) {
 
         // Start countdown from 5
         startTreasureCountdown();
+
+        // Start treasure music
+        AudioSystem.onStageChange(state.currentStage, 6);
 
         state.isTransitioning = false;
         return;
@@ -483,13 +489,18 @@ async function handleCheck(stageId) {
         input.classList.add('correct');
         createSparkles(input);
         screenFlash();
+        AudioSystem.playCorrectAnswer();
 
         // Wait for sparkle animation
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Advance to next stage (showStage manages isTransitioning)
+        const prevStage = state.currentStage;
         state.currentStage = stageId + 1;
         await showStage(state.currentStage);
+
+        // Handle audio transitions after stage change
+        AudioSystem.onStageChange(prevStage, state.currentStage);
 
         // Reset input after transition completes
         input.classList.remove('correct');
@@ -574,6 +585,14 @@ async function handleYes() {
 
     // Heart burst
     createHeartBurst();
+
+    // Play YES fireworks sound
+    AudioSystem.playYesFireworks();
+
+    // Play celebratory victory song after a short delay
+    setTimeout(() => {
+        AudioSystem.playCelebrationSong();
+    }, 600);
 
     // Show after-yes message (do NOT fade it out)
     const afterYesEl = document.getElementById('after-yes');
@@ -676,6 +695,10 @@ function bindEvents() {
     if (btnStart) {
         btnStart.addEventListener('click', () => {
             if (!state.isTransitioning) {
+                // Initialize audio on first user interaction
+                AudioSystem.ensureInitialized();
+                // Stop intro music and transition to game
+                AudioSystem.onStageChange(0, 1);
                 state.currentStage = 1;
                 showStage(1);
             }
@@ -1090,6 +1113,13 @@ function init() {
 
         // Show title screen
         showStage(0);
+
+        // Start intro music on page load (after user interaction for autoplay policy)
+        // The audio context will be resumed on first click/keydown
+        setTimeout(() => {
+            AudioSystem.ensureInitialized();
+            AudioSystem.startStageMusic(0);
+        }, 500);
 
     } catch (err) {
         console.error('Game initialization error:', err);
