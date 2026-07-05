@@ -24,6 +24,13 @@ const AudioSystem = (function () {
     // Intro music interval
     let introMusicInterval = null;
 
+    // Stage 1 heartbeat and melody timers
+    let heartbeatInterval = null;
+    let melodyInterval = null;
+
+    // Static noise updater
+    let staticUpdateInterval = null;
+
     /**
      * Initialize Web Audio context (must be called from user gesture)
      */
@@ -311,16 +318,7 @@ const AudioSystem = (function () {
      * Stop all current music
      */
     function stopAllMusic() {
-        // Stop all playing nodes
-        currentMusicNodes.forEach(node => {
-            try {
-                if (node.osc) node.osc.stop();
-                if (node.source) node.source.stop();
-            } catch (e) {}
-        });
-        currentMusicNodes = [];
-
-        // Stop intervals
+        // Stop intervals FIRST (before stopping nodes)
         if (introMusicInterval) {
             clearInterval(introMusicInterval);
             introMusicInterval = null;
@@ -329,6 +327,43 @@ const AudioSystem = (function () {
             clearInterval(typingInterval);
             typingInterval = null;
         }
+        if (heartbeatInterval) {
+            clearTimeout(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+        if (melodyInterval) {
+            clearTimeout(melodyInterval);
+            melodyInterval = null;
+        }
+        if (staticUpdateInterval) {
+            clearTimeout(staticUpdateInterval);
+            staticUpdateInterval = null;
+        }
+
+        // Stop and disconnect all tracked nodes
+        currentMusicNodes.forEach(node => {
+            try {
+                if (node.osc) {
+                    try { node.osc.stop(); } catch(e) {}
+                    try { node.osc.disconnect(); } catch(e) {}
+                }
+                if (node.osc2) {
+                    try { node.osc2.stop(); } catch(e) {}
+                    try { node.osc2.disconnect(); } catch(e) {}
+                }
+                if (node.source) {
+                    try { node.source.stop(); } catch(e) {}
+                    try { node.source.disconnect(); } catch(e) {}
+                }
+                if (node.gain) {
+                    try { node.gain.disconnect(); } catch(e) {}
+                }
+                if (node.filter) {
+                    try { node.filter.disconnect(); } catch(e) {}
+                }
+            } catch (e) {}
+        });
+        currentMusicNodes = [];
 
         currentStage = -1;
     }
@@ -353,6 +388,13 @@ const AudioSystem = (function () {
     function startIntroMusic() {
         if (!audioCtx || currentStage === 0) return;
         resumeContext();
+        
+        // Clear any existing intro music interval to prevent duplicates
+        if (introMusicInterval) {
+            clearInterval(introMusicInterval);
+            introMusicInterval = null;
+        }
+        
         currentStage = 0;
 
         // Simple ambient melody notes (C major pentatonic)
@@ -430,295 +472,361 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 1 music - World War Z-style marching drums
-     * Rhythmic war drums with pounding tempo and building urgency
-     * Mimics the apocalypse approaching: hordes of zombies closing in
-     * Inspired by Ilan Eshkeri's score: deep taiko drums + brass stabs
+     * Start Stage 1 music - "Zombie Horror Movie Theme"
+     * A simplified spooky horror-zombie chiptune theme with:
+     * - Eerie main melody in minor/diminished scale
+     * - Deep bass drone for atmosphere
+     * - Periodic zombie groan sound effects
+     * - Rhythmic heartbeat pulse
+     * - Occasional horror "stinger" notes for jump-scare effect
      */
     function startStage1Music() {
         if (!audioCtx || currentStage === 1) return;
         resumeContext();
+
+        // Stop previous music (note: stopAllMusic resets currentStage to -1)
+        stopAllMusic();
         currentStage = 1;
 
-        // Stop previous music
-        stopAllMusic();
-
-        // ========================================
-        // MASTER VOLUME
-        // ========================================
+        // Master gain for overall volume
         const masterGain = audioCtx.createGain();
-        masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+        masterGain.gain.setValueAtTime(0.45, audioCtx.currentTime);
         masterGain.connect(audioCtx.destination);
         currentMusicNodes.push({ gain: masterGain });
 
-        // ========================================
-        // LAYER 1: WAR DRUMS (Deep timpani/taiko)
-        // Amplitude-modulated noise through bandpass = boom sound
-        // ========================================
-        function playWarDrum(freq, time, duration, volume) {
-            const now = audioCtx.currentTime + time;
+        // ==========================================
+        // HORIZONTAL SHIFTS (chord progression)
+        // ==========================================
+        // E minor with horror elements:
+        // Em -> C -> G -> D (cyclical progression)
+        // Each shift = 2 seconds, loop repeats
 
-            // Create noise burst for drum body
-            const bufferSize = audioCtx.sampleRate * 0.3;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1);
-            }
+        // ==========================================
+        // MAIN MELODY - Eerie minor-key chiptune
+        // ==========================================
+        // Notes use E natural minor + diminished intervals for horror feel
+        const melodyLoop = [
+            // Measure 1 (E minor)
+            { freq: 329.63, time: 0, dur: 0.5 },    // E4 (root)
+            { freq: 0, time: 0.5, dur: 0.05 },      // rest
+            { freq: 392.00, time: 0.55, dur: 0.25 }, // G4 (minor third)
+            { freq: 466.16, time: 0.85, dur: 0.25 }, // Bb4 (diminished - horror note!)
+            { freq: 440.00, time: 1.15, dur: 0.5 },  // A4 (back to safety)
+            { freq: 0, time: 1.65, dur: 0.05 },      // rest
 
-            const noiseSource = audioCtx.createBufferSource();
-            noiseSource.buffer = buffer;
+            // Measure 2 (C major)
+            { freq: 523.25, time: 1.75, dur: 0.5 },  // C5
+            { freq: 493.88, time: 2.25, dur: 0.25 }, // B4
+            { freq: 440.00, time: 2.55, dur: 0.5 },  // A4
+            { freq: 0, time: 3.05, dur: 0.05 },      // rest
 
-            // Bandpass filter for drum body
-            const drumFilter = audioCtx.createBiquadFilter();
-            drumFilter.type = 'bandpass';
-            drumFilter.frequency.setValueAtTime(freq, now);
-            drumFilter.Q.setValueAtTime(2, now);
+            // Measure 3 (G major)
+            { freq: 392.00, time: 3.15, dur: 0.35 }, // G4
+            { freq: 440.00, time: 3.55, dur: 0.25 }, // A4
+            { freq: 466.16, time: 3.85, dur: 0.15 }, // Bb4 (again, horror tension)
+            { freq: 493.88, time: 4.05, dur: 0.5 },  // B4
 
-            // Envelope gain
-            const drumGain = audioCtx.createGain();
-            drumGain.gain.setValueAtTime(volume, now);
-            drumGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            // Measure 4 (D major) - build tension
+            { freq: 587.33, time: 4.55, dur: 0.25 }, // D5
+            { freq: 523.25, time: 4.85, dur: 0.25 }, // C5
+            { freq: 493.88, time: 5.15, dur: 0.25 }, // B4
+            { freq: 440.00, time: 5.45, dur: 0.5 },  // A4
 
-            noiseSource.connect(drumFilter);
-            drumFilter.connect(drumGain);
-            drumGain.connect(masterGain);
-            noiseSource.start(now);
-            noiseSource.stop(now + duration + 0.01);
-            currentMusicNodes.push({ source: noiseSource, gain: drumGain });
-
-            // Pitch envelope for "boom" character
-            const pitchOsc = audioCtx.createOscillator();
-            const pitchGain = audioCtx.createGain();
-            pitchOsc.type = 'sine';
-            pitchOsc.frequency.setValueAtTime(freq * 2, now);
-            pitchOsc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + duration * 0.5);
-            pitchGain.gain.setValueAtTime(volume * 0.5, now);
-            pitchGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.3);
-            pitchOsc.connect(pitchGain);
-            pitchGain.connect(masterGain);
-            pitchOsc.start(now);
-            pitchOsc.stop(now + duration + 0.01);
-            currentMusicNodes.push({ osc: pitchOsc, gain: pitchGain });
-        }
-
-        // ========================================
-        // LAYER 2: MARCHING RHYTHM PATTERN
-        // Booming pattern with building urgency
-        // ========================================
-        let beatIndex = 0;
-        let baseBPM = 60; // Start slow
-
-        function playMarchingPattern() {
-            if (currentStage !== 1) return;
-
-            // Calculate current BPM (builds over ~60 seconds then loops)
-            const cycleTime = (audioCtx.currentTime % 60) / 60; // 0-1 over 60 seconds
-            const currentBPM = baseBPM + cycleTime * 60; // 60 → 120 BPM
-            const beatDuration = 60 / currentBPM;
-
-            // Pattern: Heavy-轻-Heavy-轻(fill) - like marching footsteps
-            const pattern = [
-                { beat: 0, time: 0, heavy: true },
-                { beat: 1, time: beatDuration, heavy: false },
-                { beat: 2, time: beatDuration * 2, heavy: true },
-                { beat: 3, time: beatDuration * 3, heavy: false },
-                // Drum fill on beat 4
-                { beat: 4, time: beatDuration * 4, heavy: false, fill: true },
-                { beat: 5, time: beatDuration * 4.25, heavy: false, fill: true },
-                { beat: 6, time: beatDuration * 4.5, heavy: false, fill: true },
-                { beat: 7, time: beatDuration * 4.75, heavy: false, fill: true },
-            ];
-
-            pattern.forEach(note => {
-                if (note.fill) {
-                    // Drum roll - quick rolls at end
-                    for (let i = 0; i < 4; i++) {
-                        const rollTime = note.time + i * (beatDuration * 0.08);
-                        playWarDrum(80 + i * 10, rollTime, beatDuration * 0.06, 0.04 * (1 - i * 0.2));
-                    }
-                } else {
-                    const vol = note.heavy ? 0.15 : 0.08;
-                    const dur = note.heavy ? 0.8 : 0.5;
-                    const drumFreq = note.heavy ? 55 : 70;
-                    playWarDrum(drumFreq, note.time, dur, vol);
-                }
-            });
-
-            // Schedule next pattern
-            const patternDuration = beatDuration * 5;
-            setTimeout(() => {
-                if (currentStage === 1) {
-                    playMarchingPattern();
-                }
-            }, patternDuration * 1000 - 100);
-
-            beatIndex++;
-        }
-
-        // Start pattern after 1 second
-        setTimeout(playMarchingPattern, 1000);
-
-        // ========================================
-        // LAYER 3: BRASS STABS (Dramatic hits)
-        // Sharp, powerful chords on heavy beats
-        // ========================================
-        const brassNotes = [
-            // A minor chord (dramatic, tense)
-            { freq: 220.00, dur: 0.6 },  // A3
-            { freq: 261.63, dur: 0.6 },  // C4
-            { freq: 329.63, dur: 0.6 },  // E3
-            { freq: 440.00, dur: 0.4 },  // A4 (high stab)
+            // Resolve back to start
+            { freq: 329.63, time: 5.95, dur: 0.5 },  // E4 (home!)
+            { freq: 0, time: 6.45, dur: 0.55 },      // long rest
         ];
 
-        function playBrassStab(time, volume) {
-            const now = audioCtx.currentTime + time;
+        const melodyLoopDuration = 7.0;
 
-            brassNotes.forEach(note => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
+        // ==========================================
+        // COUNTER-MELODY - Answers the main melody
+        // ==========================================
+        const counterMelodyLoop = [
+            // Measure 1 - low, sparse
+            { freq: 164.81, time: 0, dur: 0.8 },     // E5 (high harmony)
+            { freq: 0, time: 1.0, dur: 0.75 },
 
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(note.freq, now);
+            // Measure 2
+            { freq: 131.87, time: 1.75, dur: 0.8 },  // C5
+            { freq: 0, time: 2.55, dur: 0.5 },
+            { freq: 146.83, time: 3.15, dur: 0.8 },  // D5
+            { freq: 0, time: 4.05, dur: 0.5 },
+            { freq: 146.83, time: 4.55, dur: 0.4 },  // D5
+            { freq: 0, time: 5.0, dur: 0.95 },
 
-                // Lowpass filter for brass body
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(2000, now);
-                filter.Q.setValueAtTime(3, now);
+            // Measure 3
+            { freq: 131.87, time: 5.95, dur: 0.8 },  // C5
+            { freq: 0, time: 6.75, dur: 0.25 },
+        ];
+        const counterMelodyDuration = 7.0;
 
-                // Sharp attack, quick decay
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(volume * 0.06, now + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + note.dur);
+        // ==========================================
+        // BASS LINE - Deep, sustained
+        // ==========================================
+        const bassLoop = [
+            { freq: 82.41, time: 0, dur: 1.75 },     // E2 (Em)
+            { freq: 65.41, time: 1.75, dur: 1.75 },  // C2 (C major)
+            { freq: 98.00, time: 3.5, dur: 1.75 },   // G2 (G major)
+            { freq: 73.42, time: 5.25, dur: 1.75 },  // D2 (D major)
+        ];
+        const bassLoopDuration = 7.0;
 
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(masterGain);
-                osc.start(now);
-                osc.stop(now + note.dur + 0.01);
-                currentMusicNodes.push({ osc, gain, filter });
-            });
-        }
+        // ==========================================
+        // SCHEDULE LOOP FUNCTIONS
+        // ==========================================
 
-        // Schedule brass stabs on heavy beats
-        function scheduleBrass() {
+        function scheduleMelodyLoop() {
             if (currentStage !== 1) return;
 
-            const cycleTime = (audioCtx.currentTime % 60) / 60;
-            const currentBPM = baseBPM + cycleTime * 60;
-            const beatDuration = 60 / currentBPM;
+            const now = audioCtx.currentTime;
+            const loopStart = now;
 
-            // Brass hits on beats 1 and 3 (every 2 beats)
-            const beatsPerPhrase = 8;
-            const phraseDuration = beatDuration * beatsPerPhrase;
+            // Schedule main melody
+            for (let loop = 0; loop < 2; loop++) { // Schedule 2 loops ahead
+                for (let i = 0; i < melodyLoop.length; i++) {
+                    const note = melodyLoop[i];
+                    const noteTime = loopStart + loop * melodyLoopDuration + note.time;
+                    if (noteTime < now) continue;
+                    if (noteTime > now + 2) continue; // Don't schedule too far ahead
 
-            // Start brass on first heavy beat
-            playBrassStab(0, 1.0); // Full volume
-            // Second hit
-            setTimeout(() => {
-                if (currentStage === 1) {
-                    playBrassStab(beatDuration * 2, 0.8);
+                    if (note.freq > 0) {
+                        // Square wave for eerie chiptune melody
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        const filter = audioCtx.createBiquadFilter();
+
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(note.freq * 0.97, noteTime); // Slightly lower pitch
+
+                        // Filter to muffle slightly for horror atmosphere
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(2500, noteTime);
+                        filter.Q.setValueAtTime(1.0, noteTime);
+
+                        // Envelope
+                        gain.gain.setValueAtTime(0, noteTime);
+                        gain.gain.linearRampToValueAtTime(0.10, noteTime + 0.01);
+                        gain.gain.setValueAtTime(0.09, noteTime + note.dur * 0.5);
+                        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(masterGain);
+                        osc.start(noteTime);
+                        osc.stop(noteTime + note.dur + 0.01);
+                        currentMusicNodes.push({ osc, gain, filter });
+                    }
                 }
-            }, beatDuration * 2 * 1000 - 50);
-
-            // Schedule next phrase
-            setTimeout(scheduleBrass, phraseDuration * 1000 - 200);
-        }
-
-        setTimeout(scheduleBrass, 1000);
-
-        // ========================================
-        // LAYER 4: SUB-BASS PULSE (Physical impact)
-        // Deep sine wave below hearing range
-        // ========================================
-        const subBassOsc = audioCtx.createOscillator();
-        const subBassGain = audioCtx.createGain();
-        const subBassFilter = audioCtx.createBiquadFilter();
-        subBassOsc.type = 'sine';
-        subBassOsc.frequency.setValueAtTime(40, audioCtx.currentTime);
-        subBassFilter.type = 'lowpass';
-        subBassFilter.frequency.value = 55;
-        subBassGain.gain.setValueAtTime(0.10, audioCtx.currentTime);
-
-        // Pulse sub-bass with the rhythm
-        function pulseSubBass() {
-            if (currentStage !== 1) return;
-
-            const cycleTime = (audioCtx.currentTime % 60) / 60;
-            const currentBPM = baseBPM + cycleTime * 60;
-            const beatDuration = 60 / currentBPM;
-
-            // Pulse on heavy beats
-            const now = audioCtx.currentTime;
-            subBassGain.gain.setValueAtTime(0.10, now);
-            subBassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-            setTimeout(() => {
-                if (currentStage === 1) pulseSubBass();
-            }, beatDuration * 2 * 1000 - 100);
-        }
-
-        subBassOsc.connect(subBassFilter);
-        subBassFilter.connect(subBassGain);
-        subBassGain.connect(masterGain);
-        subBassOsc.start();
-        currentMusicNodes.push({ osc: subBassOsc, gain: subBassGain });
-
-        setTimeout(pulseSubBass, 1000);
-
-        // ========================================
-        // LAYER 5: DISTANT ROAR (Zombie horde ambience)
-        // Low, rumbling noise for atmosphere
-        // ========================================
-        function playHordeRoar() {
-            if (currentStage !== 1) return;
-
-            const now = audioCtx.currentTime;
-            const duration = 2 + Math.random() * 3;
-
-            // Create roaring noise
-            const bufferSize = audioCtx.sampleRate * duration;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                // Modulate to create "roar" effect
-                const mod = Math.sin(i / audioCtx.sampleRate * 3) * 0.5 + 0.5;
-                data[i] = (Math.random() * 2 - 1) * mod;
             }
 
-            const roarSource = audioCtx.createBufferSource();
-            roarSource.buffer = buffer;
+            // Schedule counter-melody (softer, triangle wave for different timbre)
+            for (let loop = 0; loop < 2; loop++) {
+                for (let i = 0; i < counterMelodyLoop.length; i++) {
+                    const note = counterMelodyLoop[i];
+                    const noteTime = loopStart + loop * counterMelodyDuration + note.time;
+                    if (noteTime < now) continue;
+                    if (noteTime > now + 2) continue;
 
-            const roarFilter = audioCtx.createBiquadFilter();
-            roarFilter.type = 'bandpass';
-            roarFilter.frequency.value = 120;
-            roarFilter.Q.value = 1;
+                    if (note.freq > 0) {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
 
-            const roarGain = audioCtx.createGain();
-            roarGain.gain.setValueAtTime(0, now);
-            roarGain.gain.linearRampToValueAtTime(0.015, now + 0.5);
-            roarGain.gain.setValueAtTime(0.015, now + duration * 0.5);
-            roarGain.gain.linearRampToValueAtTime(0, now + duration);
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(note.freq, noteTime);
 
-            roarSource.connect(roarFilter);
-            roarFilter.connect(roarGain);
-            roarGain.connect(masterGain);
-            roarSource.start(now);
-            roarSource.stop(now + duration + 0.01);
-            currentMusicNodes.push({ source: roarSource, gain: roarGain });
+                        gain.gain.setValueAtTime(0, noteTime);
+                        gain.gain.linearRampToValueAtTime(0.05, noteTime + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
 
-            // Schedule next roar
-            const nextRoar = 10000 + Math.random() * 20000; // 10-30 seconds
-            setTimeout(playHordeRoar, nextRoar);
+                        osc.connect(gain);
+                        gain.connect(masterGain);
+                        osc.start(noteTime);
+                        osc.stop(noteTime + note.dur + 0.01);
+                        currentMusicNodes.push({ osc, gain });
+                    }
+                }
+            }
+
+            // Schedule bass (deep sine wave)
+            for (let loop = 0; loop < 2; loop++) {
+                for (let i = 0; i < bassLoop.length; i++) {
+                    const note = bassLoop[i];
+                    const noteTime = loopStart + loop * bassLoopDuration + note.time;
+                    if (noteTime < now) continue;
+                    if (noteTime > now + 2) continue;
+
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(note.freq, noteTime);
+
+                    gain.gain.setValueAtTime(0, noteTime);
+                    gain.gain.linearRampToValueAtTime(0.13, noteTime + 0.05);
+                    gain.gain.setValueAtTime(0.10, noteTime + note.dur * 0.7);
+                    gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
+
+                    osc.connect(gain);
+                    gain.connect(masterGain);
+                    osc.start(noteTime);
+                    osc.stop(noteTime + note.dur + 0.01);
+                    currentMusicNodes.push({ osc, gain });
+                }
+            }
+
+            melodyInterval = setTimeout(scheduleMelodyLoop, melodyLoopDuration * 1000);
         }
 
-        setTimeout(playHordeRoar, 5000);
+        setTimeout(scheduleMelodyLoop, 200);
+
+        // ==========================================
+        // ZOMBIE GROANS - Periodic eerie sounds
+        // ==========================================
+        function scheduleGroan() {
+            if (currentStage !== 1) return;
+
+            const now = audioCtx.currentTime;
+            const duration = 0.4 + Math.random() * 0.5;
+            const startFreq = 50 + Math.random() * 20;
+            const endFreq = startFreq * 0.65;
+
+            const groanOsc = audioCtx.createOscillator();
+            const groanGain = audioCtx.createGain();
+            const groanFilter = audioCtx.createBiquadFilter();
+
+            groanOsc.type = 'sawtooth';
+            groanOsc.frequency.setValueAtTime(startFreq, now);
+            groanOsc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+
+            groanFilter.type = 'lowpass';
+            groanFilter.frequency.setValueAtTime(250, now);
+            groanFilter.Q.setValueAtTime(4, now);
+
+            groanGain.gain.setValueAtTime(0, now);
+            groanGain.gain.linearRampToValueAtTime(0.04, now + 0.03);
+            groanGain.gain.setValueAtTime(0.035, now + duration * 0.6);
+            groanGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            groanOsc.connect(groanFilter);
+            groanFilter.connect(groanGain);
+            groanGain.connect(masterGain);
+            groanOsc.start(now);
+            groanOsc.stop(now + duration + 0.01);
+            currentMusicNodes.push({ osc: groanOsc, gain: groanGain, filter: groanFilter });
+
+            // Next groan in 3-6 seconds
+            const nextGroan = 3000 + Math.random() * 3000;
+            heartbeatInterval = setTimeout(scheduleGroan, nextGroan);
+        }
+        setTimeout(scheduleGroan, 2500);
+
+        // ==========================================
+        // HEARTBEAT - Rhythmic pulse underneath
+        // ==========================================
+        function startHeartbeat() {
+            const baseBPM = 68;
+            const beatInterval = 60 / baseBPM;
+
+            function beat() {
+                if (currentStage !== 1) return;
+                const now = audioCtx.currentTime;
+
+                // First thump
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(55, now);
+                gain1.gain.setValueAtTime(0, now);
+                gain1.gain.linearRampToValueAtTime(0.10, now + 0.003);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + beatInterval * 0.35);
+                osc1.connect(gain1);
+                gain1.connect(masterGain);
+                osc1.start(now);
+                osc1.stop(now + beatInterval * 0.35 + 0.01);
+                currentMusicNodes.push({ osc: osc1, gain: gain1 });
+
+                // Second thump (slightly later, softer)
+                const secondBeatDelay = beatInterval * 0.3;
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(50, now + secondBeatDelay);
+                gain2.gain.setValueAtTime(0, now + secondBeatDelay);
+                gain2.gain.linearRampToValueAtTime(0.06, now + secondBeatDelay + 0.003);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + secondBeatDelay + beatInterval * 0.2);
+                osc2.connect(gain2);
+                gain2.connect(masterGain);
+                osc2.start(now + secondBeatDelay);
+                osc2.stop(now + secondBeatDelay + beatInterval * 0.2 + 0.01);
+                currentMusicNodes.push({ osc: osc2, gain: gain2 });
+
+                heartbeatInterval = setTimeout(beat, beatInterval * 1000);
+            }
+            beat();
+        }
+        startHeartbeat();
+
+        // ==========================================
+        // HORROR STINGER NOTES - Occasional dissonant "jump-scare"
+        // ==========================================
+        function scheduleStinger() {
+            if (currentStage !== 1) return;
+
+            const now = audioCtx.currentTime;
+            const stingerDelay = 8000 + Math.random() * 15000; // Every 8-23 seconds
+
+            setTimeout(() => {
+                if (currentStage !== 1) return;
+
+                const stingerFreqs = [
+                    [277.18, 311.13],  // B4 + Db5 (tritone - classic horror interval!)
+                    [233.08, 261.63],  // Bb3 + C5 (minor second - dissonant!)
+                    [293.66, 329.63],  // D4 + E4 (minor second)
+                    [220.00, 246.94],  // A4 + B4 (minor second)
+                ];
+                const stinger = stingerFreqs[Math.floor(Math.random() * stingerFreqs.length)];
+
+                // High screech
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sawtooth';
+                osc1.frequency.setValueAtTime(stinger[0], now);
+                osc1.frequency.exponentialRampToValueAtTime(stinger[1], now + 0.3);
+                gain1.gain.setValueAtTime(0, now);
+                gain1.gain.linearRampToValueAtTime(0.06, now + 0.01);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc1.connect(gain1);
+                gain1.connect(masterGain);
+                osc1.start(now);
+                osc1.stop(now + 0.51);
+                currentMusicNodes.push({ osc: osc1, gain: gain1 });
+
+                // Low rumble
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(stinger[0] / 4, now);
+                osc2.frequency.exponentialRampToValueAtTime(stinger[1] / 4, now + 0.4);
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.linearRampToValueAtTime(0.08, now + 0.01);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                const rumbleFilter = audioCtx.createBiquadFilter();
+                rumbleFilter.type = 'lowpass';
+                rumbleFilter.frequency.setValueAtTime(400, now);
+                osc2.connect(rumbleFilter);
+                rumbleFilter.connect(gain2);
+                gain2.connect(masterGain);
+                osc2.start(now);
+                osc2.stop(now + 0.41);
+                currentMusicNodes.push({ osc: osc2, gain: gain2, filter: rumbleFilter });
+
+                scheduleStinger();
+            }, stingerDelay);
+        }
+        setTimeout(scheduleStinger, 10000); // First stinger after 10 seconds
     }
 
-    /**
-     * Start Stage 2 music - Romantic theme
-     */
     function startStage2Music() {
         if (!audioCtx || currentStage === 2) return;
         resumeContext();
@@ -925,6 +1033,12 @@ const AudioSystem = (function () {
      */
     function startStageMusic(stageNum) {
         if (!audioCtx) return;
+
+        // Don't start music if AudioContext is suspended (needs user gesture first)
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+            return;
+        }
 
         switch (stageNum) {
             case 0: // Title screen
