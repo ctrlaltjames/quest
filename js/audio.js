@@ -430,8 +430,10 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 1 music - Psychological drone horror theme
-     * Slow, menacing atmospheric dread with shifting drones and metallic textures
+     * Start Stage 1 music - 28 Days Later theme inspired horror drone
+     * Slowly building, intensely dissonant string cluster with exponential volume sweep
+     * Inspired by Jon Hopkins' iconic score: close-interval clusters that build to crushing
+     * crescendos, creating a sense of inevitable dread
      */
     function startStage1Music() {
         if (!audioCtx || currentStage === 1) return;
@@ -442,230 +444,200 @@ const AudioSystem = (function () {
         stopAllMusic();
 
         // ========================================
-        // LAYER 1: Sub-bass rumble (physical tension)
+        // MASTER VOLUME CONTROL for exponential sweep
         // ========================================
-        const subBass = audioCtx.createOscillator();
-        const subBassGain = audioCtx.createGain();
-        const subBassFilter = audioCtx.createBiquadFilter();
-        subBass.type = 'sine';
-        subBass.frequency.setValueAtTime(32.70, audioCtx.currentTime); // C1 - very low
-        subBassFilter.type = 'lowpass';
-        subBassFilter.frequency.value = 50;
-        subBassGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        subBassGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 4); // Slow fade in
-        subBass.connect(subBassFilter);
-        subBassFilter.connect(subBassGain);
-        subBassGain.connect(audioCtx.destination);
-        subBass.start();
-        currentMusicNodes.push({ osc: subBass, gain: subBassGain });
-
-        // Sub-bass LFO modulation for rumbling effect
-        const subBassLFO = audioCtx.createOscillator();
-        const subBassLFOGain = audioCtx.createGain();
-        subBassLFO.type = 'sine';
-        subBassLFO.frequency.setValueAtTime(0.15, audioCtx.currentTime); // Very slow
-        subBassLFOGain.gain.setValueAtTime(3, audioCtx.currentTime); // ±3 Hz modulation
-        subBassLFO.connect(subBassLFOGain);
-        subBassLFOGain.connect(subBass.frequency);
-        subBassLFO.start();
-        currentMusicNodes.push({ osc: subBassLFO, gain: subBassLFOGain });
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+        currentMusicNodes.push({ gain: masterGain });
 
         // ========================================
-        // LAYER 2: Mid drone with slow filter sweep (breathing effect)
+        // LAYER 1: String cluster - ~10 detuned oscillators
+        // Mimics the close-interval string wall of sound
+        // Base pitch around A1 (55 Hz) range
         // ========================================
-        const droneOsc1 = audioCtx.createOscillator();
-        const droneGain1 = audioCtx.createGain();
-        const droneFilter1 = audioCtx.createBiquadFilter();
-        droneOsc1.type = 'sawtooth';
-        droneOsc1.frequency.setValueAtTime(55.00, audioCtx.currentTime); // A1
-        droneFilter1.type = 'lowpass';
-        droneFilter1.frequency.setValueAtTime(200, audioCtx.currentTime);
-        droneFilter1.Q.setValueAtTime(5, audioCtx.currentTime); // Resonant filter
-        droneGain1.gain.setValueAtTime(0, audioCtx.currentTime);
-        droneGain1.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 5);
-        droneOsc1.connect(droneFilter1);
-        droneFilter1.connect(droneGain1);
-        droneGain1.connect(audioCtx.destination);
-        droneOsc1.start();
-        currentMusicNodes.push({ osc: droneOsc1, gain: droneGain1, filter: droneFilter1 });
-
-        // Second drone - detuned fifth above (creates dissonance)
-        const droneOsc2 = audioCtx.createOscillator();
-        const droneGain2 = audioCtx.createGain();
-        const droneFilter2 = audioCtx.createBiquadFilter();
-        droneOsc2.type = 'sawtooth';
-        droneOsc2.frequency.setValueAtTime(82.50, audioCtx.currentTime); // E#2 (tritone above A1 - dissonant)
-        droneFilter2.type = 'lowpass';
-        droneFilter2.frequency.setValueAtTime(150, audioCtx.currentTime);
-        droneFilter2.Q.setValueAtTime(3, audioCtx.currentTime);
-        droneGain2.gain.setValueAtTime(0, audioCtx.currentTime);
-        droneGain2.gain.linearRampToValueAtTime(0.025, audioCtx.currentTime + 6);
-        droneOsc2.connect(droneFilter2);
-        droneFilter2.connect(droneGain2);
-        droneGain2.connect(audioCtx.destination);
-        droneOsc2.start();
-        currentMusicNodes.push({ osc: droneOsc2, gain: droneGain2, filter: droneFilter2 });
-
-        // Third drone - higher harmonic, very quiet
-        const droneOsc3 = audioCtx.createOscillator();
-        const droneGain3 = audioCtx.createGain();
-        const droneFilter3 = audioCtx.createBiquadFilter();
-        droneOsc3.type = 'sine';
-        droneOsc3.frequency.setValueAtTime(165.00, audioCtx.currentTime); // E3
-        droneFilter3.type = 'lowpass';
-        droneFilter3.frequency.setValueAtTime(300, audioCtx.currentTime);
-        droneGain3.gain.setValueAtTime(0, audioCtx.currentTime);
-        droneGain3.gain.linearRampToValueAtTime(0.012, audioCtx.currentTime + 8);
-        droneOsc3.connect(droneFilter3);
-        droneFilter3.connect(droneGain3);
-        droneGain3.connect(audioCtx.destination);
-        droneOsc3.start();
-        currentMusicNodes.push({ osc: droneOsc3, gain: droneGain3, filter: droneFilter3 });
-
-        // ========================================
-        // LAYER 3: Filter sweep LFOs (breathing, unsettling)
-        // ========================================
-        // Slow filter sweep - opens and closes like breathing
-        const filterLFO = audioCtx.createOscillator();
-        const filterLFOGain = audioCtx.createGain();
-        filterLFO.type = 'sine';
-        filterLFO.frequency.setValueAtTime(0.08, audioCtx.currentTime); // Very slow - 12 second cycle
-        filterLFOGain.gain.setValueAtTime(120, audioCtx.currentTime); // Sweeps ±120 Hz
-        filterLFO.connect(filterLFOGain);
-        filterLFOGain.connect(droneFilter1.frequency);
-        filterLFOGain.connect(droneFilter2.frequency);
-        filterLFO.start();
-        currentMusicNodes.push({ osc: filterLFO, gain: filterLFOGain });
-
-        // Secondary filter sweep - offset timing for complexity
-        const filterLFO2 = audioCtx.createOscillator();
-        const filterLFOGain2 = audioCtx.createGain();
-        filterLFO2.type = 'sine';
-        filterLFO2.frequency.setValueAtTime(0.05, audioCtx.currentTime); // Even slower
-        filterLFOGain2.gain.setValueAtTime(80, audioCtx.currentTime);
-        filterLFO2.connect(filterLFOGain2);
-        filterLFOGain2.connect(droneFilter1.frequency);
-        filterLFO2.start();
-        currentMusicNodes.push({ osc: filterLFO2, gain: filterLFOGain2 });
-
-        // ========================================
-        // LAYER 4: Metallic resonant tones (irregular intervals)
-        // ========================================
-        const metallicFreqs = [
-            800, 1200, 1600, 2400, 3200, 4800, // Harmonic series
-            932.33, 1396.91, 2093.00,            // Inharmonic (E5, F#5, C#6)
-            1174.66, 1567.98, 2349.32,            // D#5, G#5, B6
+        const clusterBaseFreq = 55.00; // A1
+        // Close intervals mimicking string cluster (semitones above base)
+        // These create beating, dissonance when detuned and played together
+        const clusterSemitones = [
+            0,      // A1 (unison)
+            0.08,   // Slightly detuned unison
+            -0.06,  // Slightly detuned unison (beating)
+            1.2,    // Very close to Bb1 - crushing minor 2nd
+            1.8,    // Slightly flat Bb1
+            3.5,    // Between B1 and C2 - dissonant
+            5.0,    // C#2
+            7.0,    // D2
+            9.0,    // E2
+            11.0,   // F#2 (fifth above - adds depth)
         ];
 
-        const metallicInterval = setInterval(() => {
-            // Pick 1-2 metallic frequencies
-            const numTones = 1 + Math.floor(Math.random() * 2);
-            for (let i = 0; i < numTones; i++) {
-                const freq = metallicFreqs[Math.floor(Math.random() * metallicFreqs.length)];
-                const duration = 1 + Math.random() * 3; // 1-4 seconds sustain
-                const volume = 0.008 + Math.random() * 0.012; // Very quiet
+        const clusterOscillators = [];
+        const clusterGains = [];
 
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
+        clusterSemitones.forEach((semitoneOffset, i) => {
+            const freq = clusterBaseFreq * Math.pow(2, semitoneOffset / 12);
 
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                // Slight random detuning for metallic quality
-                osc.detune.setValueAtTime((Math.random() - 0.5) * 20, audioCtx.currentTime);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
 
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                filter.Q.setValueAtTime(50 + Math.random() * 100, audioCtx.currentTime); // Very narrow
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-                gain.gain.setValueAtTime(0, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.3); // Slow attack
-                gain.gain.linearRampToValueAtTime(volume * 0.5, audioCtx.currentTime + duration * 0.5);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+            // Low-pass filter to muffle into string-like quality
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+            filter.Q.setValueAtTime(2, audioCtx.currentTime);
 
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration + 0.1);
+            // Individual gain (will be overridden by master sweep)
+            gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
 
-                currentMusicNodes.push({ osc: osc, gain: gain });
-            }
-        }, 3000 + Math.random() * 4000); // Every 3-7 seconds, irregular
-        currentMusicNodes.push({ type: 'interval', id: metallicInterval });
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+
+            clusterOscillators.push(osc);
+            clusterGains.push(gain);
+            currentMusicNodes.push({ osc: osc, gain: gain, filter: filter });
+        });
 
         // ========================================
-        // LAYER 5: Sharp high-frequency stabs
+        // LAYER 2: Sub-bass foundation
+        // Deep rumble below the cluster for physical impact
         // ========================================
-        const stabInterval = setInterval(() => {
-            // Only stab sometimes - unpredictable tension
-            if (Math.random() < 0.4) {
-                const stabFreq = 4000 + Math.random() * 6000; // 4-10 kHz range
-                const stabDuration = 0.3 + Math.random() * 0.5;
-                const stabVolume = 0.015 + Math.random() * 0.02;
-
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(stabFreq, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(stabFreq * 0.5, audioCtx.currentTime + stabDuration); // Pitch drop
-
-                gain.gain.setValueAtTime(stabVolume, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + stabDuration);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + stabDuration + 0.1);
-
-                currentMusicNodes.push({ osc: osc, gain: gain });
-            }
-        }, 4000 + Math.random() * 5000); // Every 4-9 seconds
-        currentMusicNodes.push({ type: 'interval', id: stabInterval });
+        const subOsc = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        const subFilter = audioCtx.createBiquadFilter();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(36.71, audioCtx.currentTime); // D1
+        subFilter.type = 'lowpass';
+        subFilter.frequency.value = 55;
+        subGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        subOsc.connect(subFilter);
+        subFilter.connect(subGain);
+        subGain.connect(masterGain);
+        subOsc.start();
+        currentMusicNodes.push({ osc: subOsc, gain: subGain });
 
         // ========================================
-        // LAYER 6: Slow pitch drift on main drone
+        // LAYER 3: High harmonic shimmer
+        // Quiet overtone that adds ethereal quality
         // ========================================
-        // Continuously drift the main drone frequency for unease
-        let driftTime = 0;
-        const driftInterval = setInterval(() => {
-            driftTime += 0.1;
-            // Slow sine wave pitch drift ±8 Hz around base frequency
-            const drift = Math.sin(driftTime * 0.3) * 8;
-            droneOsc1.frequency.linearRampToValueAtTime(55.00 + drift, audioCtx.currentTime + 0.1);
-            droneOsc2.frequency.linearRampToValueAtTime(82.50 + drift * 1.5, audioCtx.currentTime + 0.1);
+        const highOsc = audioCtx.createOscillator();
+        const highGain = audioCtx.createGain();
+        const highFilter = audioCtx.createBiquadFilter();
+        highOsc.type = 'sine';
+        highOsc.frequency.setValueAtTime(clusterBaseFreq * 6, audioCtx.currentTime); // A4 (6 octaves up)
+        highFilter.type = 'lowpass';
+        highFilter.frequency.value = 1500;
+        highGain.gain.setValueAtTime(0.003, audioCtx.currentTime);
+        highOsc.connect(highFilter);
+        highFilter.connect(highGain);
+        highGain.connect(masterGain);
+        highOsc.start();
+        currentMusicNodes.push({ osc: highOsc, gain: highGain });
+
+        // ========================================
+        // LAYER 4: Slow pitch climb (the "inevitable approach")
+        // The entire cluster slowly shifts up in pitch
+        // ========================================
+        let climbStartTime = audioCtx.currentTime;
+        const climbDuration = 30; // Full climb takes 30 seconds
+        const climbRange = 3.0;   // Total climb range: 3 semitones (minor 3rd)
+
+        // ========================================
+        // THE EXPONENTIAL VOLUME SWEEP
+        // Core of 28 Days Later theme: near-silent → deafening → near-silent
+        // Loop cycle: ~20 seconds
+        // ========================================
+        const cycleDuration = 20; // Full cycle time
+        const buildPhase = 0.65;   // 65% of cycle building up
+        const releasePhase = 0.15; // 15% releasing to silence
+        const restPhase = 0.20;    // 20% resting in silence
+
+        function startVolumeCycle(startTime) {
+            const phaseBuild = cycleDuration * buildPhase;  // 13 seconds
+            const phaseRelease = cycleDuration * releasePhase; // 3 seconds
+            const phaseRest = cycleDuration * restPhase;      // 4 seconds
+            const phaseRecovery = 1.0;                         // 1 second fade back to start
+
+            const totalCycle = phaseBuild + phaseRelease + phaseRest + phaseRecovery;
+
+            // Phase 1: Exponential build from near-silence to peak
+            masterGain.gain.cancelScheduledValuesAtTime(startTime);
+            masterGain.gain.setValueAtTime(0.0001, startTime); // Nearly silent start
+            masterGain.gain.exponentialRampToValueAtTime(0.35, startTime + phaseBuild); // Build to loud!
+
+            // Phase 2: Release back to silence (abrupt cut, then fade)
+            masterGain.gain.setValueAtTime(0.35, startTime + phaseBuild);
+            masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + phaseBuild + phaseRelease);
+
+            // Phase 3: Rest in silence
+            masterGain.gain.setValueAtTime(0.0001, startTime + phaseBuild + phaseRelease);
+
+            // Phase 4: Quick recovery to start
+            masterGain.gain.setValueAtTime(0.0001, startTime + phaseBuild + phaseRelease + phaseRest);
+            masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + totalCycle);
+
+            // Schedule next cycle
+            setTimeout(() => {
+                if (currentStage === 1) {
+                    startVolumeCycle(audioCtx.currentTime);
+                }
+            }, (totalCycle - phaseRecovery) * 1000);
+        }
+
+        startVolumeCycle(audioCtx.currentTime + 1); // Start after 1 second delay
+
+        // ========================================
+        // LAYER 5: Slow pitch climb on cluster
+        // ========================================
+        let climbTime = 0;
+        const climbInterval = setInterval(() => {
+            climbTime += 0.1;
+            // Sine wave climb: goes up and down slowly
+            const climbAmount = Math.sin(climbTime * 0.15) * (climbRange / 2);
+            const currentClimb = ((climbTime % 30) / 30) * climbRange; // Gradual climb over 30s
+
+            clusterOscillators.forEach((osc, i) => {
+                const baseFreq = clusterBaseFreq * Math.pow(2, clusterSemitones[i] / 12);
+                osc.frequency.linearRampToValueAtTime(
+                    baseFreq * Math.pow(2, currentClimb / 12),
+                    audioCtx.currentTime + 0.1
+                );
+            });
         }, 100);
-        currentMusicNodes.push({ type: 'interval', id: driftInterval });
+        currentMusicNodes.push({ type: 'interval', id: climbInterval });
 
         // ========================================
-        // LAYER 7: Occasional sub-bass pulse
+        // LAYER 6: Sub-bass LFO modulation
+        // Deep rumbling/rolling effect
         // ========================================
-        const pulseInterval = setInterval(() => {
-            if (Math.random() < 0.5) {
-                const pulseOsc = audioCtx.createOscillator();
-                const pulseGain = audioCtx.createGain();
-                const pulseFilter = audioCtx.createBiquadFilter();
+        const subLFO = audioCtx.createOscillator();
+        const subLFOGain = audioCtx.createGain();
+        subLFO.type = 'sine';
+        subLFO.frequency.setValueAtTime(0.2, audioCtx.currentTime);
+        subLFOGain.gain.setValueAtTime(2, audioCtx.currentTime);
+        subLFO.connect(subLFOGain);
+        subLFOGain.connect(subOsc.frequency);
+        subLFO.start();
+        currentMusicNodes.push({ osc: subLFO, gain: subLFOGain });
 
-                pulseOsc.type = 'sine';
-                pulseOsc.frequency.setValueAtTime(28, audioCtx.currentTime); // Below sub-bass
-                pulseFilter.type = 'lowpass';
-                pulseFilter.frequency.value = 40;
-
-                pulseGain.gain.setValueAtTime(0, audioCtx.currentTime);
-                pulseGain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.05); // Fast attack
-                pulseGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2 + Math.random() * 3); // Long decay
-
-                pulseOsc.connect(pulseFilter);
-                pulseFilter.connect(pulseGain);
-                pulseGain.connect(audioCtx.destination);
-                pulseOsc.start();
-                pulseOsc.stop(audioCtx.currentTime + 5);
-
-                currentMusicNodes.push({ osc: pulseOsc, gain: pulseGain });
-            }
-        }, 5000 + Math.random() * 6000); // Every 5-11 seconds
-        currentMusicNodes.push({ type: 'interval', id: pulseInterval });
+        // ========================================
+        // LAYER 7: Cluster "breathing" - secondary volume modulation
+        // Subtle pulsing within the main sweep
+        // ========================================
+        const breatheOsc = audioCtx.createOscillator();
+        const breatheGain = audioCtx.createGain();
+        breatheOsc.type = 'sine';
+        breatheOsc.frequency.setValueAtTime(0.06, audioCtx.currentTime); // Very slow - ~17 second cycle
+        breatheGain.gain.setValueAtTime(0.008, audioCtx.currentTime);
+        breatheOsc.connect(breatheGain);
+        breatheGain.connect(masterGain.gain); // Modulate master volume subtly
+        breatheOsc.start();
+        currentMusicNodes.push({ osc: breatheOsc, gain: breatheGain });
     }
 
     /**
