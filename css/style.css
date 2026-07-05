@@ -185,7 +185,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 360px;
+    gap: 24px;
+    position: relative;
+    z-index: 2;
 }
 
 .title-group {
@@ -231,80 +233,6 @@ body {
         0 -2px 0 rgba(0, 0, 0, 0.7),
         0 2px 0 rgba(0, 0, 0, 0.7),
         3px 3px 0 rgba(0, 0, 0, 0.5);
-}
-
-/* ============================================
-   SUBTLE CLOUDS (Title Screen)
-   ============================================ */
-.title-clouds {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 0;
-}
-
-.cloud {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    filter: blur(20px);
-}
-
-.cloud::before,
-.cloud::after {
-    content: '';
-    position: absolute;
-    background: inherit;
-    border-radius: 50%;
-}
-
-.cloud-1 {
-    width: 200px;
-    height: 80px;
-    top: 15%;
-    left: -200px;
-    animation: cloudDrift 60s linear infinite;
-}
-
-.cloud-1::before {
-    width: 100px;
-    height: 60px;
-    top: -20px;
-    left: 30px;
-}
-
-.cloud-1::after {
-    width: 120px;
-    height: 70px;
-    top: -15px;
-    right: 20px;
-}
-
-.cloud-2 {
-    width: 250px;
-    height: 90px;
-    top: 40%;
-    left: -250px;
-    animation: cloudDrift 80s linear infinite;
-    animation-delay: -25s;
-}
-
-.cloud-2::before {
-    width: 130px;
-    height: 70px;
-    top: -25px;
-    left: 50px;
-}
-
-.cloud-2::after {
-    width: 100px;
-    height: 55px;
-    top: -10px;
-    right: 30px;
 }
 
 .cloud-3 {
@@ -476,7 +404,7 @@ body {
 
 /* --- Progress Dots --- */
 .progress-dots {
-    display: flex;
+    display: none;
     gap: 12px;
     padding: 8px 0;
 }
@@ -1036,12 +964,55 @@ body::after {
         background-size: cover !important;
     }
 
-    /* Title screen portrait mode - anchored to top */
+    /* Title screen portrait mode - text top, button bottom */
     #stage-title.active {
         background-image: url('../images/portrait/intro.jpg') !important;
         background-size: cover !important;
-        background-position: top center !important;
+        background-position: center !important;
         background-repeat: no-repeat !important;
+    }
+
+    /* Position clouds absolutely so they don't interfere with layout */
+    #stage-title.active .title-clouds {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 0 !important;
+    }
+
+    /* Title content fills the full stage height */
+    #stage-title.active .title-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        height: 100% !important;
+        height: 100dvh !important;
+        width: 100% !important;
+        position: relative !important;
+    }
+
+    /* Title group: push title to top with margin */
+    #stage-title.active .title-group {
+        margin-top: 8vh;
+    }
+
+    /* Push button to bottom of screen with flex spacing */
+    #stage-title.active .title-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        height: 100% !important;
+        height: 100dvh !important;
+        width: 100% !important;
+        position: relative !important;
+        padding: 12px !important;
+    }
+
+    /* Button bottom margin to match title top margin */
+    #stage-title.active .btn-primary {
+        margin-bottom: 8vh;
     }
 
     /* Stage portrait modes - anchored to top, contain */
@@ -1790,6 +1761,119 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
 }
 
 /* ============================================
+    STAGE 4 - DUAL ZONE LAYOUT
+    Dialogue box at top, coop buttons at bottom
+    Both float above the background image
+    ============================================ */
+
+/* Stage 4: split into two zones with flex (only when active) */
+.stage.active.stage-4 {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+}
+
+/* Dialogue zone anchored to top of stage-4 (only when active) - relative for toggle positioning */
+.stage.active.stage-4 .stage-content-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    /* Grow to fill available space, allowing coop section to be pushed to bottom */
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+/* Dialogue box inside stage-4 top zone - keep its existing bg (only when active) */
+.stage.active.stage-4 .stage-content-top .dialogue-box {
+    width: 100%;
+    padding: 12px;
+    position: relative;
+}
+
+/* Stage 4 toggle: position at bottom-right of dialogue box */
+.stage.active.stage-4 .clue-toggle-4 {
+    position: absolute;
+    bottom: -36px;
+    right: 0;
+    top: auto;
+}
+
+/* Coop section at the bottom - separate floating card */
+.coop-section-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    /* Subtle background so it floats above the image */
+    background-color: rgba(26, 26, 46, 0.35);
+    /* border: 3px solid var(--pixel-border); */
+    border-radius: 12px;
+    padding: 20px 16px;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); */
+    /* Position at bottom area */
+    flex: 0 0 auto;
+    margin-bottom: 12px;
+    margin-top: auto;
+}
+
+/* Coop prompt text styling */
+.coop-section-bottom .coop-prompt {
+    margin-bottom: 16px;
+}
+
+/* ============================================
+    STAGE 4 - RESPONSIVE TIGHTENING
+    ============================================ */
+
+/* Tablet: tighten spacing */
+@media (max-width: 768px) {
+    .coop-section-bottom {
+        padding: 16px 12px;
+    }
+}
+
+/* Mobile: more compact */
+@media (max-width: 428px) {
+    .coop-section-bottom {
+        padding: 14px 10px;
+        border-radius: 8px;
+    }
+
+    .coop-section-bottom .coop-prompt {
+        margin-bottom: 12px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+    .coop-section-bottom {
+        padding: 12px 8px;
+    }
+}
+
+/* ============================================
+    STAGE 4 TOGGLE - REVERSED ARROW DIRECTION
+    Toggle is now at bottom-right of clue box, clue expands downward
+    Arrow points up when clue is visible, down when collapsed
+    ============================================ */
+
+/* Default: ▲ pointing up when clue is visible (expanded) */
+.clue-toggle-4 .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* When collapsed: flip to ▼ pointing down */
+.clue-toggle-4[aria-expanded="false"] .toggle-icon {
+    transform: rotate(0deg);
+}
+
+/* ============================================
     COUNTDOWN NUMBER STYLES
     ============================================ */
 .countdown-number {
@@ -1906,20 +1990,53 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     }
 }
 
-/* Mobile sizing */
-@media (max-width: 428px) {
+/* Mobile sizing - 60px buttons, hide player titles */
+@media (max-width: 600px) {
+    /* Hide Player 1 / Player 2 titles to save vertical space */
+    .coop-player-title {
+        display: none;
+    }
+
     .arcade-btn {
-        width: 76px;
-        height: 76px;
+        width: 60px !important;
+        height: 60px !important;
     }
 
     .arcade-key {
-        font-size: 24px;
+        font-size: 19.2px !important;
     }
 
-    .coop-player-title {
-        font-size: 7px;
-        letter-spacing: 1px;
+    /* Scale ring border inset proportionally (4px * 0.6 = 2.4px) */
+    .arcade-btn::after {
+        inset: -2.4px !important;
+    }
+
+    /* Scale Player 1 shadow offsets proportionally (6px * 0.6 = 3.6px) */
+    .arcade-btn-p1::before {
+        box-shadow:
+            inset 0 -3.6px 0 rgba(255, 150, 150, 0.15),
+            inset 0 3.6px 0 rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .arcade-btn-p1:active::before,
+    .arcade-btn-p1.tapped::before {
+        box-shadow:
+            inset 0 3.6px 0 rgba(0, 0, 0, 0.2),
+            inset 0 -3.6px 0 rgba(255, 150, 150, 0.1) !important;
+    }
+
+    /* Scale Player 2 shadow offsets proportionally */
+    .arcade-btn-p2::before {
+        box-shadow:
+            inset 0 -3.6px 0 rgba(150, 220, 255, 0.15),
+            inset 0 3.6px 0 rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .arcade-btn-p2:active::before,
+    .arcade-btn-p2.tapped::before {
+        box-shadow:
+            inset 0 3.6px 0 rgba(0, 0, 0, 0.2),
+            inset 0 -3.6px 0 rgba(150, 220, 255, 0.1) !important;
     }
 
     .coop-buttons {
@@ -1931,15 +2048,15 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     }
 }
 
-/* Very small screens */
+/* Very small screens - keep 60px buttons */
 @media (max-width: 360px) {
     .arcade-btn {
-        width: 68px;
-        height: 68px;
+        width: 60px !important;
+        height: 60px !important;
     }
 
     .arcade-key {
-        font-size: 22px;
+        font-size: 19.2px !important;
     }
 
     .coop-buttons {
