@@ -53,7 +53,6 @@ const CONFIG = {
         message: "Every quest has led to this moment...",
         question: "Will you marry me?",
         buttonYes: "YES! 💍",
-        buttonNo: "Are you sure? 🥺",
         afterYes: "She said YES! Forever begins now! 💕",
     },
 };
@@ -63,9 +62,8 @@ const CONFIG = {
    ============================================ */
 
 const state = {
-    currentStage: 0,        // 0=title, 1-4=stages, 5=proposal
+    currentStage: 0,        // 0=title, 1-4=stages, 5=proposal, 6=treasure
     isTransitioning: false,  // Guards against double-submit
-    noButtonEvades: 0,       // 0-3
     confettiActive: false,
 };
 
@@ -100,10 +98,10 @@ function handleCoOpTap(playerNum) {
         document.querySelectorAll('.arcade-btn').forEach(b => b.classList.add('success'));
         screenFlash();
 
-        // Proceed to proposal after delay
+        // Proceed to treasure screen after delay
         setTimeout(() => {
-            state.currentStage = 5;
-            showStage(5);
+            state.currentStage = 6;
+            showStage(6);
         }, 1000);
     }
 
@@ -277,8 +275,8 @@ async function showStage(n) {
         return;
     }
 
-    // Guard: valid range
-    if (n < 0 || n > 5) return;
+    // Guard: valid range (0=title, 1-4=stages, 5=proposal, 6=treasure)
+    if (n < 0 || n > 6) return;
 
     state.isTransitioning = true;
 
@@ -293,6 +291,8 @@ async function showStage(n) {
         targetId = 'stage-title';
     } else if (n === 5) {
         targetId = 'stage-proposal';
+    } else if (n === 6) {
+        targetId = 'stage-treasure';
     } else {
         targetId = `stage-${n}`;
     }
@@ -318,7 +318,13 @@ async function showStage(n) {
     // Handle stage-specific initialization
     if (n === 5) {
         // Proposal screen init
-        startConfetti();
+        // Show the YES button for user interaction
+        const btnYes = document.getElementById('btn-yes');
+        if (btnYes) {
+            btnYes.style.display = 'block';
+        }
+
+        // Heart burst
         createHeartBurst();
 
         // Typewriter for proposal message
@@ -328,8 +334,33 @@ async function showStage(n) {
             await typewriter(msgEl, CONFIG.proposal.message, 50);
         }
 
-        // Start confetti
-        Confetti.start();
+        state.isTransitioning = false;
+        return;
+    }
+
+    // Treasure screen (stage 6)
+    if (n === 6) {
+        // Show treasure background with portrait support
+        const isMobile = window.innerWidth <= 600;
+        const treasureImage = isMobile
+            ? 'images/portrait/treasure.jpg'
+            : 'images/treasure.jpg';
+        target.style.setProperty('background-image', `url('${treasureImage}')`, 'important');
+        target.setAttribute('data-portrait', treasureImage);
+
+        // Update blurred background
+        updateBgBlurVisibility();
+
+        // Start golden sparkle particles
+        spawnTreasureSparkles();
+        if (!window.__treasureParticleInterval) {
+            window.__treasureParticleInterval = setInterval(() => {
+                spawnTreasureSparkles();
+            }, 2000);
+        }
+
+        // Start countdown from 5
+        startTreasureCountdown();
 
         state.isTransitioning = false;
         return;
@@ -488,72 +519,15 @@ function handleEnter(event, stageId) {
    ============================================ */
 
 /**
- * Handle YES button press
+ * Run countdown from 5 to 1 on the treasure screen, then transition to proposal
  */
-async function handleYes() {
-    if (state.isTransitioning) return;
-
-    state.isTransitioning = true;
-
-    // Disable both buttons
-    const btnYes = document.getElementById('btn-yes');
-    const btnNo = document.getElementById('btn-no');
-    if (btnYes) btnYes.disabled = true;
-    if (btnNo) btnNo.disabled = true;
-
-    // Intensify confetti
-    Confetti.intensify();
-
-    // Heart burst
-    createHeartBurst();
-
-    // Show after-yes message
-    const afterYesEl = document.getElementById('after-yes');
-    if (afterYesEl) {
-        afterYesEl.style.display = 'block';
-        await typewriter(afterYesEl, CONFIG.proposal.afterYes, 60);
-    }
-
-    // Wait a moment after the message completes
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Fade out buttons
-    const proposalButtons = document.querySelector('.proposal-buttons');
-    if (proposalButtons) {
-        proposalButtons.classList.add('fading-out');
-    }
-
-    // Fade out flowers
-    const flowerContainer = document.querySelector('.flower-container');
-    if (flowerContainer) {
-        flowerContainer.classList.add('fading-out');
-    }
-
-    // Wait for fade-out to complete
-    await new Promise(resolve => setTimeout(resolve, 900));
-
-    // Hide the faded-out elements from layout (CSS opacity is 0 but they're still in the flow)
-    if (proposalButtons) {
-        proposalButtons.style.display = 'none';
-    }
-    if (flowerContainer) {
-        flowerContainer.style.display = 'none';
-    }
-    // NOTE: afterYesEl is NOT hidden - it remains visible during countdown
-
-    // Start countdown
-    await startCountdown();
-}
-
-/**
- * Run countdown from 5 to 1, then trigger final transition
- */
-async function startCountdown() {
+async function startTreasureCountdown() {
     const countdownEl = document.getElementById('countdown');
     if (!countdownEl) return;
 
+    countdownEl.style.display = 'block';
+
     for (let i = 5; i >= 1; i--) {
-        countdownEl.style.display = 'block';
         countdownEl.textContent = i;
         // Reset animation
         countdownEl.style.animation = 'none';
@@ -566,76 +540,62 @@ async function startCountdown() {
     // Hide countdown
     countdownEl.style.display = 'none';
 
-    // Trigger final screen transition
-    await triggerFinalTransition();
+    // Stop treasure sparkle interval
+    if (window.__treasureParticleInterval) {
+        clearInterval(window.__treasureParticleInterval);
+        window.__treasureParticleInterval = null;
+    }
+
+    // Transition to proposal screen
+    state.currentStage = 5;
+    showStage(5);
 }
 
 /**
- * Fade to black, then reveal final2.jpg
+ * Handle YES button press - start confetti and show celebration
  */
-async function triggerFinalTransition() {
-    const overlay = document.getElementById('fade-overlay');
-    if (!overlay) return;
+async function handleYes() {
+    if (state.isTransitioning) return;
 
-    // Stop confetti
-    stopConfetti();
+    state.isTransitioning = true;
 
-    // Fade to black
-    overlay.classList.add('active');
+    // Disable the YES button
+    const btnYes = document.getElementById('btn-yes');
+    if (btnYes) btnYes.disabled = true;
 
-    // Wait for fade to complete
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Change proposal screen background to treasure.jpg
-    const proposalStage = document.getElementById('stage-proposal');
-    if (proposalStage) {
-        // Determine portrait image based on viewport width
-        const isMobile = window.innerWidth <= 600;
-        const finalImage = isMobile
-            ? 'images/portrait/treasure.jpg'
-            : 'images/treasure.jpg';
-
-        // Use setProperty with 'important' to override CSS !important rules
-        proposalStage.style.setProperty('background-image', `url('${finalImage}')`, 'important');
-
-        // Update the data-portrait for blur layer consistency
-        proposalStage.setAttribute('data-portrait', finalImage);
+    // Add fading-out class to buttons to trigger fade animation
+    const proposalButtons = document.querySelector('.proposal-buttons');
+    if (proposalButtons) {
+        proposalButtons.classList.add('fading-out');
     }
 
-    // Update the blurred background layer
-    updateFinalBgBlur();
+    // Start confetti
+    Confetti.start();
 
-    // Fade from black (remove overlay)
-    overlay.classList.remove('active');
+    // Heart burst
+    createHeartBurst();
 
-    // Hide proposal message (it's no longer needed on treasure screen)
-    const proposalMessage = document.getElementById('proposal-message');
-    if (proposalMessage) {
-        proposalMessage.style.transition = 'opacity 600ms ease, transform 600ms ease';
-        proposalMessage.style.opacity = '0';
-        proposalMessage.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            proposalMessage.style.display = 'none';
-            proposalMessage.style.opacity = '';
-            proposalMessage.style.transform = '';
-            proposalMessage.style.transition = '';
-        }, 700);
+    // Show after-yes message (do NOT fade it out)
+    const afterYesEl = document.getElementById('after-yes');
+    if (afterYesEl) {
+        afterYesEl.style.display = 'block';
+        await typewriter(afterYesEl, CONFIG.proposal.afterYes, 60);
     }
 
-    // Spawn treasure sparkle particles
-    spawnTreasureSparkles();
-
-    // Start infinite particle loop
-    if (!window.__treasureParticleInterval) {
-        window.__treasureParticleInterval = setInterval(() => {
-            spawnTreasureSparkles();
-        }, 2000);
-    }
-
-    // Clean up overlay after fade completes
+    // Intensify confetti after message
     setTimeout(() => {
-        overlay.style.display = 'none';
-    }, 1100);
+        Confetti.intensify();
+    }, 500);
+
+    // Hide ONLY the proposal buttons after fade animation completes
+    // The after-yes message stays visible permanently
+    setTimeout(() => {
+        if (proposalButtons) {
+            proposalButtons.style.display = 'none';
+        }
+    }, 800);
+
+    state.isTransitioning = false;
 }
 
 /**
@@ -691,73 +651,6 @@ function spawnTreasureSparkles() {
     }
 }
 
-/**
- * Update the blurred background for the final screen
- */
-function updateFinalBgBlur() {
-    const proposalStage = document.getElementById('stage-proposal');
-    if (!proposalStage) return;
-
-    const bgBlur = document.querySelector('.bg-blur[data-stage="stage-proposal"]');
-    if (!bgBlur) return;
-
-    const bgImage = proposalStage.style.getPropertyValue('background-image');
-    if (bgImage) {
-        bgBlur.style.setProperty('background-image', bgImage, 'important');
-    }
-}
-
-/**
- * Handle NO button press
- */
-function handleNo() {
-    state.noButtonEvades++;
-
-    if (state.noButtonEvades >= 3) {
-        // After 3 evades, convert to YES button
-        const btnNo = document.getElementById('btn-no');
-        if (btnNo) {
-            btnNo.textContent = CONFIG.proposal.buttonYes;
-            btnNo.className = 'btn-yes';
-            btnNo.removeAttribute('id'); // Remove id so handleNo no longer triggers
-            btnNo.addEventListener('click', () => handleYes());
-        }
-    } else {
-        repositionNoButton();
-    }
-}
-
-/**
- * Reposition NO button to a random viewport-bound position
- */
-function repositionNoButton() {
-    const btn = document.getElementById('btn-no');
-    if (!btn) return;
-
-    const btnWidth = btn.offsetWidth + 20; // padding
-    const btnHeight = btn.offsetHeight + 20;
-
-    // Clamp to safe viewport area
-    const maxX = window.innerWidth - btnWidth;
-    const maxY = window.innerHeight - btnHeight;
-
-    // Ensure minimum bounds
-    const clampedMaxX = Math.max(60, maxX);
-    const clampedMaxY = Math.max(60, maxY);
-
-    const newX = Math.max(10, Math.random() * clampedMaxX);
-    const newY = Math.max(10, Math.random() * clampedMaxY);
-
-    btn.style.position = 'fixed';
-    btn.style.left = newX + 'px';
-    btn.style.top = newY + 'px';
-    btn.style.zIndex = '50';
-
-    // Add wiggle animation
-    btn.style.animation = 'none';
-    btn.offsetHeight; // Force reflow
-    btn.style.animation = '';
-}
 
 /* ============================================
    CONFETTI MANAGEMENT
@@ -842,12 +735,6 @@ function bindEvents() {
     const btnYes = document.getElementById('btn-yes');
     if (btnYes) {
         btnYes.addEventListener('click', handleYes);
-    }
-
-    // NO button
-    const btnNo = document.getElementById('btn-no');
-    if (btnNo) {
-        btnNo.addEventListener('click', handleNo);
     }
 
     // Keyboard detection for mobile input
@@ -1190,7 +1077,6 @@ function init() {
         // Create ambient effects
         createAmbientParticles();
         createStarField();
-        createFlowers();
 
         // Render pixel art
         const heartCanvas = document.getElementById('heart-canvas');
