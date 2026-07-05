@@ -430,10 +430,10 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 1 music - Resident Evil-style pipe organ drone
-     * Deep, dissonant organ tones with slow volume swells
-     * Mimics the RE mansion atmosphere: heavy, oppressive, with sudden tension spikes
-     * Based on Christopher Young's score: organ drones + distant screams
+     * Start Stage 1 music - World War Z-style marching drums
+     * Rhythmic war drums with pounding tempo and building urgency
+     * Mimics the apocalypse approaching: hordes of zombies closing in
+     * Inspired by Ilan Eshkeri's score: deep taiko drums + brass stabs
      */
     function startStage1Music() {
         if (!audioCtx || currentStage === 1) return;
@@ -452,186 +452,268 @@ const AudioSystem = (function () {
         currentMusicNodes.push({ gain: masterGain });
 
         // ========================================
-        // LAYER 1: Pipe Organ (F1 + G1 minor 2nd)
-        // Multiple harmonics filtered to sound like pipe organ
+        // LAYER 1: WAR DRUMS (Deep timpani/taiko)
+        // Amplitude-modulated noise through bandpass = boom sound
         // ========================================
-        const organFrequencies = [
-            // F1 fundamental + harmonics
-            43.65,    // F1 (fundamental)
-            87.30,    // F2 (1st harmonic)
-            130.81,   // C3 (2nd harmonic)
-            174.61,   // F3 (3rd harmonic)
-            220.00,   // A3 (4th harmonic)
-            261.63,   // C4 (5th harmonic)
-            349.23,   // F4 (6th harmonic)
-            // G1 fundamental + harmonics (dissonant minor 2nd)
-            49.00,    // G1 (fundamental)
-            98.00,    // G2 (1st harmonic)
-            146.83,   // D3 (2nd harmonic)
-            196.00,   // G3 (3rd harmonic)
-            246.94,   // Bb3 (4th harmonic)
-            293.66,   // D4 (5th harmonic)
-            392.00,   // G4 (6th harmonic)
+        function playWarDrum(freq, time, duration, volume) {
+            const now = audioCtx.currentTime + time;
+
+            // Create noise burst for drum body
+            const bufferSize = audioCtx.sampleRate * 0.3;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1);
+            }
+
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = buffer;
+
+            // Bandpass filter for drum body
+            const drumFilter = audioCtx.createBiquadFilter();
+            drumFilter.type = 'bandpass';
+            drumFilter.frequency.setValueAtTime(freq, now);
+            drumFilter.Q.setValueAtTime(2, now);
+
+            // Envelope gain
+            const drumGain = audioCtx.createGain();
+            drumGain.gain.setValueAtTime(volume, now);
+            drumGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            noiseSource.connect(drumFilter);
+            drumFilter.connect(drumGain);
+            drumGain.connect(masterGain);
+            noiseSource.start(now);
+            noiseSource.stop(now + duration + 0.01);
+            currentMusicNodes.push({ source: noiseSource, gain: drumGain });
+
+            // Pitch envelope for "boom" character
+            const pitchOsc = audioCtx.createOscillator();
+            const pitchGain = audioCtx.createGain();
+            pitchOsc.type = 'sine';
+            pitchOsc.frequency.setValueAtTime(freq * 2, now);
+            pitchOsc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + duration * 0.5);
+            pitchGain.gain.setValueAtTime(volume * 0.5, now);
+            pitchGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.3);
+            pitchOsc.connect(pitchGain);
+            pitchGain.connect(masterGain);
+            pitchOsc.start(now);
+            pitchOsc.stop(now + duration + 0.01);
+            currentMusicNodes.push({ osc: pitchOsc, gain: pitchGain });
+        }
+
+        // ========================================
+        // LAYER 2: MARCHING RHYTHM PATTERN
+        // Booming pattern with building urgency
+        // ========================================
+        let beatIndex = 0;
+        let baseBPM = 60; // Start slow
+
+        function playMarchingPattern() {
+            if (currentStage !== 1) return;
+
+            // Calculate current BPM (builds over ~60 seconds then loops)
+            const cycleTime = (audioCtx.currentTime % 60) / 60; // 0-1 over 60 seconds
+            const currentBPM = baseBPM + cycleTime * 60; // 60 → 120 BPM
+            const beatDuration = 60 / currentBPM;
+
+            // Pattern: Heavy-轻-Heavy-轻(fill) - like marching footsteps
+            const pattern = [
+                { beat: 0, time: 0, heavy: true },
+                { beat: 1, time: beatDuration, heavy: false },
+                { beat: 2, time: beatDuration * 2, heavy: true },
+                { beat: 3, time: beatDuration * 3, heavy: false },
+                // Drum fill on beat 4
+                { beat: 4, time: beatDuration * 4, heavy: false, fill: true },
+                { beat: 5, time: beatDuration * 4.25, heavy: false, fill: true },
+                { beat: 6, time: beatDuration * 4.5, heavy: false, fill: true },
+                { beat: 7, time: beatDuration * 4.75, heavy: false, fill: true },
+            ];
+
+            pattern.forEach(note => {
+                if (note.fill) {
+                    // Drum roll - quick rolls at end
+                    for (let i = 0; i < 4; i++) {
+                        const rollTime = note.time + i * (beatDuration * 0.08);
+                        playWarDrum(80 + i * 10, rollTime, beatDuration * 0.06, 0.04 * (1 - i * 0.2));
+                    }
+                } else {
+                    const vol = note.heavy ? 0.15 : 0.08;
+                    const dur = note.heavy ? 0.8 : 0.5;
+                    const drumFreq = note.heavy ? 55 : 70;
+                    playWarDrum(drumFreq, note.time, dur, vol);
+                }
+            });
+
+            // Schedule next pattern
+            const patternDuration = beatDuration * 5;
+            setTimeout(() => {
+                if (currentStage === 1) {
+                    playMarchingPattern();
+                }
+            }, patternDuration * 1000 - 100);
+
+            beatIndex++;
+        }
+
+        // Start pattern after 1 second
+        setTimeout(playMarchingPattern, 1000);
+
+        // ========================================
+        // LAYER 3: BRASS STABS (Dramatic hits)
+        // Sharp, powerful chords on heavy beats
+        // ========================================
+        const brassNotes = [
+            // A minor chord (dramatic, tense)
+            { freq: 220.00, dur: 0.6 },  // A3
+            { freq: 261.63, dur: 0.6 },  // C4
+            { freq: 329.63, dur: 0.6 },  // E3
+            { freq: 440.00, dur: 0.4 },  // A4 (high stab)
         ];
 
-        const organOscillators = [];
-        const organGains = [];
+        function playBrassStab(time, volume) {
+            const now = audioCtx.currentTime + time;
 
-        organFrequencies.forEach((freq, i) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            const filter = audioCtx.createBiquadFilter();
+            brassNotes.forEach(note => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
 
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(note.freq, now);
 
-            // Lowpass filter to mimic pipe organ tone
-            filter.type = 'lowpass';
-            // Higher harmonics get more filtered
-            const cutoff = Math.max(400, 2000 - (i * 250));
-            filter.frequency.setValueAtTime(cutoff, audioCtx.currentTime);
-            filter.Q.setValueAtTime(1, audioCtx.currentTime);
+                // Lowpass filter for brass body
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2000, now);
+                filter.Q.setValueAtTime(3, now);
 
-            // Lower volume for higher harmonics
-            const vol = i < 6 ? 0.025 : (i < 12 ? 0.015 : 0.008);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                // Sharp attack, quick decay
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(volume * 0.06, now + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + note.dur);
 
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(masterGain);
-            osc.start();
-            currentMusicNodes.push({ osc, gain, filter });
-            organOscillators.push(osc);
-            organGains.push(gain);
-        });
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + note.dur + 0.01);
+                currentMusicNodes.push({ osc, gain, filter });
+            });
+        }
 
-        // ========================================
-        // LAYER 2: Sub-bass foundation (F0)
-        // Deep rumble below hearing range
-        // ========================================
-        const subOsc = audioCtx.createOscillator();
-        const subGain = audioCtx.createGain();
-        const subFilter = audioCtx.createBiquadFilter();
-        subOsc.type = 'sine';
-        subOsc.frequency.setValueAtTime(21.83, audioCtx.currentTime); // F0
-        subFilter.type = 'lowpass';
-        subFilter.frequency.value = 35;
-        subGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        subOsc.connect(subFilter);
-        subFilter.connect(subGain);
-        subGain.connect(masterGain);
-        subOsc.start();
-        currentMusicNodes.push({ osc: subOsc, gain: subGain });
+        // Schedule brass stabs on heavy beats
+        function scheduleBrass() {
+            if (currentStage !== 1) return;
 
-        // ========================================
-        // LAYER 3: Sub-bass LFO (rolling thunder effect)
-        // ========================================
-        const subLFO = audioCtx.createOscillator();
-        const subLFOGain = audioCtx.createGain();
-        subLFO.type = 'sine';
-        subLFO.frequency.setValueAtTime(0.15, audioCtx.currentTime); // ~7 second cycle
-        subLFOGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
-        subLFO.connect(subLFOGain);
-        subLFOGain.connect(subOsc.frequency);
-        subLFO.start();
-        currentMusicNodes.push({ osc: subLFO, gain: subLFOGain });
+            const cycleTime = (audioCtx.currentTime % 60) / 60;
+            const currentBPM = baseBPM + cycleTime * 60;
+            const beatDuration = 60 / currentBPM;
+
+            // Brass hits on beats 1 and 3 (every 2 beats)
+            const beatsPerPhrase = 8;
+            const phraseDuration = beatDuration * beatsPerPhrase;
+
+            // Start brass on first heavy beat
+            playBrassStab(0, 1.0); // Full volume
+            // Second hit
+            setTimeout(() => {
+                if (currentStage === 1) {
+                    playBrassStab(beatDuration * 2, 0.8);
+                }
+            }, beatDuration * 2 * 1000 - 50);
+
+            // Schedule next phrase
+            setTimeout(scheduleBrass, phraseDuration * 1000 - 200);
+        }
+
+        setTimeout(scheduleBrass, 1000);
 
         // ========================================
-        // LAYER 4: Organ "breathing" modulation
-        // Slow volume pulse on organ layer
+        // LAYER 4: SUB-BASS PULSE (Physical impact)
+        // Deep sine wave below hearing range
         // ========================================
-        const breatheOsc = audioCtx.createOscillator();
-        const breatheGain = audioCtx.createGain();
-        breatheOsc.type = 'sine';
-        breatheOsc.frequency.setValueAtTime(0.07, audioCtx.currentTime); // ~14 second cycle
-        breatheGain.gain.setValueAtTime(0.008, audioCtx.currentTime);
-        breatheOsc.connect(breatheGain);
-        // Modulate each organ gain slightly
-        organGains.forEach(g => {
-            breatheGain.connect(g.gain);
-        });
-        breatheOsc.start();
-        currentMusicNodes.push({ osc: breatheOsc, gain: breatheGain });
+        const subBassOsc = audioCtx.createOscillator();
+        const subBassGain = audioCtx.createGain();
+        const subBassFilter = audioCtx.createBiquadFilter();
+        subBassOsc.type = 'sine';
+        subBassOsc.frequency.setValueAtTime(40, audioCtx.currentTime);
+        subBassFilter.type = 'lowpass';
+        subBassFilter.frequency.value = 55;
+        subBassGain.gain.setValueAtTime(0.10, audioCtx.currentTime);
+
+        // Pulse sub-bass with the rhythm
+        function pulseSubBass() {
+            if (currentStage !== 1) return;
+
+            const cycleTime = (audioCtx.currentTime % 60) / 60;
+            const currentBPM = baseBPM + cycleTime * 60;
+            const beatDuration = 60 / currentBPM;
+
+            // Pulse on heavy beats
+            const now = audioCtx.currentTime;
+            subBassGain.gain.setValueAtTime(0.10, now);
+            subBassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+            setTimeout(() => {
+                if (currentStage === 1) pulseSubBass();
+            }, beatDuration * 2 * 1000 - 100);
+        }
+
+        subBassOsc.connect(subBassFilter);
+        subBassFilter.connect(subBassGain);
+        subBassGain.connect(masterGain);
+        subBassOsc.start();
+        currentMusicNodes.push({ osc: subBassOsc, gain: subBassGain });
+
+        setTimeout(pulseSubBass, 1000);
 
         // ========================================
-        // LAYER 5: Distant "scream" screeches
-        // Random high-pitched dissonant bursts
+        // LAYER 5: DISTANT ROAR (Zombie horde ambience)
+        // Low, rumbling noise for atmosphere
         // ========================================
-        function playDistantScream() {
+        function playHordeRoar() {
             if (currentStage !== 1) return;
 
             const now = audioCtx.currentTime;
-            // Random pitch between F5 and A5 (dissonant high range)
-            const pitch = 698.46 + Math.random() * 197.53;
-            const duration = 0.5 + Math.random() * 1.5;
+            const duration = 2 + Math.random() * 3;
 
-            const screamOsc = audioCtx.createOscillator();
-            const screamGain = audioCtx.createGain();
-            const screamFilter = audioCtx.createBiquadFilter();
+            // Create roaring noise
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                // Modulate to create "roar" effect
+                const mod = Math.sin(i / audioCtx.sampleRate * 3) * 0.5 + 0.5;
+                data[i] = (Math.random() * 2 - 1) * mod;
+            }
 
-            screamOsc.type = 'sawtooth';
-            screamOsc.frequency.setValueAtTime(pitch, now);
-            screamOsc.frequency.exponentialRampToValueAtTime(
-                pitch * 1.02, now + duration * 0.5
-            );
-            screamOsc.frequency.exponentialRampToValueAtTime(
-                pitch * 0.98, now + duration
-            );
+            const roarSource = audioCtx.createBufferSource();
+            roarSource.buffer = buffer;
 
-            screamFilter.type = 'bandpass';
-            screamFilter.frequency.value = pitch;
-            screamFilter.Q.value = 8;
+            const roarFilter = audioCtx.createBiquadFilter();
+            roarFilter.type = 'bandpass';
+            roarFilter.frequency.value = 120;
+            roarFilter.Q.value = 1;
 
-            screamGain.gain.setValueAtTime(0, now);
-            screamGain.gain.linearRampToValueAtTime(0.015, now + 0.1);
-            screamGain.gain.setValueAtTime(0.015, now + duration * 0.6);
-            screamGain.gain.linearRampToValueAtTime(0, now + duration);
+            const roarGain = audioCtx.createGain();
+            roarGain.gain.setValueAtTime(0, now);
+            roarGain.gain.linearRampToValueAtTime(0.015, now + 0.5);
+            roarGain.gain.setValueAtTime(0.015, now + duration * 0.5);
+            roarGain.gain.linearRampToValueAtTime(0, now + duration);
 
-            screamOsc.connect(screamFilter);
-            screamFilter.connect(screamGain);
-            screamGain.connect(masterGain);
-            screamOsc.start(now);
-            screamOsc.stop(now + duration + 0.1);
-            currentMusicNodes.push({ osc: screamOsc, gain: screamGain });
+            roarSource.connect(roarFilter);
+            roarFilter.connect(roarGain);
+            roarGain.connect(masterGain);
+            roarSource.start(now);
+            roarSource.stop(now + duration + 0.01);
+            currentMusicNodes.push({ source: roarSource, gain: roarGain });
 
-            // Schedule next scream
-            const nextScream = 8000 + Math.random() * 15000; // 8-23 seconds
-            setTimeout(playDistantScream, nextScream);
+            // Schedule next roar
+            const nextRoar = 10000 + Math.random() * 20000; // 10-30 seconds
+            setTimeout(playHordeRoar, nextRoar);
         }
 
-        // Start first scream after 3 seconds
-        setTimeout(playDistantScream, 3000);
-
-        // ========================================
-        // LAYER 6: Slow volume swell cycle
-        // The signature RE organ effect
-        // ========================================
-        function startVolumeCycle(startTime) {
-            const buildTime = 8;   // 8 seconds building up
-            const peakTime = 3;    // 3 seconds at peak
-            const releaseTime = 4; // 4 seconds releasing
-
-            // Build from quiet to loud
-            masterGain.gain.setValueAtTime(0.01, startTime);
-            masterGain.gain.linearRampToValueAtTime(0.5, startTime + buildTime);
-
-            // Hold at peak
-            masterGain.gain.setValueAtTime(0.5, startTime + buildTime);
-            masterGain.gain.setValueAtTime(0.5, startTime + buildTime + peakTime);
-
-            // Release back to quiet
-            masterGain.gain.setValueAtTime(0.5, startTime + buildTime + peakTime);
-            masterGain.gain.linearRampToValueAtTime(0.01, startTime + buildTime + peakTime + releaseTime);
-
-            // Schedule next cycle (15 seconds total)
-            setTimeout(() => {
-                if (currentStage === 1) {
-                    startVolumeCycle(audioCtx.currentTime);
-                }
-            }, (buildTime + peakTime + releaseTime) * 1000 - 500);
-        }
-
-        startVolumeCycle(audioCtx.currentTime + 1);
+        setTimeout(playHordeRoar, 5000);
     }
 
     /**
