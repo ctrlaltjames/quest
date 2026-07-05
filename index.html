@@ -159,23 +159,26 @@
         </div>
     </section>
 
-    <!-- Proposal Screen -->
-    <section id="stage-proposal" class="stage" data-portrait="images/portrait/final.jpg">
-        <div class="confetti-container" aria-hidden="true"></div>
+    <!-- Treasure Screen (transitions from stage 4) -->
+    <section id="stage-treasure" class="stage" style="background-image: url('images/treasure.jpg');" data-portrait="images/portrait/treasure.jpg">
         <div class="proposal-content">
-            <div class="ring-sparkle" aria-hidden="true">
-                <canvas id="ring-sparkle-canvas" width="48" height="48"></canvas>
-            </div>
-            <p class="proposal-message" id="proposal-message"></p>
-            <div class="proposal-buttons">
-                <button class="btn-yes" id="btn-yes">YES! 💍</button>
-                <button class="btn-no" id="btn-no">Are you sure? 🥺</button>
-            </div>
-            <div class="flower-container" aria-hidden="true"></div>
-            <p class="after-yes" id="after-yes" style="display:none;"></p>
             <p class="countdown-number" id="countdown" style="display:none;"></p>
         </div>
     </section>
+
+    <!-- Proposal Screen -->
+    <section id="stage-proposal" class="stage" data-portrait="images/portrait/final.jpg">
+        <div class="proposal-content">
+            <p class="proposal-message" id="proposal-message"></p>
+            <div class="proposal-buttons">
+                <button class="btn-yes" id="btn-yes">YES!</button>
+            </div>
+        </div>
+        <p class="after-yes" id="after-yes" style="display:none;"></p>
+    </section>
+
+    <!-- Global confetti container (body-level for full viewport coverage) -->
+    <div id="confetti-container" class="confetti-container" aria-hidden="true"></div>
 
     <!-- Fade overlay for final transition -->
     <div id="fade-overlay" class="fade-overlay" aria-hidden="true"></div>

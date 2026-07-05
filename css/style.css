@@ -581,7 +581,7 @@ body {
 
 /* --- Proposal Screen --- */
 #stage-proposal {
-    justify-content: flex-end !important;
+    justify-content: flex-start !important;
     padding-bottom: 0 !important;
 }
 
@@ -592,14 +592,7 @@ body {
     text-align: center;
     max-width: 480px;
     width: 100%;
-    margin-top: auto;
-    padding-bottom: 5vh;
-}
-
-.ring-sparkle canvas {
-    width: 48px;
-    height: 48px;
-    image-rendering: pixelated;
+    margin-top: 0;
 }
 
 .proposal-message {
@@ -665,8 +658,8 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 10;
-    overflow: hidden;
+    z-index: 15;
+    overflow: visible;
 }
 
 .confetti-particle {
@@ -1889,7 +1882,7 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
         0 0 20px rgba(255, 215, 0, 0.5),
         0 0 40px rgba(255, 215, 0, 0.3);
     position: fixed;
-    bottom: 30%;
+    top: 15%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
