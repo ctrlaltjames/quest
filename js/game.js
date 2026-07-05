@@ -274,9 +274,6 @@ function renderStage(n) {
 async function showStage(n) {
     // Guard: prevent double calls
     if (state.isTransitioning) {
-        if (typeof window !== 'undefined' && window.__DEV__) {
-            console.warn(`showStage(${n}) called while transitioning. Ignoring.`);
-        }
         return;
     }
 
@@ -314,11 +311,6 @@ async function showStage(n) {
 
     // Update blurred background visibility for stages with images
     updateBgBlurVisibility();
-
-    // Update parallax background for the active stage
-    if (typeof ParallaxBG !== 'undefined') {
-        ParallaxBG.setActiveStage(target);
-    }
 
     // Update progress dots
     updateProgressDots(n);
@@ -788,21 +780,13 @@ function stopConfetti() {
 function bindEvents() {
     // Begin Adventure button
     const btnStart = document.getElementById('btn-start');
-    console.log('[Game-Diag] btn-start found:', btnStart);
-    console.log('[Game-Diag] btn-start computed style:', btnStart ? window.getComputedStyle(btnStart) : 'null');
     if (btnStart) {
         btnStart.addEventListener('click', () => {
-            console.log('[Game-Diag] Begin Adventure clicked!');
             if (!state.isTransitioning) {
                 state.currentStage = 1;
                 showStage(1);
             }
         });
-        btnStart.addEventListener('touchstart', () => {
-            console.log('[Game-Diag] Begin Adventure touchstart!');
-        }, { passive: true });
-    } else {
-        console.error('[Game-Diag] btn-start NOT FOUND!');
     }
 
     // CHECK buttons (event delegation)
@@ -1099,6 +1083,7 @@ function renderRingCanvas(canvasEl) {
  * Initialize blurred background fill for all stages with background images.
  * Copies the parent's background-image to the .bg-blur element so the
  * blur layer can use background-size: cover while the parent uses contain.
+ * The blur layer is static (no parallax animation).
  */
 function initBgBlurLayers() {
     document.querySelectorAll('.stage[style*="background-image"]').forEach(stage => {
@@ -1121,6 +1106,8 @@ function initBgBlurLayers() {
 
         // Start hidden - only show when the stage is active
         bgBlur.style.display = 'none';
+        // Use static center positioning (no parallax)
+        bgBlur.style.backgroundPosition = 'center';
     });
 }
 
@@ -1206,5 +1193,3 @@ if (document.readyState === 'loading') {
     init();
 }
 
-// Enable dev mode flag
-window.__DEV__ = true;
