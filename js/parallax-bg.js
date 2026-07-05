@@ -39,6 +39,9 @@
         // Create diagnostic overlay on mobile
         if (window.innerWidth <= 600) {
             createDiagnosticOverlay();
+        } else {
+            // Always create overlay for debugging on desktop too
+            createDiagnosticOverlay();
         }
     }
 

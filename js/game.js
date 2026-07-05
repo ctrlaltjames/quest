@@ -788,13 +788,21 @@ function stopConfetti() {
 function bindEvents() {
     // Begin Adventure button
     const btnStart = document.getElementById('btn-start');
+    console.log('[Game-Diag] btn-start found:', btnStart);
+    console.log('[Game-Diag] btn-start computed style:', btnStart ? window.getComputedStyle(btnStart) : 'null');
     if (btnStart) {
         btnStart.addEventListener('click', () => {
+            console.log('[Game-Diag] Begin Adventure clicked!');
             if (!state.isTransitioning) {
                 state.currentStage = 1;
                 showStage(1);
             }
         });
+        btnStart.addEventListener('touchstart', () => {
+            console.log('[Game-Diag] Begin Adventure touchstart!');
+        }, { passive: true });
+    } else {
+        console.error('[Game-Diag] btn-start NOT FOUND!');
     }
 
     // CHECK buttons (event delegation)
@@ -1110,7 +1118,7 @@ function initBgBlurLayers() {
 
         // Apply the same background-image to the blur layer
         bgBlur.style.backgroundImage = bgImage;
-        
+
         // Start hidden - only show when the stage is active
         bgBlur.style.display = 'none';
     });
@@ -1135,18 +1143,18 @@ function getPortraitImageUrl(stageEl) {
  */
 function updateBgBlurVisibility() {
     const activeStage = document.querySelector('.stage.active[style*="background-image"]');
-    
+
     // Hide all blurred backgrounds first
     document.querySelectorAll('.bg-blur').forEach(bgBlur => {
         bgBlur.style.display = 'none';
     });
-    
+
     // Show the blurred background for the active stage
     if (activeStage) {
         const bgBlur = document.querySelector('.bg-blur[data-stage="' + activeStage.id + '"]');
         if (bgBlur) {
             bgBlur.style.display = 'block';
-            
+
             // On mobile (≤600px), use portrait image for the blur layer
             if (window.innerWidth <= 600) {
                 const portraitUrl = getPortraitImageUrl(activeStage);
