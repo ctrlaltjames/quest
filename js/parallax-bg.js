@@ -8,6 +8,14 @@
 (function () {
     'use strict';
 
+    // === VISIBLE DIAGNOSTIC MARKER ===
+    var _diagMarker = document.createElement('div');
+    _diagMarker.id = 'parallax-script-marker';
+    _diagMarker.style.cssText = 'position:fixed;bottom:10px;left:10px;z-index:999999;background:#f00;color:#fff;padding:8px 12px;border-radius:4px;font:bold 14px monospace;';
+    _diagMarker.textContent = 'PARALLAX LOADED';
+    document.body.appendChild(_diagMarker);
+    console.log('[Parallax] Script loaded successfully');
+
     // === Configuration ===
     const MAX_OFFSET_PERCENT = 15; // Maximum background shift as % of container height
     const DAMPING_FACTOR = 0.12; // Lower = smoother/heavier feel (0.01 - 1.0)
