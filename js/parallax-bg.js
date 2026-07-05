@@ -479,23 +479,27 @@
     function createDiagnosticOverlay() {
         if (diagOverlayEl) return;
 
+        console.log('[Parallax-Diag] Creating diagnostic overlay...');
+
         diagOverlayEl = document.createElement('div');
         diagOverlayEl.id = 'parallax-diag-overlay';
-        diagOverlayEl.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99999;' +
-            'background:rgba(0,0,0,0.85);color:#0f0;font:11px/1.4 monospace;' +
-            'padding:10px;border-radius:6px;max-width:280px;pointer-events:auto;' +
-            'cursor:move;user-select:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:block;';
+        diagOverlayEl.style.cssText = 'position:fixed;top:50px;right:10px;z-index:999999!important;' +
+            'background:#f00!important;color:#fff!important;font:bold 16px/1.4 monospace!important;' +
+            'padding:20px!important;border:5px solid #ff0!important;border-radius:10px!important;' +
+            'max-width:320px!important;pointer-events:auto!important;cursor:move!important;' +
+            'user-select:none!important;box-shadow:0 8px 24px rgba(255,0,0,0.8)!important;display:block!important;';
 
         diagOverlayEl.innerHTML = `
-            <div style="text-align:center;margin-bottom:6px;">
-                <span style="color:#ff0;font-weight:bold;">⚙ Parallax Debug</span>
-                <span id="diag-toggle" style="margin-left:8px;cursor:pointer;color:#0ff;">[HIDE]</span>
+            <div style="text-align:center;margin-bottom:10px;">
+                <span style="font-size:20px;">⚙ PARALLAX DEBUG ⚙</span>
             </div>
-            <div id="diag-content"></div>
-            <div style="text-align:center;margin-top:8px;padding-top:6px;border-top:1px solid #333;">
-                <button id="diag-force-tilt-btn" style="background:#f5a623;color:#000;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Force Show Tilt Button</button>
+            <div id="diag-content" style="font-size:14px;"></div>
+            <div style="text-align:center;margin-top:12px;padding-top:10px;border-top:2px solid #ff0;">
+                <button id="diag-force-tilt-btn" style="background:#ff0;color:#000;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold;">Force Show Tilt Button</button>
             </div>
         `;
+
+        console.log('[Parallax-Diag] Overlay element created, appending to body...');
 
         // Toggle visibility
         document.getElementById('diag-toggle').addEventListener('click', function () {
@@ -526,6 +530,14 @@
 
         document.body.appendChild(diagOverlayEl);
         diagVisible = true;
+
+        console.log('[Parallax-Diag] Overlay appended to body, id:', diagOverlayEl.id);
+        console.log('[Parallax-Diag] Overlay display:', diagOverlayEl.style.display);
+        console.log('[Parallax-Diag] Overlay computed style:', window.getComputedStyle(diagOverlayEl).display);
+
+        // Verify it's in the DOM
+        var el = document.getElementById('parallax-diag-overlay');
+        console.log('[Parallax-Diag] document.getElementById result:', el ? 'FOUND' : 'NOT FOUND');
     }
 
     function updateDiagnosticOverlay() {
