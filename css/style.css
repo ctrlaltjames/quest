@@ -420,12 +420,37 @@ body {
     right: 30px;
 }
 
+/* Cloud 7 - very large, near bottom, slowest for depth */
+.cloud-7 {
+    width: 350px;
+    height: 110px;
+    top: 95%;
+    left: -380px;
+    animation: cloudDrift 120s linear infinite;
+    animation-delay: -80s;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.30));
+}
+
+.cloud-7::before {
+    width: 175px;
+    height: 95px;
+    top: -35px;
+    left: 55px;
+}
+
+.cloud-7::after {
+    width: 150px;
+    height: 85px;
+    top: -28px;
+    right: 50px;
+}
+
 @keyframes cloudDrift {
     from {
-        left: -280px;
+        left: -100%;
     }
     to {
-        left: calc(100vw + 50px);
+        left: calc(100% + 100px);
     }
 }
 
@@ -1131,8 +1156,9 @@ body::after {
     #stage-title.active .title-clouds {
         position: absolute !important;
         top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
+        left: -50vw !important;
+        right: -50vw !important;
+        width: calc(100% + 100vw) !important;
         height: 100% !important;
         z-index: 0 !important;
     }
