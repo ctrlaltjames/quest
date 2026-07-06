@@ -19,11 +19,11 @@ const AudioSystem = (function () {
     // Single shared master gain node for all audio output
     let masterGainNode = null;
 
-    // Crossfade management
-    let previousMasterGain = null; // The gain node currently fading out
-    let currentMasterGain = null;  // The gain node currently playing (faded in)
-    let crossfadeDuration = 0.8;   // Duration of crossfade in seconds (longer = smoother)
-    let crossfadeTimeout = null;   // Timeout for cleanup of old gain nodes
+    // Gain node management (no crossfading - sequential fade out then in)
+    let currentMasterGain = null;  // The gain node currently playing
+    let fadeOutDuration = 0.5;     // Duration of fade-out in seconds
+    let fadeInDuration = 0.8;      // Duration of fade-in in seconds
+    let fadeOutTimeout = null;     // Timeout for sequential fade-out
 
     // Track which stage music is playing
     let currentStage = -1; // -1 = no music, 0 = intro, 1-4 = stages, 5 = treasure, 6 = proposal
@@ -333,40 +333,26 @@ const AudioSystem = (function () {
      */
 
     /**
-     * Start a smooth crossfade from oldGain to newGain
-     * Both gain nodes should already be connected to audioCtx.destination
+     * Fade out a gain node to silence and disconnect it
      */
-    function startCrossfade(oldGain, newGain, duration = crossfadeDuration) {
-        if (!audioCtx || !oldGain || !newGain) {
-            return false;
-        }
+    function fadeOutGainNode(gainNode, duration = fadeOutDuration) {
+        if (!audioCtx || !gainNode) return;
 
         const now = audioCtx.currentTime;
-        const oldVol = oldGain.gain.value;
-
-        // Fade out the old gain node
-        oldGain.gain.cancelScheduledValues(now);
-        oldGain.gain.setValueAtTime(oldGain.gain.value, now);
-        oldGain.gain.linearRampToValueAtTime(0, now + duration);
         
-        // Fade in the new gain node
-        newGain.gain.cancelScheduledValues(now);
-        newGain.gain.setValueAtTime(0, now);
-        newGain.gain.linearRampToValueAtTime(1, now + duration);
-
-        // Schedule cleanup of old gain node after crossfade completes
-        if (crossfadeTimeout) {
-            clearTimeout(crossfadeTimeout);
-        }
-        crossfadeTimeout = setTimeout(() => {
+        // Cancel any existing scheduled values
+        gainNode.gain.cancelScheduledValues(now);
+        gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+        gainNode.gain.linearRampToValueAtTime(0, now + duration);
+        
+        // Schedule disconnection after fade completes
+        const timeout = setTimeout(() => {
             try {
-                oldGain.disconnect();
+                gainNode.disconnect();
             } catch (e) {
                 // Node may already be disconnected
             }
         }, duration * 1000 + 100);
-        
-        return true;
     }
 
     /**
@@ -455,10 +441,10 @@ const AudioSystem = (function () {
             staticUpdateInterval = null;
         }
 
-        // Clear crossfade timeout
-        if (crossfadeTimeout) {
-            clearTimeout(crossfadeTimeout);
-            crossfadeTimeout = null;
+        // Clear fade timeout
+        if (fadeOutTimeout) {
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = null;
         }
 
         // Stop and disconnect all tracked nodes (immediate stop for proposal screen)
@@ -488,13 +474,12 @@ const AudioSystem = (function () {
         currentMusicNodes = [];
         currentStage = -1;
         
-        // Reset crossfade state
-        previousMasterGain = null;
+        // Reset gain state
         currentMasterGain = null;
     }
 
     /**
-     * Fade out current music
+     * Fade out current music (kept for backward compatibility)
      */
     function fadeOutMusic(duration = 300) {
         if (!masterGainNode || !audioCtx) return;
@@ -524,20 +509,11 @@ const AudioSystem = (function () {
         newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         newMasterGain.connect(audioCtx.destination);
 
-        // Crossfade from previous stage
-        if (previousMasterGain && previousMasterGain !== newMasterGain) {
-            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
-        } else {
-            // No previous gain, just fade in
-            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
-        }
+        // Fade in the new gain node (no crossfade)
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
 
-        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
-        // (prevents previousMasterGain from being set to null during first stage transition)
-        if (currentMasterGain) {
-            previousMasterGain = currentMasterGain;
-        }
+        // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
         // Simple ambient melody notes (C major pentatonic)
@@ -636,20 +612,11 @@ const AudioSystem = (function () {
         newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         newMasterGain.connect(audioCtx.destination);
 
-        // Crossfade from previous stage
-        if (previousMasterGain && previousMasterGain !== newMasterGain) {
-            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
-        } else {
-            // No previous gain, just fade in
-            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
-        }
+        // Fade in the new gain node (no crossfade)
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
 
-        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
-        // (prevents previousMasterGain from being set to null during first stage transition)
-        if (currentMasterGain) {
-            previousMasterGain = currentMasterGain;
-        }
+        // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
         // ==========================================
@@ -998,20 +965,11 @@ const AudioSystem = (function () {
         newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         newMasterGain.connect(audioCtx.destination);
 
-        // Crossfade from previous stage
-        if (previousMasterGain && previousMasterGain !== newMasterGain) {
-            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
-        } else {
-            // No previous gain, just fade in
-            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
-        }
+        // Fade in the new gain node (no crossfade)
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
 
-        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
-        // (prevents previousMasterGain from being set to null during first stage transition)
-        if (currentMasterGain) {
-            previousMasterGain = currentMasterGain;
-        }
+        // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
         // Romantic melody notes (warm, flowing) - play through master gain for crossfading
@@ -1061,20 +1019,11 @@ const AudioSystem = (function () {
         newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         newMasterGain.connect(audioCtx.destination);
 
-        // Crossfade from previous stage
-        if (previousMasterGain && previousMasterGain !== newMasterGain) {
-            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
-        } else {
-            // No previous gain, just fade in
-            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
-        }
+        // Fade in the new gain node (no crossfade)
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
 
-        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
-        // (prevents previousMasterGain from being set to null during first stage transition)
-        if (currentMasterGain) {
-            previousMasterGain = currentMasterGain;
-        }
+        // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
         // Rhythmic typing pattern - connect to master gain via playNote chain
@@ -1127,20 +1076,11 @@ const AudioSystem = (function () {
         newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         newMasterGain.connect(audioCtx.destination);
 
-        // Crossfade from previous stage
-        if (previousMasterGain && previousMasterGain !== newMasterGain) {
-            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
-        } else {
-            // No previous gain, just fade in
-            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
-        }
+        // Fade in the new gain node (no crossfade)
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
 
-        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
-        // (prevents previousMasterGain from being set to null during first stage transition)
-        if (currentMasterGain) {
-            previousMasterGain = currentMasterGain;
-        }
+        // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
         // Upbeat 8-bit game music melody - connect to master gain via playNote chain
@@ -1198,20 +1138,11 @@ const AudioSystem = (function () {
         newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         newMasterGain.connect(audioCtx.destination);
 
-        // Crossfade from previous stage
-        if (previousMasterGain && previousMasterGain !== newMasterGain) {
-            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
-        } else {
-            // No previous gain, just fade in
-            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
-        }
+        // Fade in the new gain node (no crossfade)
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
 
-        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
-        // (prevents previousMasterGain from being set to null during first stage transition)
-        if (currentMasterGain) {
-            previousMasterGain = currentMasterGain;
-        }
+        // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
         // Ascending chord progression - builds tension toward climax - connect to master gain via playNote chain
@@ -1318,29 +1249,43 @@ const AudioSystem = (function () {
 
     /**
      * Called when transitioning between stages
-     * Handles crossfading between stage music using proper gain node management.
+     * Fades out current music, then starts the new stage music.
      */
     function onStageChange(prevStageNum, stageNum) {
         if (!audioCtx) {
             return;
         }
 
-        // If transitioning to a different stage, ensure the previous stage's music is playing
-        // This enables proper crossfading when prevStage music was never started
-        // (e.g., intro → stage 1, where intro music wasn't auto-started)
+        // If transitioning to a different stage
         if (prevStageNum >= 0 && prevStageNum !== stageNum) {
+            // First, ensure the previous stage's music is playing (in case it was never started)
+            // This handles cases where intro music wasn't auto-started before transitioning to stage 1
             if (currentStage !== prevStageNum) {
                 startStageMusic(prevStageNum);
             }
+            
+            // Fade out the current music, then start the new stage music
+            const prevMasterGain = currentMasterGain;
+            if (prevMasterGain) {
+                fadeOutGainNode(prevMasterGain, fadeOutDuration);
+                
+                // After fade-out completes, start the new stage music
+                fadeOutTimeout = setTimeout(() => {
+                    startStageMusic(stageNum);
+                }, fadeOutDuration * 1000 + 50);
+            } else {
+                // No current music to fade out, start new music immediately
+                startStageMusic(stageNum);
+            }
+        } else {
+            startStageMusic(stageNum);
         }
-
-        startStageMusic(stageNum);
     }
 
     /**
-     * Clean up resources from the previous stage WITHOUT stopping oscillators.
-     * Oscillators are allowed to play out naturally so the crossfade gain node
-     * has audio to fade. Only intervals are cleared to stop new note scheduling.
+     * Clean up resources from the previous stage.
+     * Clears intervals to stop new note scheduling and stops all active oscillators
+     * immediately to prevent audio overlap between stages.
      */
     function cleanupPreviousStage() {
         // Clear intervals FIRST (stops new note scheduling)
@@ -1365,14 +1310,25 @@ const AudioSystem = (function () {
             staticUpdateInterval = null;
         }
 
-        // Remove interval references from tracking array but keep oscillator nodes
-        // Oscillators will stop on their own after their duration, allowing
-        // their audio to flow through the crossfading gain node
-        currentMusicNodes = currentMusicNodes.filter(node => {
-            if (!node) return false;
-            if (typeof node === 'object' && node.type === 'interval') return false;
-            return true;
+        // STOP all active oscillators immediately to prevent audio overlap
+        currentMusicNodes.forEach(node => {
+            if (!node) return;
+            // Stop single oscillator nodes
+            if (node.osc) {
+                try { node.osc.stop(); } catch(e) {}
+            }
+            // Stop second oscillator nodes (used in some stages)
+            if (node.osc2) {
+                try { node.osc2.stop(); } catch(e) {}
+            }
+            // Stop buffer source nodes (used for noise)
+            if (node.source) {
+                try { node.source.stop(); } catch(e) {}
+            }
         });
+
+        // Clear all nodes (not just interval references)
+        currentMusicNodes = [];
     }
 
     /**
@@ -1420,16 +1376,29 @@ const AudioSystem = (function () {
                 return;
             }
             
-            // If transitioning to a different stage, ensure the previous stage's music is playing
-            // This enables proper crossfading when prevStage music was never started
-            // (e.g., intro → stage 1, where intro music wasn't auto-started)
+            // If transitioning to a different stage
             if (prevStageNum >= 0 && prevStageNum !== stageNum) {
+                // First, ensure the previous stage's music is playing (in case it was never started)
                 if (currentStage !== prevStageNum) {
                     startStageMusic(prevStageNum);
                 }
+                
+                // Fade out the current music, then start the new stage music
+                const prevMasterGain = currentMasterGain;
+                if (prevMasterGain) {
+                    fadeOutGainNode(prevMasterGain, fadeOutDuration);
+                    
+                    // After fade-out completes, start the new stage music
+                    fadeOutTimeout = setTimeout(() => {
+                        startStageMusic(stageNum);
+                    }, fadeOutDuration * 1000 + 50);
+                } else {
+                    // No current music to fade out, start new music immediately
+                    startStageMusic(stageNum);
+                }
+            } else {
+                startStageMusic(stageNum);
             }
-            
-            startStageMusic(stageNum);
         },
         stopAllMusic,
 
