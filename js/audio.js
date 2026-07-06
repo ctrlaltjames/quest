@@ -14,6 +14,16 @@ const AudioSystem = (function () {
     let currentMusicNode = null;
     let currentMusicGain = null;
     let currentMusicNodes = []; // Track all nodes for cleanup
+    let fadingOutNodes = []; // Nodes currently fading out (old music during crossfade)
+    
+    // Single shared master gain node for all audio output
+    let masterGainNode = null;
+
+    // Crossfade management
+    let previousMasterGain = null; // The gain node currently fading out
+    let currentMasterGain = null;  // The gain node currently playing (faded in)
+    let crossfadeDuration = 0.8;   // Duration of crossfade in seconds (longer = smoother)
+    let crossfadeTimeout = null;   // Timeout for cleanup of old gain nodes
 
     // Track which stage music is playing
     let currentStage = -1; // -1 = no music, 0 = intro, 1-4 = stages, 5 = treasure, 6 = proposal
@@ -39,6 +49,12 @@ const AudioSystem = (function () {
 
         try {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create a single shared master gain node connected to destination
+            masterGainNode = audioCtx.createGain();
+            masterGainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            masterGainNode.connect(audioCtx.destination);
+            
             isInitialized = true;
         } catch (e) {
             console.warn('Web Audio API not supported');
@@ -55,9 +71,9 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Create a square wave oscillator (NES-style)
+     * Create a square wave oscillator (retro chiptune sound)
      */
-    function createSquareWave(frequency, volume = 0.15, duration = 0.1) {
+    function createSquareWave(frequency, volume = 0.12, duration = 0.15, destination = null) {
         if (!audioCtx) return null;
 
         const osc = audioCtx.createOscillator();
@@ -70,7 +86,7 @@ const AudioSystem = (function () {
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(destination || masterGainNode);
 
         return { osc, gain };
     }
@@ -78,7 +94,7 @@ const AudioSystem = (function () {
     /**
      * Create a triangle wave oscillator (warm, soft sound)
      */
-    function createTriangleWave(frequency, volume = 0.12, duration = 0.15) {
+    function createTriangleWave(frequency, volume = 0.12, duration = 0.15, destination = null) {
         if (!audioCtx) return null;
 
         const osc = audioCtx.createOscillator();
@@ -91,7 +107,7 @@ const AudioSystem = (function () {
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(destination || masterGainNode);
 
         return { osc, gain };
     }
@@ -99,7 +115,7 @@ const AudioSystem = (function () {
     /**
      * Create a noise burst (for typing sounds)
      */
-    function createNoiseBurst(duration = 0.03, volume = 0.08) {
+    function createNoiseBurst(duration = 0.03, volume = 0.08, destination = null) {
         if (!audioCtx) return null;
 
         const bufferSize = audioCtx.sampleRate * duration;
@@ -124,7 +140,7 @@ const AudioSystem = (function () {
 
         source.connect(filter);
         filter.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(destination || masterGainNode);
 
         source.start();
 
@@ -134,11 +150,11 @@ const AudioSystem = (function () {
     /**
      * Play a single note with given frequency and duration
      */
-    function playNote(frequency, duration, waveType = 'square', volume = 0.12) {
+    function playNote(frequency, duration, waveType = 'square', volume = 0.12, destination = null) {
         if (!audioCtx) return;
 
         const createFunc = waveType === 'triangle' ? createTriangleWave : createSquareWave;
-        const nodes = createFunc(frequency, volume, duration);
+        const nodes = createFunc(frequency, volume, duration, destination);
         if (nodes) {
             nodes.osc.start();
             nodes.osc.stop(audioCtx.currentTime + duration);
@@ -149,12 +165,12 @@ const AudioSystem = (function () {
     /**
      * Play a sequence of notes (arpeggio)
      */
-    function playArpeggio(notes, waveType = 'square', volume = 0.12, speed = 0.1) {
+    function playArpeggio(notes, waveType = 'square', volume = 0.12, speed = 0.1, duration = 0.15, destination = null) {
         if (!audioCtx) return;
 
         notes.forEach((freq, i) => {
             setTimeout(() => {
-                playNote(freq, speed * 0.9, waveType, volume);
+                playNote(freq, duration * 0.9, waveType, volume, destination);
             }, i * speed * 1000);
         });
     }
@@ -312,15 +328,58 @@ const AudioSystem = (function () {
 
     /**
      * ==========================================
+     * CROSSFADE SYSTEM
+     * ==========================================
+     */
+
+    /**
+     * Start a smooth crossfade from oldGain to newGain
+     * Both gain nodes should already be connected to audioCtx.destination
+     */
+    function startCrossfade(oldGain, newGain, duration = crossfadeDuration) {
+        if (!audioCtx || !oldGain || !newGain) {
+            return false;
+        }
+
+        const now = audioCtx.currentTime;
+        const oldVol = oldGain.gain.value;
+
+        // Fade out the old gain node
+        oldGain.gain.cancelScheduledValues(now);
+        oldGain.gain.setValueAtTime(oldGain.gain.value, now);
+        oldGain.gain.linearRampToValueAtTime(0, now + duration);
+        
+        // Fade in the new gain node
+        newGain.gain.cancelScheduledValues(now);
+        newGain.gain.setValueAtTime(0, now);
+        newGain.gain.linearRampToValueAtTime(1, now + duration);
+
+        // Schedule cleanup of old gain node after crossfade completes
+        if (crossfadeTimeout) {
+            clearTimeout(crossfadeTimeout);
+        }
+        crossfadeTimeout = setTimeout(() => {
+            try {
+                oldGain.disconnect();
+            } catch (e) {
+                // Node may already be disconnected
+            }
+        }, duration * 1000 + 100);
+        
+        return true;
+    }
+
+    /**
+     * ==========================================
      * STAGE MUSIC
      * ==========================================
      */
 
     /**
-     * Stop all current music
+     * Clean up resources from previous stage without resetting currentStage
      */
-    function stopAllMusic() {
-        // Stop intervals FIRST (before stopping nodes)
+    function cleanupPreviousStage() {
+        // Clear intervals FIRST (before stopping nodes)
         if (introMusicInterval) {
             clearInterval(introMusicInterval);
             introMusicInterval = null;
@@ -342,7 +401,67 @@ const AudioSystem = (function () {
             staticUpdateInterval = null;
         }
 
-        // Stop and disconnect all tracked nodes
+        // Stop and disconnect all tracked nodes EXCEPT master gain node and interval references
+        currentMusicNodes = currentMusicNodes.filter(node => {
+            return !node || 
+                   typeof node !== 'object' || 
+                   (typeof node === 'object' && node.type === 'interval');
+        }).map(node => {
+            if (!node) return null;
+            try {
+                if (node.osc) {
+                    try { node.osc.stop(); } catch(e) {}
+                    try { node.osc.disconnect(); } catch(e) {}
+                }
+                if (node.osc2) {
+                    try { node.osc2.stop(); } catch(e) {}
+                    try { node.osc2.disconnect(); } catch(e) {}
+                }
+                if (node.source) {
+                    try { node.source.stop(); } catch(e) {}
+                    try { node.source.disconnect(); } catch(e) {}
+                }
+                // Don't disconnect gain nodes that are still in use
+                return node;
+            } catch (e) {
+                return null;
+            }
+        }).filter(Boolean);
+    }
+
+    /**
+     * Stop all current music (used for proposal screen - stops everything immediately)
+     */
+    function stopAllMusic() {
+        // Clear intervals
+        if (introMusicInterval) {
+            clearInterval(introMusicInterval);
+            introMusicInterval = null;
+        }
+        if (typingInterval) {
+            clearInterval(typingInterval);
+            typingInterval = null;
+        }
+        if (heartbeatInterval) {
+            clearTimeout(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+        if (melodyInterval) {
+            clearTimeout(melodyInterval);
+            melodyInterval = null;
+        }
+        if (staticUpdateInterval) {
+            clearTimeout(staticUpdateInterval);
+            staticUpdateInterval = null;
+        }
+
+        // Clear crossfade timeout
+        if (crossfadeTimeout) {
+            clearTimeout(crossfadeTimeout);
+            crossfadeTimeout = null;
+        }
+
+        // Stop and disconnect all tracked nodes (immediate stop for proposal screen)
         currentMusicNodes.forEach(node => {
             try {
                 if (node.osc) {
@@ -365,23 +484,24 @@ const AudioSystem = (function () {
                 }
             } catch (e) {}
         });
+        
         currentMusicNodes = [];
-
         currentStage = -1;
+        
+        // Reset crossfade state
+        previousMasterGain = null;
+        currentMasterGain = null;
     }
 
     /**
      * Fade out current music
      */
-    function fadeOutMusic(duration = 1000) {
-        if (!currentMusicGain) return;
+    function fadeOutMusic(duration = 300) {
+        if (!masterGainNode || !audioCtx) return;
 
-        currentMusicGain.gain.setValueAtTime(currentMusicGain.gain.value, audioCtx.currentTime);
-        currentMusicGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
-
-        setTimeout(() => {
-            stopAllMusic();
-        }, duration);
+        const now = audioCtx.currentTime;
+        masterGainNode.gain.setValueAtTime(masterGainNode.gain.value, now);
+        masterGainNode.gain.linearRampToValueAtTime(0, now + duration / 1000);
     }
 
     /**
@@ -390,14 +510,35 @@ const AudioSystem = (function () {
     function startIntroMusic() {
         if (!audioCtx || currentStage === 0) return;
         resumeContext();
-        
+
         // Clear any existing intro music interval to prevent duplicates
         if (introMusicInterval) {
             clearInterval(introMusicInterval);
             introMusicInterval = null;
         }
-        
+
         currentStage = 0;
+
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
+
+        // Crossfade from previous stage
+        if (previousMasterGain && previousMasterGain !== newMasterGain) {
+            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
+        } else {
+            // No previous gain, just fade in
+            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
+        }
+
+        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
+        // (prevents previousMasterGain from being set to null during first stage transition)
+        if (currentMasterGain) {
+            previousMasterGain = currentMasterGain;
+        }
+        currentMasterGain = newMasterGain;
 
         // Simple ambient melody notes (C major pentatonic)
         const melody = [
@@ -446,14 +587,14 @@ const AudioSystem = (function () {
         // Play melody loop - slower, more spacious
         introMusicInterval = setInterval(() => {
             const freq = melody[noteIndex % melody.length];
-            // Melody (triangle wave for softer sound, longer sustain)
-            playNote(freq, noteDuration * 1.5, 'triangle', 0.06);
+            // Melody (triangle wave for softer sound, longer sustain) - connect to masterGain for crossfading
+            playNote(freq, noteDuration * 1.5, 'triangle', 0.06, newMasterGain);
             // Delayed echo for ambient effect
             setTimeout(() => {
-                playNote(freq * 0.998, noteDuration * 0.7, 'triangle', 0.025);
+                playNote(freq * 0.998, noteDuration * 0.7, 'triangle', 0.025, newMasterGain);
             }, 300);
-            // Bass (triangle wave, longer sustain)
-            playNote(bassNotes[noteIndex % bassNotes.length], noteDuration * 1.2, 'triangle', 0.05);
+            // Bass (triangle wave, longer sustain) - connect to masterGain for crossfading
+            playNote(bassNotes[noteIndex % bassNotes.length], noteDuration * 1.2, 'triangle', 0.05, newMasterGain);
             noteIndex++;
         }, noteDuration * 1000);
 
@@ -486,15 +627,30 @@ const AudioSystem = (function () {
         if (!audioCtx || currentStage === 1) return;
         resumeContext();
 
-        // Stop previous music (note: stopAllMusic resets currentStage to -1)
-        stopAllMusic();
+        // Clean up previous stage's resources (clears intervals and old notes)
+        cleanupPreviousStage();
         currentStage = 1;
 
-        // Master gain for overall volume
-        const masterGain = audioCtx.createGain();
-        masterGain.gain.setValueAtTime(0.45, audioCtx.currentTime);
-        masterGain.connect(audioCtx.destination);
-        currentMusicNodes.push({ gain: masterGain });
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
+
+        // Crossfade from previous stage
+        if (previousMasterGain && previousMasterGain !== newMasterGain) {
+            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
+        } else {
+            // No previous gain, just fade in
+            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
+        }
+
+        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
+        // (prevents previousMasterGain from being set to null during first stage transition)
+        if (currentMasterGain) {
+            previousMasterGain = currentMasterGain;
+        }
+        currentMasterGain = newMasterGain;
 
         // ==========================================
         // HORIZONTAL SHIFTS (chord progression)
@@ -609,12 +765,12 @@ const AudioSystem = (function () {
                         // Envelope
                         gain.gain.setValueAtTime(0, noteTime);
                         gain.gain.linearRampToValueAtTime(0.10, noteTime + 0.01);
-                        gain.gain.setValueAtTime(0.09, noteTime + note.dur * 0.5);
+                        gain.gain.setValueAtTime(0.07, noteTime + note.dur * 0.5);
                         gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
 
                         osc.connect(filter);
                         filter.connect(gain);
-                        gain.connect(masterGain);
+                        gain.connect(newMasterGain);
                         osc.start(noteTime);
                         osc.stop(noteTime + note.dur + 0.01);
                         currentMusicNodes.push({ osc, gain, filter });
@@ -642,7 +798,7 @@ const AudioSystem = (function () {
                         gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
 
                         osc.connect(gain);
-                        gain.connect(masterGain);
+                        gain.connect(newMasterGain);
                         osc.start(noteTime);
                         osc.stop(noteTime + note.dur + 0.01);
                         currentMusicNodes.push({ osc, gain });
@@ -670,7 +826,7 @@ const AudioSystem = (function () {
                     gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
 
                     osc.connect(gain);
-                    gain.connect(masterGain);
+                    gain.connect(newMasterGain);
                     osc.start(noteTime);
                     osc.stop(noteTime + note.dur + 0.01);
                     currentMusicNodes.push({ osc, gain });
@@ -706,13 +862,13 @@ const AudioSystem = (function () {
             groanFilter.Q.setValueAtTime(4, now);
 
             groanGain.gain.setValueAtTime(0, now);
-            groanGain.gain.linearRampToValueAtTime(0.04, now + 0.03);
-            groanGain.gain.setValueAtTime(0.035, now + duration * 0.6);
+            groanGain.gain.linearRampToValueAtTime(0.08, now + 0.03);
+            groanGain.gain.setValueAtTime(0.065, now + duration * 0.6);
             groanGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
             groanOsc.connect(groanFilter);
             groanFilter.connect(groanGain);
-            groanGain.connect(masterGain);
+            groanGain.connect(newMasterGain);
             groanOsc.start(now);
             groanOsc.stop(now + duration + 0.01);
             currentMusicNodes.push({ osc: groanOsc, gain: groanGain, filter: groanFilter });
@@ -740,10 +896,10 @@ const AudioSystem = (function () {
                 osc1.type = 'sine';
                 osc1.frequency.setValueAtTime(55, now);
                 gain1.gain.setValueAtTime(0, now);
-                gain1.gain.linearRampToValueAtTime(0.10, now + 0.003);
+                gain1.gain.linearRampToValueAtTime(0.20, now + 0.003);
                 gain1.gain.exponentialRampToValueAtTime(0.001, now + beatInterval * 0.35);
                 osc1.connect(gain1);
-                gain1.connect(masterGain);
+                gain1.connect(newMasterGain);
                 osc1.start(now);
                 osc1.stop(now + beatInterval * 0.35 + 0.01);
                 currentMusicNodes.push({ osc: osc1, gain: gain1 });
@@ -755,10 +911,10 @@ const AudioSystem = (function () {
                 osc2.type = 'sine';
                 osc2.frequency.setValueAtTime(50, now + secondBeatDelay);
                 gain2.gain.setValueAtTime(0, now + secondBeatDelay);
-                gain2.gain.linearRampToValueAtTime(0.06, now + secondBeatDelay + 0.003);
+                gain2.gain.linearRampToValueAtTime(0.13, now + secondBeatDelay + 0.003);
                 gain2.gain.exponentialRampToValueAtTime(0.001, now + secondBeatDelay + beatInterval * 0.2);
                 osc2.connect(gain2);
-                gain2.connect(masterGain);
+                gain2.connect(newMasterGain);
                 osc2.start(now + secondBeatDelay);
                 osc2.stop(now + secondBeatDelay + beatInterval * 0.2 + 0.01);
                 currentMusicNodes.push({ osc: osc2, gain: gain2 });
@@ -799,7 +955,7 @@ const AudioSystem = (function () {
                 gain1.gain.linearRampToValueAtTime(0.06, now + 0.01);
                 gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
                 osc1.connect(gain1);
-                gain1.connect(masterGain);
+                gain1.connect(newMasterGain);
                 osc1.start(now);
                 osc1.stop(now + 0.51);
                 currentMusicNodes.push({ osc: osc1, gain: gain1 });
@@ -818,7 +974,7 @@ const AudioSystem = (function () {
                 rumbleFilter.frequency.setValueAtTime(400, now);
                 osc2.connect(rumbleFilter);
                 rumbleFilter.connect(gain2);
-                gain2.connect(masterGain);
+                gain2.connect(newMasterGain);
                 osc2.start(now);
                 osc2.stop(now + 0.41);
                 currentMusicNodes.push({ osc: osc2, gain: gain2, filter: rumbleFilter });
@@ -832,11 +988,33 @@ const AudioSystem = (function () {
     function startStage2Music() {
         if (!audioCtx || currentStage === 2) return;
         resumeContext();
+
+        // Clean up previous stage's resources (clears intervals and old notes)
+        cleanupPreviousStage();
         currentStage = 2;
 
-        stopAllMusic();
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
 
-        // Romantic melody notes (warm, flowing)
+        // Crossfade from previous stage
+        if (previousMasterGain && previousMasterGain !== newMasterGain) {
+            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
+        } else {
+            // No previous gain, just fade in
+            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
+        }
+
+        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
+        // (prevents previousMasterGain from being set to null during first stage transition)
+        if (currentMasterGain) {
+            previousMasterGain = currentMasterGain;
+        }
+        currentMasterGain = newMasterGain;
+
+        // Romantic melody notes (warm, flowing) - play through master gain for crossfading
         const melody = [
             329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66,
             329.63, 349.23, 440.00, 523.25, 493.88, 440.00, 349.23, 329.63,
@@ -857,10 +1035,10 @@ const AudioSystem = (function () {
             const melFreq = melody[noteIndex % melody.length];
             const harpFreq = harmony[noteIndex % harmony.length];
 
-            // Melody (triangle wave for warm sound)
-            playNote(melFreq, noteDuration * 0.9, 'triangle', 0.08);
-            // Harmony (triangle wave, softer)
-            playNote(harpFreq, noteDuration * 0.9, 'triangle', 0.05);
+            // Melody (triangle wave for warm sound) - connect to masterGain for crossfading
+            playNote(melFreq, noteDuration * 0.9, 'triangle', 0.08, newMasterGain);
+            // Harmony (triangle wave, softer) - connect to masterGain for crossfading
+            playNote(harpFreq, noteDuration * 0.9, 'triangle', 0.05, newMasterGain);
             noteIndex++;
         }, noteDuration * 1000);
 
@@ -873,11 +1051,33 @@ const AudioSystem = (function () {
     function startStage3Music() {
         if (!audioCtx || currentStage === 3) return;
         resumeContext();
+
+        // Clean up previous stage's resources (clears intervals and old notes)
+        cleanupPreviousStage();
         currentStage = 3;
 
-        stopAllMusic();
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
 
-        // Rhythmic typing pattern
+        // Crossfade from previous stage
+        if (previousMasterGain && previousMasterGain !== newMasterGain) {
+            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
+        } else {
+            // No previous gain, just fade in
+            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
+        }
+
+        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
+        // (prevents previousMasterGain from being set to null during first stage transition)
+        if (currentMasterGain) {
+            previousMasterGain = currentMasterGain;
+        }
+        currentMasterGain = newMasterGain;
+
+        // Rhythmic typing pattern - connect to master gain via playNote chain
         const typingPattern = [
             { delay: 0, sound: true },
             { delay: 80, sound: true },
@@ -903,7 +1103,7 @@ const AudioSystem = (function () {
                 // Vary the click sound slightly for realism
                 const volume = 0.04 + Math.random() * 0.04;
                 const duration = 0.02 + Math.random() * 0.02;
-                createNoiseBurst(duration, volume);
+                createNoiseBurst(duration, volume, newMasterGain);
             }
             patternIndex++;
         }, 1200); // Pattern repeats every 1200ms
@@ -917,11 +1117,33 @@ const AudioSystem = (function () {
     function startStage4Music() {
         if (!audioCtx || currentStage === 4) return;
         resumeContext();
+
+        // Clean up previous stage's resources (clears intervals and old notes)
+        cleanupPreviousStage();
         currentStage = 4;
 
-        stopAllMusic();
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
 
-        // Upbeat 8-bit game music melody
+        // Crossfade from previous stage
+        if (previousMasterGain && previousMasterGain !== newMasterGain) {
+            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
+        } else {
+            // No previous gain, just fade in
+            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
+        }
+
+        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
+        // (prevents previousMasterGain from being set to null during first stage transition)
+        if (currentMasterGain) {
+            previousMasterGain = currentMasterGain;
+        }
+        currentMasterGain = newMasterGain;
+
+        // Upbeat 8-bit game music melody - connect to master gain via playNote chain
         const melody = [
             392.00, 523.25, 392.00, 329.63,
             349.23, 440.00, 349.23, 293.66,
@@ -950,10 +1172,10 @@ const AudioSystem = (function () {
             const melFreq = melody[noteIndex % melody.length];
             const bassFreq = bass[noteIndex % bass.length];
 
-            // Fast melody (square wave)
-            playNote(melFreq, noteDuration * 0.8, 'square', 0.08);
-            // Bouncy bass (triangle wave)
-            playNote(bassFreq, noteDuration * 0.8, 'triangle', 0.07);
+            // Fast melody (square wave) - connect to masterGain for crossfading
+            playNote(melFreq, noteDuration * 0.8, 'square', 0.08, newMasterGain);
+            // Bouncy bass (triangle wave) - connect to masterGain for crossfading
+            playNote(bassFreq, noteDuration * 0.8, 'triangle', 0.07, newMasterGain);
             noteIndex++;
         }, noteDuration * 1000);
 
@@ -964,13 +1186,35 @@ const AudioSystem = (function () {
      * Start treasure screen music - faster paced, building tension
      */
     function startTreasureMusic() {
-        if (!audioCtx || currentStage === 5) return;
+        if (!audioCtx || currentStage === 6) return;
         resumeContext();
-        currentStage = 5;
 
-        stopAllMusic();
+        // Clean up previous stage's resources (clears intervals and old notes)
+        cleanupPreviousStage();
+        currentStage = 6;
 
-        // Ascending chord progression - builds tension toward climax
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
+
+        // Crossfade from previous stage
+        if (previousMasterGain && previousMasterGain !== newMasterGain) {
+            startCrossfade(previousMasterGain, newMasterGain, crossfadeDuration);
+        } else {
+            // No previous gain, just fade in
+            newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + crossfadeDuration);
+        }
+
+        // Update crossfade state - only set previousMasterGain if currentMasterGain exists
+        // (prevents previousMasterGain from being set to null during first stage transition)
+        if (currentMasterGain) {
+            previousMasterGain = currentMasterGain;
+        }
+        currentMasterGain = newMasterGain;
+
+        // Ascending chord progression - builds tension toward climax - connect to master gain via playNote chain
         const chords = [
             [523.25, 659.25, 783.99],  // C4 major - start humble
             [587.33, 739.99, 880.00],  // D4 major
@@ -995,27 +1239,27 @@ const AudioSystem = (function () {
             // Volume swells as we approach the climax
             const volumeMultiplier = 0.5 + (progress / 10) * 0.5; // 0.5 → 1.0
 
-            // Play chord tones (harmony) - faster arpeggio upward
+            // Play chord tones (harmony) - faster arpeggio upward - connect to masterGain for crossfading
             chord.forEach((freq, i) => {
                 const delay = i * 40; // 40ms between each note
                 setTimeout(() => {
-                    playNote(freq, chordDuration * 0.5, 'triangle', 0.04 * volumeMultiplier);
+                    playNote(freq, chordDuration * 0.5, 'triangle', 0.04 * volumeMultiplier, newMasterGain);
                 }, delay);
             });
 
-            // Bass note - punchier on beat
-            playNote(chord[0] / 4, chordDuration * 0.7, 'triangle', 0.06 * volumeMultiplier);
+            // Bass note - punchier on beat - connect to masterGain for crossfading
+            playNote(chord[0] / 4, chordDuration * 0.7, 'triangle', 0.06 * volumeMultiplier, newMasterGain);
 
             // More frequent high sparkles as we build tension
             if (Math.random() < (0.4 + progress * 0.06)) {
                 const sparkle = chord[chord.length - 1] * 1.5;
-                playNote(sparkle, 0.2, 'square', 0.015 * volumeMultiplier);
+                playNote(sparkle, 0.2, 'square', 0.015 * volumeMultiplier, newMasterGain);
             }
 
             // Double sparkle on climax chords
             if (progress >= 8 && Math.random() < 0.5) {
                 const sparkle2 = chord[0] * 3;
-                playNote(sparkle2, 0.3, 'square', 0.01 * volumeMultiplier);
+                playNote(sparkle2, 0.3, 'square', 0.01 * volumeMultiplier, newMasterGain);
             }
 
             chordIndex++;
@@ -1036,9 +1280,14 @@ const AudioSystem = (function () {
     function startStageMusic(stageNum) {
         if (!audioCtx) return;
 
-        // Don't start music if AudioContext is suspended (needs user gesture first)
+        // If AudioContext is suspended, resume it first (must be done from user gesture)
         if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+            audioCtx.resume().then(() => {
+                // Resume succeeded; start music in the next microtask
+                startStageMusic(stageNum);
+            }).catch(err => {
+                console.warn('AudioContext resume failed:', err);
+            });
             return;
         }
 
@@ -1069,61 +1318,94 @@ const AudioSystem = (function () {
 
     /**
      * Called when transitioning between stages
-     * Handles crossfading between stage music
+     * Handles crossfading between stage music using proper gain node management.
      */
-    function onStageChange(fromStage, toStage) {
-        if (!audioCtx) return;
-
-        // If going to proposal screen, stop all music immediately (no fade)
-        if (toStage === 5) {
-            stopAllMusic();
+    function onStageChange(prevStageNum, stageNum) {
+        if (!audioCtx) {
             return;
         }
 
-        // If going to treasure screen, quick transition
-        if (toStage === 6) {
-            stopAllMusic();
-            setTimeout(() => {
-                startTreasureMusic();
-            }, 200);
-            return;
+        // If transitioning to a different stage, ensure the previous stage's music is playing
+        // This enables proper crossfading when prevStage music was never started
+        // (e.g., intro → stage 1, where intro music wasn't auto-started)
+        if (prevStageNum >= 0 && prevStageNum !== stageNum) {
+            if (currentStage !== prevStageNum) {
+                startStageMusic(prevStageNum);
+            }
         }
 
-        // If going to title screen, quick transition
-        if (toStage === 0) {
-            stopAllMusic();
-            setTimeout(() => {
-                startIntroMusic();
-            }, 200);
-            return;
-        }
-
-        // For game stages, quick crossfade between music
-        if (fromStage !== toStage && toStage >= 1 && toStage <= 4) {
-            stopAllMusic();
-            // Start new music after very brief pause
-            setTimeout(() => {
-                startStageMusic(toStage);
-            }, 50);
-        }
+        startStageMusic(stageNum);
     }
 
     /**
-     * Initialize audio on first user interaction
+     * Clean up resources from the previous stage WITHOUT stopping oscillators.
+     * Oscillators are allowed to play out naturally so the crossfade gain node
+     * has audio to fade. Only intervals are cleared to stop new note scheduling.
+     */
+    function cleanupPreviousStage() {
+        // Clear intervals FIRST (stops new note scheduling)
+        if (introMusicInterval) {
+            clearInterval(introMusicInterval);
+            introMusicInterval = null;
+        }
+        if (typingInterval) {
+            clearInterval(typingInterval);
+            typingInterval = null;
+        }
+        if (heartbeatInterval) {
+            clearTimeout(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+        if (melodyInterval) {
+            clearTimeout(melodyInterval);
+            melodyInterval = null;
+        }
+        if (staticUpdateInterval) {
+            clearTimeout(staticUpdateInterval);
+            staticUpdateInterval = null;
+        }
+
+        // Remove interval references from tracking array but keep oscillator nodes
+        // Oscillators will stop on their own after their duration, allowing
+        // their audio to flow through the crossfading gain node
+        currentMusicNodes = currentMusicNodes.filter(node => {
+            if (!node) return false;
+            if (typeof node === 'object' && node.type === 'interval') return false;
+            return true;
+        });
+    }
+
+    /**
+     * Initialize audio and return a Promise that resolves when the AudioContext is running.
+     * This allows callers to await context startup synchronously within user gestures.
      */
     function ensureInitialized() {
         if (!isInitialized) {
             init();
         }
-        resumeContext();
+        return resumeWithContext();
+    }
+
+    /**
+     * Resume the AudioContext and return a Promise that resolves when running.
+     * If already running, resolves immediately.
+     */
+    function resumeWithContext() {
+        return new Promise((resolve) => {
+            if (!audioCtx) { resolve(); return; }
+            if (audioCtx.state === 'running') { resolve(); return; }
+            audioCtx.resume().then(() => { resolve(); }).catch(() => { resolve(); });
+        });
     }
 
     /**
      * Public API
      */
+    
     return {
         // Initialization
         init: ensureInitialized,
+        resumeContext: resumeContext,
 
         // Sound effects
         playCorrectAnswer,
@@ -1133,7 +1415,22 @@ const AudioSystem = (function () {
 
         // Stage music
         startStageMusic,
-        onStageChange,
+        onStageChange: function(prevStageNum, stageNum) {
+            if (!audioCtx) {
+                return;
+            }
+            
+            // If transitioning to a different stage, ensure the previous stage's music is playing
+            // This enables proper crossfading when prevStage music was never started
+            // (e.g., intro → stage 1, where intro music wasn't auto-started)
+            if (prevStageNum >= 0 && prevStageNum !== stageNum) {
+                if (currentStage !== prevStageNum) {
+                    startStageMusic(prevStageNum);
+                }
+            }
+            
+            startStageMusic(stageNum);
+        },
         stopAllMusic,
 
         // Called when any user interaction happens (for autoplay policy)
@@ -1141,15 +1438,5 @@ const AudioSystem = (function () {
     };
 })();
 
-// ============================================
-// AUTO-INITIALIZE ON FIRST USER INTERACTION
-// ============================================
-document.addEventListener('click', function initAudioOnce() {
-    AudioSystem.ensureInitialized();
-    document.removeEventListener('click', initAudioOnce);
-}, { once: true });
-
-document.addEventListener('keydown', function initAudioOnce() {
-    AudioSystem.ensureInitialized();
-    document.removeEventListener('keydown', initAudioOnce);
-}, { once: true });
+// Expose AudioSystem globally for other scripts
+window.AudioSystem = AudioSystem;
