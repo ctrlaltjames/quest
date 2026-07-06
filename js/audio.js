@@ -841,6 +841,13 @@ const AudioSystem = (function () {
         scheduledTimeouts.push(firstStingerTimeout);
     }
 
+    /**
+     * Start Stage 2 audio - "Moonlit Waltz" (Option F)
+     * A graceful waltz pattern with alternating bass notes (oom-pah) and
+     * a lyrical melody above. Romantic ballroom feel — elegant, flowing,
+     * and timeless under moonlight.
+     * 12-second loop, 3/4 time signature with bass & melody
+     */
     function startStage2Music() {
         if (!audioCtx || currentStage === 2) return;
         resumeContext();
@@ -861,35 +868,113 @@ const AudioSystem = (function () {
         // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
-        // Romantic melody notes (warm, flowing) - play through master gain for crossfading
-        const melody = [
-            329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66,
-            329.63, 349.23, 440.00, 523.25, 493.88, 440.00, 349.23, 329.63,
-            261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 261.63, 220.00,
-            246.94, 329.63, 440.00, 523.25, 440.00, 329.63, 261.63, 293.66,
-        ];
-        const harmony = [
-            164.81, 196.00, 220.00, 261.63, 220.00, 196.00, 164.81, 146.83,
-            164.81, 174.61, 220.00, 261.63, 246.94, 220.00, 174.61, 164.81,
-            130.81, 164.81, 196.00, 261.63, 196.00, 164.81, 130.81, 110.00,
-            123.47, 164.81, 220.00, 261.63, 220.00, 164.81, 130.81, 146.83,
+        const loopDuration = 12;
+
+        // Waltz pattern: bass note on beat 1, chord on beats 2 & 3
+        // Progression: C → Am → F → G (each chord = 3 beats, 4 chords = 12 beats = 12 seconds at 1 beat/sec)
+        const waltzChords = [
+            { bass: 130.81, chord: [196.00, 261.63, 329.63] },  // C: C3 → (G3+C4+E4)
+            { bass: 110.00, chord: [164.81, 220.00, 261.63] },  // Am: A3 → (E4+A4+C5)
+            { bass: 65.41,  chord: [98.00, 130.81, 174.61] },   // F: C2 → (G3+C4+F4)
+            { bass: 98.00,  chord: [146.83, 196.00, 246.94] },  // G: G2 → (D4+G4+B3)
         ];
 
-        let noteIndex = 0;
-        const noteDuration = 0.5;
+        function scheduleWaltz() {
+            if (currentStage !== 2) return;
 
-        typingInterval = setInterval(() => {
-            const melFreq = melody[noteIndex % melody.length];
-            const harpFreq = harmony[noteIndex % harmony.length];
+            const now = audioCtx.currentTime;
 
-            // Melody (triangle wave for warm sound) - connect to masterGain for crossfading
-            playNote(melFreq, noteDuration * 0.9, 'triangle', 0.08, newMasterGain);
-            // Harmony (triangle wave, softer) - connect to masterGain for crossfading
-            playNote(harpFreq, noteDuration * 0.9, 'triangle', 0.05, newMasterGain);
-            noteIndex++;
-        }, noteDuration * 1000);
+            waltzChords.forEach((chord, i) => {
+                const beatTime = now + i * 3.0;
 
-        currentMusicNodes.push({ type: 'interval', id: typingInterval });
+                // Bass note (beat 1) - "oom"
+                const bassOsc = audioCtx.createOscillator();
+                const bassGain = audioCtx.createGain();
+                bassOsc.type = 'sine';
+                bassOsc.frequency.setValueAtTime(chord.bass, beatTime);
+                bassGain.gain.setValueAtTime(0, beatTime);
+                bassGain.gain.linearRampToValueAtTime(0.06, beatTime + 0.02);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, beatTime + 2.5);
+                bassOsc.connect(bassGain);
+                bassGain.connect(newMasterGain);
+                bassOsc.start(beatTime);
+                bassOsc.stop(beatTime + 2.6);
+                currentMusicNodes.push({ osc: bassOsc, gain: bassGain });
+
+                // Chord on beats 2 & 3 - "pah"
+                chord.chord.forEach(freq => {
+                    // Beat 2
+                    const chordOsc2 = audioCtx.createOscillator();
+                    const chordGain2 = audioCtx.createGain();
+                    chordOsc2.type = 'triangle';
+                    chordOsc2.frequency.setValueAtTime(freq, beatTime + 1.0);
+                    chordGain2.gain.setValueAtTime(0, beatTime + 1.0);
+                    chordGain2.gain.linearRampToValueAtTime(0.025, beatTime + 1.05);
+                    chordGain2.gain.exponentialRampToValueAtTime(0.001, beatTime + 2.0);
+                    chordOsc2.connect(chordGain2);
+                    chordGain2.connect(newMasterGain);
+                    chordOsc2.start(beatTime + 1.0);
+                    chordOsc2.stop(beatTime + 2.1);
+                    currentMusicNodes.push({ osc: chordOsc2, gain: chordGain2 });
+
+                    // Beat 3
+                    const chordOsc3 = audioCtx.createOscillator();
+                    const chordGain3 = audioCtx.createGain();
+                    chordOsc3.type = 'triangle';
+                    chordOsc3.frequency.setValueAtTime(freq, beatTime + 2.0);
+                    chordGain3.gain.setValueAtTime(0, beatTime + 2.0);
+                    chordGain3.gain.linearRampToValueAtTime(0.025, beatTime + 2.05);
+                    chordGain3.gain.exponentialRampToValueAtTime(0.001, beatTime + 3.0);
+                    chordOsc3.connect(chordGain3);
+                    chordGain3.connect(newMasterGain);
+                    chordOsc3.start(beatTime + 2.0);
+                    chordOsc3.stop(beatTime + 3.1);
+                    currentMusicNodes.push({ osc: chordOsc3, gain: chordGain3 });
+                });
+            });
+
+            // Melody: lyrical waltz melody over the accompaniment
+            const melodyNotes = [
+                { time: 0.5,  freq: 523.25, dur: 2.0 },   // C5 - "the first note"
+                { time: 3.5,  freq: 587.33, dur: 1.5 },   // D5
+                { time: 5.5,  freq: 523.25, dur: 2.0 },   // C5 (return)
+                { time: 8.0,  freq: 440.00, dur: 2.5 },   // A4
+                { time: 10.5, freq: 392.00, dur: 2.0 },   // G4 (resolve)
+            ];
+
+            melodyNotes.forEach(note => {
+                const noteTime = now + note.time;
+                if (noteTime < now) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(note.freq, noteTime);
+
+                gain.gain.setValueAtTime(0, noteTime);
+                gain.gain.linearRampToValueAtTime(0.08, noteTime + 0.04);
+                gain.gain.setValueAtTime(0.06, noteTime + note.dur * 0.6);
+                gain.gain.exponentialRampToValueAtTime(0.001, noteTime + note.dur);
+
+                // Lowpass filter for piano-like warmth
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2500, noteTime);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(newMasterGain);
+                osc.start(noteTime);
+                osc.stop(noteTime + note.dur + 0.01);
+                currentMusicNodes.push({ osc, gain });
+            });
+
+            // Schedule next loop
+            const nextLoop = setTimeout(scheduleWaltz, loopDuration * 1000);
+            currentMusicNodes.push({ type: 'timeout', id: nextLoop });
+        }
+
+        scheduleWaltz();
     }
 
     /**
