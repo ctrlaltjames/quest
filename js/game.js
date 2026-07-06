@@ -328,7 +328,7 @@ async function showStage(n) {
         createHeartBurst();
 
         // Stop all music when entering proposal screen
-        AudioSystem.onStageChange(state.currentStage, 5);
+        AudioSystem.stopAllMusic();
 
         // Typewriter for proposal message
         const msgEl = document.getElementById('proposal-message');
@@ -366,7 +366,7 @@ async function showStage(n) {
         startTreasureCountdown();
 
         // Start treasure music
-        AudioSystem.onStageChange(state.currentStage, 6);
+        AudioSystem.startStageMusic(6);
 
         state.isTransitioning = false;
         return;
@@ -500,7 +500,7 @@ async function handleCheck(stageId) {
         await showStage(state.currentStage);
 
         // Handle audio transitions after stage change
-        AudioSystem.onStageChange(prevStage, state.currentStage);
+        AudioSystem.startStageMusic(state.currentStage);
 
         // Reset input after transition completes
         input.classList.remove('correct');
@@ -698,7 +698,7 @@ function bindEvents() {
                 // Initialize audio on first user interaction
                 AudioSystem.ensureInitialized();
                 // Stop intro music and transition to game
-                AudioSystem.onStageChange(0, 1);
+                AudioSystem.startStageMusic(1);
                 state.currentStage = 1;
                 showStage(1);
             }

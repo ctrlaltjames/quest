@@ -235,35 +235,197 @@ body {
         3px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
+/* ============================================
+   TITLE SCREEN CLOUDS
+   ============================================ */
+
+/* Container with blur filter for soft cloud effect */
+/* Use fixed positioning to break out of padded stage container and fill true viewport */
+.title-clouds {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    filter: blur(8px);
+    -webkit-filter: blur(8px);
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Base cloud shape using pseudo-elements */
+.cloud {
+    position: absolute;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
+    border-radius: 100px;
+    pointer-events: none;
+}
+
+/* Cloud bumps via pseudo-elements */
+.cloud::before {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+/* Cloud 1 - small, near top, slow */
+.cloud-1 {
+    width: 140px;
+    height: 50px;
+    top: 5%;
+    left: -160px;
+    animation: cloudDrift 80s linear infinite;
+    animation-delay: -20s;
+}
+
+.cloud-1::before {
+    width: 70px;
+    height: 45px;
+    top: -20px;
+    left: 20px;
+}
+
+.cloud-1::after {
+    width: 60px;
+    height: 40px;
+    top: -15px;
+    right: 20px;
+}
+
+/* Cloud 2 - medium, upper-mid, medium speed */
+.cloud-2 {
+    width: 200px;
+    height: 65px;
+    top: 22%;
+    left: -220px;
+    animation: cloudDrift 60s linear infinite;
+    animation-delay: -35s;
+}
+
+.cloud-2::before {
+    width: 100px;
+    height: 60px;
+    top: -25px;
+    left: 35px;
+}
+
+.cloud-2::after {
+    width: 85px;
+    height: 50px;
+    top: -18px;
+    right: 30px;
+}
+
+/* Cloud 3 - large, mid-height, fast */
 .cloud-3 {
-    width: 180px;
-    height: 70px;
-    top: 65%;
-    left: -180px;
-    animation: cloudDrift 70s linear infinite;
-    animation-delay: -40s;
+    width: 250px;
+    height: 75px;
+    top: 40%;
+    left: -270px;
+    animation: cloudDrift 50s linear infinite;
+    animation-delay: -15s;
 }
 
 .cloud-3::before {
-    width: 90px;
-    height: 55px;
-    top: -18px;
-    left: 25px;
+    width: 120px;
+    height: 65px;
+    top: -28px;
+    left: 40px;
 }
 
 .cloud-3::after {
     width: 110px;
     height: 60px;
+    top: -20px;
+    right: 35px;
+}
+
+/* Cloud 4 - small, lower-mid, slow */
+.cloud-4 {
+    width: 130px;
+    height: 45px;
+    top: 55%;
+    left: -150px;
+    animation: cloudDrift 90s linear infinite;
+    animation-delay: -60s;
+}
+
+.cloud-4::before {
+    width: 65px;
+    height: 42px;
+    top: -18px;
+    left: 18px;
+}
+
+.cloud-4::after {
+    width: 55px;
+    height: 35px;
     top: -12px;
+    right: 18px;
+}
+
+/* Cloud 5 - medium, lower area, medium speed */
+.cloud-5 {
+    width: 180px;
+    height: 60px;
+    top: 70%;
+    left: -200px;
+    animation: cloudDrift 65s linear infinite;
+    animation-delay: -45s;
+}
+
+.cloud-5::before {
+    width: 90px;
+    height: 55px;
+    top: -22px;
+    left: 30px;
+}
+
+.cloud-5::after {
+    width: 80px;
+    height: 48px;
+    top: -15px;
     right: 25px;
+}
+
+/* Cloud 6 - large, near bottom, slow */
+.cloud-6 {
+    width: 220px;
+    height: 70px;
+    top: 88%;
+    left: -240px;
+    animation: cloudDrift 75s linear infinite;
+    animation-delay: -55s;
+}
+
+.cloud-6::before {
+    width: 110px;
+    height: 58px;
+    top: -24px;
+    left: 35px;
+}
+
+.cloud-6::after {
+    width: 95px;
+    height: 52px;
+    top: -16px;
+    right: 30px;
 }
 
 @keyframes cloudDrift {
     from {
-        transform: translateX(0);
+        left: -280px;
     }
     to {
-        transform: translateX(calc(100vw + 300px));
+        left: calc(100vw + 50px);
     }
 }
 
@@ -965,12 +1127,13 @@ body::after {
         background-repeat: no-repeat !important;
     }
 
-    /* Position clouds absolutely so they don't interfere with layout */
+    /* Position clouds to fill full viewport */
     #stage-title.active .title-clouds {
         position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
         z-index: 0 !important;
     }
 

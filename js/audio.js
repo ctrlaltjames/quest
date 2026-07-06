@@ -37,6 +37,9 @@ const AudioSystem = (function () {
     // Stage 1 heartbeat and melody timers
     let heartbeatInterval = null;
     let melodyInterval = null;
+    
+    // Stage 1 scheduled note timeouts (for horror stingers and groans)
+    let scheduledTimeouts = [];
 
     // Static noise updater
     let staticUpdateInterval = null;
@@ -361,126 +364,6 @@ const AudioSystem = (function () {
      * ==========================================
      */
 
-    /**
-     * Clean up resources from previous stage without resetting currentStage
-     */
-    function cleanupPreviousStage() {
-        // Clear intervals FIRST (before stopping nodes)
-        if (introMusicInterval) {
-            clearInterval(introMusicInterval);
-            introMusicInterval = null;
-        }
-        if (typingInterval) {
-            clearInterval(typingInterval);
-            typingInterval = null;
-        }
-        if (heartbeatInterval) {
-            clearTimeout(heartbeatInterval);
-            heartbeatInterval = null;
-        }
-        if (melodyInterval) {
-            clearTimeout(melodyInterval);
-            melodyInterval = null;
-        }
-        if (staticUpdateInterval) {
-            clearTimeout(staticUpdateInterval);
-            staticUpdateInterval = null;
-        }
-
-        // Stop and disconnect all tracked nodes EXCEPT master gain node and interval references
-        currentMusicNodes = currentMusicNodes.filter(node => {
-            return !node || 
-                   typeof node !== 'object' || 
-                   (typeof node === 'object' && node.type === 'interval');
-        }).map(node => {
-            if (!node) return null;
-            try {
-                if (node.osc) {
-                    try { node.osc.stop(); } catch(e) {}
-                    try { node.osc.disconnect(); } catch(e) {}
-                }
-                if (node.osc2) {
-                    try { node.osc2.stop(); } catch(e) {}
-                    try { node.osc2.disconnect(); } catch(e) {}
-                }
-                if (node.source) {
-                    try { node.source.stop(); } catch(e) {}
-                    try { node.source.disconnect(); } catch(e) {}
-                }
-                // Don't disconnect gain nodes that are still in use
-                return node;
-            } catch (e) {
-                return null;
-            }
-        }).filter(Boolean);
-    }
-
-    /**
-     * Stop all current music (used for proposal screen - stops everything immediately)
-     */
-    function stopAllMusic() {
-        // Clear intervals
-        if (introMusicInterval) {
-            clearInterval(introMusicInterval);
-            introMusicInterval = null;
-        }
-        if (typingInterval) {
-            clearInterval(typingInterval);
-            typingInterval = null;
-        }
-        if (heartbeatInterval) {
-            clearTimeout(heartbeatInterval);
-            heartbeatInterval = null;
-        }
-        if (melodyInterval) {
-            clearTimeout(melodyInterval);
-            melodyInterval = null;
-        }
-        if (staticUpdateInterval) {
-            clearTimeout(staticUpdateInterval);
-            staticUpdateInterval = null;
-        }
-
-        // Clear fade timeout
-        if (fadeOutTimeout) {
-            clearTimeout(fadeOutTimeout);
-            fadeOutTimeout = null;
-        }
-
-        // Stop and disconnect all tracked nodes (immediate stop for proposal screen)
-        currentMusicNodes.forEach(node => {
-            try {
-                if (node.osc) {
-                    try { node.osc.stop(); } catch(e) {}
-                    try { node.osc.disconnect(); } catch(e) {}
-                }
-                if (node.osc2) {
-                    try { node.osc2.stop(); } catch(e) {}
-                    try { node.osc2.disconnect(); } catch(e) {}
-                }
-                if (node.source) {
-                    try { node.source.stop(); } catch(e) {}
-                    try { node.source.disconnect(); } catch(e) {}
-                }
-                if (node.gain) {
-                    try { node.gain.disconnect(); } catch(e) {}
-                }
-                if (node.filter) {
-                    try { node.filter.disconnect(); } catch(e) {}
-                }
-            } catch (e) {}
-        });
-        
-        currentMusicNodes = [];
-        currentStage = -1;
-        
-        // Reset gain state
-        currentMasterGain = null;
-    }
-
-    /**
-     * Fade out current music (kept for backward compatibility)
-     */
     function fadeOutMusic(duration = 300) {
         if (!masterGainNode || !audioCtx) return;
 
@@ -842,9 +725,11 @@ const AudioSystem = (function () {
 
             // Next groan in 3-6 seconds
             const nextGroan = 3000 + Math.random() * 3000;
-            heartbeatInterval = setTimeout(scheduleGroan, nextGroan);
+            const groanTimeout = setTimeout(scheduleGroan, nextGroan);
+            scheduledTimeouts.push(groanTimeout);
         }
-        setTimeout(scheduleGroan, 2500);
+        const firstGroanTimeout = setTimeout(scheduleGroan, 2500);
+        scheduledTimeouts.push(firstGroanTimeout);
 
         // ==========================================
         // HEARTBEAT - Rhythmic pulse underneath
@@ -886,7 +771,8 @@ const AudioSystem = (function () {
                 osc2.stop(now + secondBeatDelay + beatInterval * 0.2 + 0.01);
                 currentMusicNodes.push({ osc: osc2, gain: gain2 });
 
-                heartbeatInterval = setTimeout(beat, beatInterval * 1000);
+                const beatTimeout = setTimeout(beat, beatInterval * 1000);
+                scheduledTimeouts.push(beatTimeout);
             }
             beat();
         }
@@ -901,7 +787,7 @@ const AudioSystem = (function () {
             const now = audioCtx.currentTime;
             const stingerDelay = 8000 + Math.random() * 15000; // Every 8-23 seconds
 
-            setTimeout(() => {
+            const stingerTimeout = setTimeout(() => {
                 if (currentStage !== 1) return;
 
                 const stingerFreqs = [
@@ -946,10 +832,13 @@ const AudioSystem = (function () {
                 osc2.stop(now + 0.41);
                 currentMusicNodes.push({ osc: osc2, gain: gain2, filter: rumbleFilter });
 
-                scheduleStinger();
+                const nextStingerTimeout = setTimeout(scheduleStinger, stingerDelay);
+                scheduledTimeouts.push(nextStingerTimeout);
             }, stingerDelay);
+            scheduledTimeouts.push(stingerTimeout);
         }
-        setTimeout(scheduleStinger, 10000); // First stinger after 10 seconds
+        const firstStingerTimeout = setTimeout(scheduleStinger, 10000); // First stinger after 10 seconds
+        scheduledTimeouts.push(firstStingerTimeout);
     }
 
     function startStage2Music() {
@@ -1200,30 +1089,11 @@ const AudioSystem = (function () {
     }
 
     /**
-     * ==========================================
-     * STAGE MANAGEMENT
-     * ==========================================
+     * Start music for a specific stage (public interface)
      */
-
-    /**
-     * Start appropriate music for a given stage
-     */
-    function startStageMusic(stageNum) {
-        if (!audioCtx) return;
-
-        // If AudioContext is suspended, resume it first (must be done from user gesture)
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => {
-                // Resume succeeded; start music in the next microtask
-                startStageMusic(stageNum);
-            }).catch(err => {
-                console.warn('AudioContext resume failed:', err);
-            });
-            return;
-        }
-
-        switch (stageNum) {
-            case 0: // Title screen
+    function startStageMusic(stage) {
+        switch (stage) {
+            case 0: // Intro / Title screen
                 startIntroMusic();
                 break;
             case 1: // Stage 1 - Spooky
@@ -1241,45 +1111,18 @@ const AudioSystem = (function () {
             case 6: // Treasure screen
                 startTreasureMusic();
                 break;
-            case 5: // Proposal - stop music
+            default:
                 stopAllMusic();
                 break;
         }
     }
 
     /**
-     * Called when transitioning between stages
-     * Fades out current music, then starts the new stage music.
+     * Stop all music (public interface)
      */
-    function onStageChange(prevStageNum, stageNum) {
-        if (!audioCtx) {
-            return;
-        }
-
-        // If transitioning to a different stage
-        if (prevStageNum >= 0 && prevStageNum !== stageNum) {
-            // First, ensure the previous stage's music is playing (in case it was never started)
-            // This handles cases where intro music wasn't auto-started before transitioning to stage 1
-            if (currentStage !== prevStageNum) {
-                startStageMusic(prevStageNum);
-            }
-            
-            // Fade out the current music, then start the new stage music
-            const prevMasterGain = currentMasterGain;
-            if (prevMasterGain) {
-                fadeOutGainNode(prevMasterGain, fadeOutDuration);
-                
-                // After fade-out completes, start the new stage music
-                fadeOutTimeout = setTimeout(() => {
-                    startStageMusic(stageNum);
-                }, fadeOutDuration * 1000 + 50);
-            } else {
-                // No current music to fade out, start new music immediately
-                startStageMusic(stageNum);
-            }
-        } else {
-            startStageMusic(stageNum);
-        }
+    function stopAllMusic() {
+        cleanupPreviousStage();
+        currentStage = -1;
     }
 
     /**
@@ -1309,6 +1152,10 @@ const AudioSystem = (function () {
             clearTimeout(staticUpdateInterval);
             staticUpdateInterval = null;
         }
+
+        // Clear all scheduled timeouts (Stage 1 horror stingers, groans, heartbeat)
+        scheduledTimeouts.forEach(t => clearTimeout(t));
+        scheduledTimeouts = [];
 
         // STOP all active oscillators immediately to prevent audio overlap
         currentMusicNodes.forEach(node => {
@@ -1371,41 +1218,12 @@ const AudioSystem = (function () {
 
         // Stage music
         startStageMusic,
-        onStageChange: function(prevStageNum, stageNum) {
-            if (!audioCtx) {
-                return;
-            }
-            
-            // If transitioning to a different stage
-            if (prevStageNum >= 0 && prevStageNum !== stageNum) {
-                // First, ensure the previous stage's music is playing (in case it was never started)
-                if (currentStage !== prevStageNum) {
-                    startStageMusic(prevStageNum);
-                }
-                
-                // Fade out the current music, then start the new stage music
-                const prevMasterGain = currentMasterGain;
-                if (prevMasterGain) {
-                    fadeOutGainNode(prevMasterGain, fadeOutDuration);
-                    
-                    // After fade-out completes, start the new stage music
-                    fadeOutTimeout = setTimeout(() => {
-                        startStageMusic(stageNum);
-                    }, fadeOutDuration * 1000 + 50);
-                } else {
-                    // No current music to fade out, start new music immediately
-                    startStageMusic(stageNum);
-                }
-            } else {
-                startStageMusic(stageNum);
-            }
-        },
         stopAllMusic,
 
         // Called when any user interaction happens (for autoplay policy)
         ensureInitialized,
     };
+    
+    // Expose AudioSystem globally for other scripts
+    window.AudioSystem = AudioSystem;
 })();
-
-// Expose AudioSystem globally for other scripts
-window.AudioSystem = AudioSystem;
