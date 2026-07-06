@@ -15,14 +15,14 @@ const AudioSystem = (function () {
     let currentMusicGain = null;
     let currentMusicNodes = []; // Track all nodes for cleanup
     let fadingOutNodes = []; // Nodes currently fading out (old music during crossfade)
-    
+
     // Single shared master gain node for all audio output
     let masterGainNode = null;
 
     // Gain node management (no crossfading - sequential fade out then in)
     let currentMasterGain = null;  // The gain node currently playing
     let fadeOutDuration = 0.5;     // Duration of fade-out in seconds
-    let fadeInDuration = 0.8;      // Duration of fade-in in seconds
+    let fadeInDuration = 0.1;      // Duration of fade-in in seconds (reduced for faster music switching)
     let fadeOutTimeout = null;     // Timeout for sequential fade-out
 
     // Track which stage music is playing
@@ -37,7 +37,7 @@ const AudioSystem = (function () {
     // Stage 1 heartbeat and melody timers
     let heartbeatInterval = null;
     let melodyInterval = null;
-    
+
     // Stage 1 scheduled note timeouts (for horror stingers and groans)
     let scheduledTimeouts = [];
 
@@ -52,12 +52,12 @@ const AudioSystem = (function () {
 
         try {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
+
             // Create a single shared master gain node connected to destination
             masterGainNode = audioCtx.createGain();
             masterGainNode.gain.setValueAtTime(1, audioCtx.currentTime);
             masterGainNode.connect(audioCtx.destination);
-            
+
             isInitialized = true;
         } catch (e) {
             console.warn('Web Audio API not supported');
@@ -342,12 +342,12 @@ const AudioSystem = (function () {
         if (!audioCtx || !gainNode) return;
 
         const now = audioCtx.currentTime;
-        
+
         // Cancel any existing scheduled values
         gainNode.gain.cancelScheduledValues(now);
         gainNode.gain.setValueAtTime(gainNode.gain.value, now);
         gainNode.gain.linearRampToValueAtTime(0, now + duration);
-        
+
         // Schedule disconnection after fade completes
         const timeout = setTimeout(() => {
             try {
@@ -978,7 +978,94 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start Stage 3 audio - Typing sounds
+     * Create a clicky-clacky keyboard keypress sound
+     * Sharper transient, louder volume, more high-frequency content
+     */
+    function createKeyPress(volume = 0.15, pitch = 2500, destination = null) {
+        if (!audioCtx) return null;
+
+        const now = audioCtx.currentTime;
+        const group = [];
+
+        // === SHARP CLICK TRANSIENT (very short, bright) ===
+        const clickDuration = 0.004 + Math.random() * 0.004;
+        const bufferSize = audioCtx.sampleRate * clickDuration;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            const envelope = Math.pow(1 - i / bufferSize, 3);
+            data[i] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        const clickSource = audioCtx.createBufferSource();
+        clickSource.buffer = buffer;
+
+        // High-pass filter for bright, sharp click
+        const clickFilter = audioCtx.createBiquadFilter();
+        clickFilter.type = 'highpass';
+        clickFilter.frequency.value = pitch + Math.random() * 1500;
+        clickFilter.Q.value = 0.7;
+
+        const clickGain = audioCtx.createGain();
+        clickGain.gain.setValueAtTime(volume, now);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, now + clickDuration);
+
+        clickSource.connect(clickFilter);
+        clickFilter.connect(clickGain);
+        clickGain.connect(destination || masterGainNode);
+        clickSource.start(now);
+        group.push({ source: clickSource, gain: clickGain });
+
+        // === SECOND CLICK LAYER (slightly delayed for mechanical depth) ===
+        const click2Delay = 0.002 + Math.random() * 0.003;
+        const click2Duration = clickDuration * 0.8;
+        const bufferSize2 = audioCtx.sampleRate * click2Duration;
+        const buffer2 = audioCtx.createBuffer(1, bufferSize2, audioCtx.sampleRate);
+        const data2 = buffer2.getChannelData(0);
+        for (let i = 0; i < bufferSize2; i++) {
+            const envelope = Math.pow(1 - i / bufferSize2, 2);
+            data2[i] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        const clickSource2 = audioCtx.createBufferSource();
+        clickSource2.buffer = buffer2;
+
+        const clickFilter2 = audioCtx.createBiquadFilter();
+        clickFilter2.type = 'bandpass';
+        clickFilter2.frequency.value = pitch * 0.6 + Math.random() * 800;
+        clickFilter2.Q.value = 2;
+
+        const clickGain2 = audioCtx.createGain();
+        clickGain2.gain.setValueAtTime(volume * 0.6, now + click2Delay);
+        clickGain2.gain.exponentialRampToValueAtTime(0.001, now + click2Delay + click2Duration);
+
+        clickSource2.connect(clickFilter2);
+        clickFilter2.connect(clickGain2);
+        clickGain2.connect(destination || masterGainNode);
+        clickSource2.start(now + click2Delay);
+        group.push({ source: clickSource2, gain: clickGain2 });
+
+        // === LOW "THOCK" (key bottom-out body) ===
+        const tonalDuration = 0.05 + Math.random() * 0.02;
+        const tonalOsc = audioCtx.createOscillator();
+        const tonalGain = audioCtx.createGain();
+        tonalOsc.type = 'sine';
+        tonalOsc.frequency.setValueAtTime(300 + Math.random() * 200, now);
+        tonalGain.gain.setValueAtTime(volume * 0.5, now);
+        tonalGain.gain.exponentialRampToValueAtTime(0.001, now + tonalDuration);
+
+        tonalOsc.connect(tonalGain);
+        tonalGain.connect(destination || masterGainNode);
+        tonalOsc.start(now);
+        tonalOsc.stop(now + tonalDuration + 0.01);
+        group.push({ osc: tonalOsc, gain: tonalGain });
+
+        return group;
+    }
+
+    /**
+     * Start Stage 3 audio - Realistic keyboard typing loop
+     * Simulates someone typing a message with natural rhythm and variation
      */
     function startStage3Music() {
         if (!audioCtx || currentStage === 3) return;
@@ -1000,36 +1087,136 @@ const AudioSystem = (function () {
         // Update current master gain (no previous gain tracking needed)
         currentMasterGain = newMasterGain;
 
-        // Rhythmic typing pattern - connect to master gain via playNote chain
-        const typingPattern = [
-            { delay: 0, sound: true },
-            { delay: 80, sound: true },
-            { delay: 150, sound: true },
-            { delay: 300, sound: true },
-            { delay: 400, sound: true },
-            { delay: 500, sound: false }, // pause
-            { delay: 600, sound: true },
-            { delay: 680, sound: true },
-            { delay: 800, sound: true },
-            { delay: 950, sound: true },
-            { delay: 1000, sound: true },
-            { delay: 1100, sound: true },
-            { delay: 1200, sound: false }, // pause
+        // Natural typing pattern configuration
+        // Word lengths weighted toward common English word lengths (2-7 letters)
+        const wordLengthWeights = [
+            2, 2,  // short words (a, I, oh)
+            3, 3, 3,  // common (the, and, for)
+            4, 4, 4, 4,  // most common (that, with, this)
+            5, 5, 5,  // medium (every, where, what)
+            6, 6,  // longer (around, behind)
+            7,  // longest (another, never)
         ];
+        // Timing ranges in ms
+        const interClickMin = 100;
+        const interClickMax = 200;       // Within a word (letters) - slower for natural feel
+        const interWordMin = 400;
+        const interWordMax = 800;        // Between words in a phrase
+        const interPhraseMin = 1200;
+        const interPhraseMax = 3500;     // Between phrases
+        const cycleEndMin = 1500;
+        const cycleEndMax = 4000;        // End of full cycle
+        const jitterAmount = 20;          // Random timing variation for organic feel
 
-        let patternIndex = 0;
+        // Helper: random integer in range [min, max]
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Helper: random float in range [min, max]
+        function randomFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        // Generate a natural typing event sequence for one cycle
+        function generateTypingPattern() {
+            const events = [];
+            let lastEventType = 'none'; // track what we just added
+
+            // Each cycle has 2-4 phrases
+            const numPhrases = randomInt(2, 4);
+
+            for (let p = 0; p < numPhrases; p++) {
+                // Each phrase has 2-6 words
+                const numWords = randomInt(2, 6);
+
+                for (let w = 0; w < numWords; w++) {
+                    // Pick word length from weighted distribution
+                    const wordLength = wordLengthWeights[Math.floor(Math.random() * wordLengthWeights.length)];
+
+                    // Add clicks for this word
+                    for (let c = 0; c < wordLength; c++) {
+                        if (c > 0 || w > 0 || p > 0 || events.length > 0) {
+                            // Inter-click timing within/between words
+                            let clickDelay;
+                            if (c > 0) {
+                                // Within same word - faster
+                                clickDelay = randomFloat(interClickMin, interClickMax);
+                            } else if (w > 0) {
+                                // Between words in same phrase
+                                clickDelay = randomFloat(interWordMin, interWordMax);
+                            } else {
+                                // Between phrases
+                                clickDelay = randomFloat(interPhraseMin, interPhraseMax);
+                            }
+                            // Add jitter for organic feel
+                            clickDelay += (Math.random() * 2 - 1) * jitterAmount;
+                            events.push({ type: 'pause', delay: Math.max(10, clickDelay) });
+                        }
+                        events.push({ type: 'click', delay: 0 });
+                        lastEventType = 'click';
+                    }
+
+                    // Small pause between words (if not last word)
+                    if (w < numWords - 1) {
+                        const wordPause = randomFloat(interWordMin, interWordMax);
+                        events.push({ type: 'pause', delay: wordPause + (Math.random() * 2 - 1) * jitterAmount });
+                    }
+                }
+
+                // Pause between phrases (if not last phrase)
+                if (p < numPhrases - 1) {
+                    const phrasePause = randomFloat(interPhraseMin, interPhraseMax);
+                    events.push({ type: 'pause', delay: phrasePause + (Math.random() * 2 - 1) * jitterAmount });
+                }
+            }
+
+            // End of cycle pause
+            const cycleEndPause = randomFloat(cycleEndMin, cycleEndMax);
+            events.push({ type: 'pause', delay: cycleEndPause + (Math.random() * 2 - 1) * jitterAmount });
+
+            return events;
+        }
+
+        // Generate a fresh natural typing pattern
+        const typingPattern = generateTypingPattern();
+
+        // Build cumulative timestamps
+        const events = [];
+        let cumulativeTime = 0;
+        for (const entry of typingPattern) {
+            cumulativeTime += entry.delay;
+            events.push({ type: entry.type, time: cumulativeTime });
+        }
+
+        const totalCycleDuration = cumulativeTime + 100; // small buffer
+        let eventIndex = 0;
+        let lastTriggerTime = 0;
 
         typingInterval = setInterval(() => {
-            const pattern = typingPattern[patternIndex % typingPattern.length];
+            const now = performance.now();
 
-            if (pattern.sound) {
-                // Vary the click sound slightly for realism
-                const volume = 0.04 + Math.random() * 0.04;
-                const duration = 0.02 + Math.random() * 0.02;
-                createNoiseBurst(duration, volume, newMasterGain);
+            // Fire all events that are due
+            while (eventIndex < events.length) {
+                const event = events[eventIndex];
+                if (now - lastTriggerTime >= event.time) {
+                    if (event.type === 'click') {
+                        const pitchVariation = 2200 + Math.random() * 1300;
+                        const volumeVariation = 0.13 + Math.random() * 0.07;
+                        createKeyPress(volumeVariation, pitchVariation, newMasterGain);
+                    }
+                    eventIndex++;
+                } else {
+                    break;
+                }
             }
-            patternIndex++;
-        }, 1200); // Pattern repeats every 1200ms
+
+            // Reset cycle when complete
+            if (eventIndex >= events.length) {
+                eventIndex = 0;
+                lastTriggerTime = now;
+            }
+        }, 20);
 
         currentMusicNodes.push({ type: 'interval', id: typingInterval });
     }
@@ -1289,7 +1476,7 @@ const AudioSystem = (function () {
     /**
      * Public API
      */
-    
+
     return {
         // Initialization
         init: ensureInitialized,
@@ -1308,7 +1495,7 @@ const AudioSystem = (function () {
         // Called when any user interaction happens (for autoplay policy)
         ensureInitialized,
     };
-    
+
     // Expose AudioSystem globally for other scripts
     window.AudioSystem = AudioSystem;
 })();

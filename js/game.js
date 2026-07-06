@@ -491,16 +491,18 @@ async function handleCheck(stageId) {
         screenFlash();
         AudioSystem.playCorrectAnswer();
 
-        // Wait for sparkle animation
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Stop previous music immediately and start new music right away
+        // This prevents old stage's music bleeding into the new stage
+        const nextStage = stageId + 1;
+        AudioSystem.stopAllMusic();
+        AudioSystem.startStageMusic(nextStage);
+
+        // Short wait for visual feedback (sparkles, screen flash) before transition
+        await new Promise(resolve => setTimeout(resolve, 150));
 
         // Advance to next stage (showStage manages isTransitioning)
-        const prevStage = state.currentStage;
-        state.currentStage = stageId + 1;
+        state.currentStage = nextStage;
         await showStage(state.currentStage);
-
-        // Handle audio transitions after stage change
-        AudioSystem.startStageMusic(state.currentStage);
 
         // Reset input after transition completes
         input.classList.remove('correct');
