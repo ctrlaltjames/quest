@@ -1150,14 +1150,18 @@ function initAudioWaitingOverlay() {
 
     let audioStarted = false;
 
-    function startAudio() {
+    async function startAudio() {
         if (audioStarted) return;
         audioStarted = true;
 
-        // Initialize and resume AudioContext
-        AudioSystem.ensureInitialized();
+        // Initialize and resume AudioContext synchronously within the user gesture.
+        // This MUST happen inside the user gesture handler so that the browser
+        // allows audio playback (autoplay policy). The await ensures we wait for
+        // resume() to complete before calling startStageMusic, keeping everything
+        // within the same synchronous execution context as the click event.
+        await AudioSystem.ensureInitialized();
 
-        // Start intro music (stage 0 = title screen)
+        // Start intro music (stage 0 = title screen) - now AudioContext is running
         AudioSystem.startStageMusic(0);
 
         // Hide the overlay
@@ -1170,8 +1174,17 @@ function initAudioWaitingOverlay() {
         }, 500);
     }
 
-    // Support both click and touch events
-    overlay.addEventListener('click', startAudio);
-    overlay.addEventListener('touchstart', startAudio, { passive: true });
+    // Support both click and touch events.
+    // Both event types must be handled for cross-browser compatibility since some browsers
+    // (especially iOS Safari) only fire 'click' while others may require 'touchstart'.
+    // We use removeEventListener to avoid double-firing when both events trigger on the same tap.
+    function handleOverlayTap(e) {
+        startAudio();
+        overlay.removeEventListener('click', handleOverlayTap);
+        overlay.removeEventListener('touchstart', handleOverlayTap);
+    }
+
+    overlay.addEventListener('click', handleOverlayTap);
+    overlay.addEventListener('touchstart', handleOverlayTap, { passive: true });
 }
 
