@@ -491,14 +491,13 @@ async function handleCheck(stageId) {
         screenFlash();
         AudioSystem.playCorrectAnswer();
 
-        // Stop previous music immediately and start new music right away
-        // This prevents old stage's music bleeding into the new stage
+        // Wait 2.5 seconds (current stage's music continues during this delay)
         const nextStage = stageId + 1;
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
+        // After the delay: stop old music and start new music
         AudioSystem.stopAllMusic();
         AudioSystem.startStageMusic(nextStage);
-
-        // Short wait for visual feedback (sparkles, screen flash) before transition
-        await new Promise(resolve => setTimeout(resolve, 150));
 
         // Advance to next stage (showStage manages isTransitioning)
         state.currentStage = nextStage;
@@ -540,7 +539,7 @@ async function startTreasureCountdown() {
 
     countdownEl.style.display = 'block';
 
-    for (let i = 5; i >= 1; i--) {
+    for (let i = 10; i >= 1; i--) {
         countdownEl.textContent = i;
         // Reset animation
         countdownEl.style.animation = 'none';
