@@ -587,13 +587,8 @@ async function handleYes() {
     // Heart burst
     createHeartBurst();
 
-    // Play YES fireworks sound
-    AudioSystem.playYesFireworks();
-
-    // Play celebratory victory song after a short delay
-    setTimeout(() => {
-        AudioSystem.playCelebrationSong();
-    }, 600);
+    // Play celebratory victory song
+    AudioSystem.playCelebrationSong();
 
     // Show after-yes message (do NOT fade it out)
     const afterYesEl = document.getElementById('after-yes');
