@@ -226,6 +226,7 @@ body {
     font-size: clamp(8px, 3vw, 14px);
     text-align: center;
     opacity: 0.8;
+    line-height: 1.6;
     margin-bottom: 12px;
     text-shadow:
         2px 0 0 rgba(0, 0, 0, 0.7),
@@ -768,8 +769,8 @@ body {
 
 /* --- Proposal Screen --- */
 #stage-proposal {
-    justify-content: flex-start !important;
-    padding-bottom: 0 !important;
+    justify-content: space-between !important;
+    padding-bottom: 40px !important;
 }
 
 .proposal-content {
@@ -780,6 +781,7 @@ body {
     max-width: 480px;
     width: 100%;
     margin-top: 0;
+    flex: 1;
 }
 
 .proposal-message {
@@ -815,6 +817,7 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     width: 100%;
+    padding-bottom: 24px;
 }
 
 .proposal-buttons .btn-no {
