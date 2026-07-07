@@ -1176,17 +1176,9 @@ function initAudioWaitingOverlay() {
         }, 500);
     }
 
-    // Support both click and touch events.
-    // Both event types must be handled for cross-browser compatibility since some browsers
-    // (especially iOS Safari) only fire 'click' while others may require 'touchstart'.
-    // We use removeEventListener to avoid double-firing when both events trigger on the same tap.
-    function handleOverlayTap(e) {
-        startAudio();
-        overlay.removeEventListener('click', handleOverlayTap);
-        overlay.removeEventListener('touchstart', handleOverlayTap);
-    }
-
-    overlay.addEventListener('click', handleOverlayTap);
-    overlay.addEventListener('touchstart', handleOverlayTap, { passive: true });
+    // Use a single 'click' event with { once: true } to avoid race conditions on Android.
+    // The 'click' event fires reliably after touch on all browsers (including Android Chrome).
+    // { once: true } automatically removes the listener after first fire — no manual removal needed.
+    overlay.addEventListener('click', startAudio, { once: true });
 }
 
