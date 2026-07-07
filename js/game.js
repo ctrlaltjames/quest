@@ -52,7 +52,7 @@ const CONFIG = {
     proposal: {
         message: "Every quest has led to this moment...",
         question: "Will you marry me?",
-        buttonYes: "YES! 💍",
+        buttonYes: "YES!",
         afterYes: "She said YES! Forever begins now! 💕",
     },
 };

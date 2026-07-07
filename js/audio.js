@@ -252,81 +252,262 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Play celebratory victory fanfare - chiptune "congratulations" song
-     * Classic RPG-style triumph melody
+     * Play celebratory romantic victory fanfare - grand chiptune love song
+     * A beautiful, romantic, celebration chiptune composition for the proposal moment
+     * Structure: Romantic Intro -> Build -> Grand Celebration -> Triumphant Finale
      */
     function playCelebrationSong() {
         resumeContext();
 
-        // Victory fanfare melody (like classic RPG celebration)
-        const melody = [
-            { f: 659.25, d: 0.15 },  // E5
-            { f: 659.25, d: 0.15 },  // E5
-            { f: 659.25, d: 0.15 },  // E5
-            { f: 783.99, d: 0.4 },   // G5 (hold)
-            { f: 698.46, d: 0.4 },   // F5 (hold)
-            { f: 659.25, d: 0.4 },   // E5 (hold)
-            { f: 587.33, d: 0.4 },   // D5 (hold)
-            { f: 659.25, d: 0.15 },  // E5
-            { f: 783.99, d: 0.15 },  // G5
-            { f: 1046.50, d: 0.6 },  // C6 (victory note!)
+        const now = audioCtx.currentTime;
+
+        // ==========================================
+        // SECTION 1: ROMANTIC INTRO (0 - 2.5s)
+        // Soft, intimate melody with gentle harmonies
+        // ==========================================
+
+        // Main romantic melody - triangle wave for warm, loving tone
+        const introMelody = [
+            // "Be my love" - gentle opening phrase
+            { f: 523.25, d: 0.3, t: 0 },     // C5
+            { f: 587.33, d: 0.3, t: 0.3 },   // D5
+            { f: 659.25, d: 0.5, t: 0.6 },   // E5 (hold with emotion)
+            { f: 587.33, d: 0.2, t: 1.1 },   // D5
+            { f: 523.25, d: 0.3, t: 1.3 },   // C5
+            { f: 493.88, d: 0.3, t: 1.6 },   // B4
+            { f: 523.25, d: 0.5, t: 1.9 },   // C5 (resolve gently)
         ];
 
-        // Bass line
-        const bass = [
-            { f: 329.63, d: 0.15 },  // E4
-            { f: 329.63, d: 0.15 },  // E4
-            { f: 329.63, d: 0.15 },  // E4
-            { f: 392.00, d: 0.4 },   // G4
-            { f: 349.23, d: 0.4 },   // F4
-            { f: 329.63, d: 0.4 },   // E4
-            { f: 293.66, d: 0.4 },   // D4
-            { f: 329.63, d: 0.15 },  // E4
-            { f: 392.00, d: 0.15 },  // G4
-            { f: 523.25, d: 0.6 },   // C5
+        // ==========================================
+        // SECTION 2: BUILD PHASE (2.5 - 5s)
+        // Add layers, increase energy
+        // ==========================================
+
+        // Transition melody - bridging to celebration
+        const buildMelody = [
+            // Ascending sequence - building hope
+            { f: 392.00, d: 0.2, t: 2.5 },   // G4
+            { f: 440.00, d: 0.2, t: 2.7 },   // A4
+            { f: 493.88, d: 0.2, t: 2.9 },   // B4
+            { f: 523.25, d: 0.4, t: 3.1 },   // C5
+            // Repeat with variation - higher
+            { f: 523.25, d: 0.2, t: 3.6 },   // C5
+            { f: 587.33, d: 0.2, t: 3.8 },   // D5
+            { f: 659.25, d: 0.2, t: 4.0 },   // E5
+            { f: 698.46, d: 0.4, t: 4.2 },   // F5
+            // Second variation - even higher
+            { f: 659.25, d: 0.2, t: 4.7 },   // E5
+            { f: 698.46, d: 0.2, t: 4.9 },   // F5
+            { f: 783.99, d: 0.2, t: 5.1 },   // G5
+            { f: 880.00, d: 0.4, t: 5.3 },   // A5 (reaching higher!)
         ];
 
-        // Arpeggiated chords for richness
-        const chords = [
-            { f: 415.30, d: 0.15 },  // E4 (low)
-            { f: 493.88, d: 0.15 },  // B4
-            { f: 659.25, d: 0.15 },  // E5
-            { f: 830.61, d: 0.4 },   // E6 (hold)
-            { f: 392.00, d: 0.15 },  // G4
-            { f: 440.00, d: 0.15 },  // A4
-            { f: 587.33, d: 0.15 },  // D5
-            { f: 698.46, d: 0.4 },   // F5 (hold)
-            { f: 329.63, d: 0.15 },  // E4
-            { f: 392.00, d: 0.15 },  // G4
-            { f: 493.88, d: 0.15 },  // B4
-            { f: 659.25, d: 0.15 },  // E5
-            { f: 783.99, d: 0.15 },  // G5
-            { f: 987.77, d: 0.15 },  // B5
-            { f: 1318.51, d: 0.6 },  // E6 (victory!)
+        // ==========================================
+        // SECTION 3: GRAND CELEBRATION (5 - 9s)
+        // Full romantic orchestration
+        // ==========================================
+
+        // Main celebration melody - the "yes!" love theme
+        const celebrationMelody = [
+            // "Will you..." - romantic question
+            { f: 783.99, d: 0.25, t: 5.8 },  // G5
+            { f: 698.46, d: 0.25, t: 6.05 }, // F5
+            { f: 659.25, d: 0.25, t: 6.3 },  // E5
+            { f: 698.46, d: 0.25, t: 6.55 }, // F5
+            { f: 783.99, d: 0.5, t: 6.8 },   // G5 (hold - anticipation!)
+            // "...say yes!" - triumphant resolution
+            { f: 880.00, d: 0.25, t: 7.3 },  // A5
+            { f: 880.00, d: 0.25, t: 7.55 }, // A5
+            { f: 880.00, d: 0.25, t: 7.8 },  // A5
+            { f: 1046.50, d: 0.6, t: 8.05 }, // C6 (YES! Victory!)
         ];
 
-        let time = 0;
+        // ==========================================
+        // SECTION 4: TRIUMPHANT FINALE (9 - 13s)
+        // Grand crescendo with sparkling arpeggios
+        // ==========================================
 
-        // Play melody (square wave) + bass (triangle wave) simultaneously
-        melody.forEach((note, i) => {
+        // Victory arpeggios - multiple sparkling sequences
+        const victoryArpeggios = [
+            { notes: [523.25, 659.25, 783.99, 1046.50, 1318.51], start: 9.0 },   // C major ascending
+            { notes: [587.33, 739.99, 880.00, 1174.66, 1468.33], start: 9.4 },   // D major ascending
+            { notes: [659.25, 830.61, 987.77, 1318.51, 1567.98], start: 9.8 },   // E major ascending
+            { notes: [698.46, 880.00, 1046.50, 1396.00, 1760.00], start: 10.2 }, // F major ascending
+            { notes: [783.99, 987.77, 1174.66, 1567.98, 2093.00], start: 10.6 }, // G major ascending - highest!
+            // Final descending sparkle
+            { notes: [1567.98, 1318.51, 1046.50, 783.99, 659.25, 523.25], start: 11.2 }, // C major descending
+        ];
+
+        // ==========================================
+        // BASS LINE - Deep, warm foundation
+        // ==========================================
+
+        const bassLine = [
+            { f: 130.81, d: 0.6, t: 0 },      // C3 (intro)
+            { f: 164.81, d: 0.6, t: 0.6 },    // E3
+            { f: 196.00, d: 0.6, t: 1.2 },    // G3
+            { f: 174.61, d: 0.6, t: 1.8 },    // F3
+            { f: 130.81, d: 0.4, t: 2.5 },    // C3 (build)
+            { f: 164.81, d: 0.4, t: 2.9 },    // E3
+            { f: 196.00, d: 0.4, t: 3.3 },    // G3
+            { f: 220.00, d: 0.4, t: 3.7 },    // A3
+            { f: 196.00, d: 0.4, t: 4.1 },    // G3
+            { f: 174.61, d: 0.4, t: 4.5 },    // F3
+            { f: 196.00, d: 0.4, t: 4.9 },    // G3
+            { f: 220.00, d: 0.4, t: 5.3 },    // A3
+            { f: 261.63, d: 0.6, t: 5.8 },    // C4 (celebration bass!)
+            { f: 293.66, d: 0.3, t: 6.4 },    // D4
+            { f: 261.63, d: 0.3, t: 6.7 },    // C4
+            { f: 293.66, d: 0.3, t: 7.0 },    // D4
+            { f: 329.63, d: 0.3, t: 7.3 },    // E4
+            { f: 261.63, d: 0.3, t: 7.6 },    // C4
+            { f: 329.63, d: 0.3, t: 7.9 },    // E4
+            { f: 392.00, d: 0.3, t: 8.2 },    // G4
+            { f: 523.25, d: 0.8, t: 8.5 },    // C5 (grand final bass!)
+        ];
+
+        // ==========================================
+        // HARMONY LAYERS - Rich, romantic chords
+        // ==========================================
+
+        // Harmony notes that double the melody with octaves
+        const harmonyMelodies = [
+            // Intro harmonies (softer, triangle wave)
+            { f: 523.25, d: 0.3, t: 0.05 },   // C5 + octave
+            { f: 587.33, d: 0.3, t: 0.35 },   // D5 + octave
+            { f: 659.25, d: 0.5, t: 0.65 },   // E5 + octave
+            { f: 587.33, d: 0.2, t: 1.15 },   // D5
+            { f: 523.25, d: 0.3, t: 1.65 },   // C5
+            { f: 493.88, d: 0.3, t: 1.95 },   // B4
+            { f: 523.25, d: 0.5, t: 2.25 },   // C5
+            // Build harmonies
+            { f: 392.00, d: 0.2, t: 2.55 },   // G4
+            { f: 440.00, d: 0.2, t: 2.75 },   // A4
+            { f: 493.88, d: 0.2, t: 2.95 },   // B4
+            { f: 523.25, d: 0.4, t: 3.15 },   // C5
+            { f: 523.25, d: 0.2, t: 3.65 },   // C5
+            { f: 587.33, d: 0.2, t: 3.85 },   // D5
+            { f: 659.25, d: 0.2, t: 4.05 },   // E5
+            { f: 698.46, d: 0.4, t: 4.25 },   // F5
+            { f: 659.25, d: 0.2, t: 4.75 },   // E5
+            { f: 698.46, d: 0.2, t: 4.95 },   // F5
+            { f: 783.99, d: 0.2, t: 5.15 },   // G5
+            { f: 880.00, d: 0.4, t: 5.35 },   // A5
+            // Celebration harmonies
+            { f: 783.99, d: 0.25, t: 5.85 },  // G5
+            { f: 698.46, d: 0.25, t: 6.1 },   // F5
+            { f: 659.25, d: 0.25, t: 6.35 },  // E5
+            { f: 698.46, d: 0.25, t: 6.6 },   // F5
+            { f: 783.99, d: 0.5, t: 6.85 },   // G5
+            { f: 880.00, d: 0.25, t: 7.35 },  // A5
+            { f: 880.00, d: 0.25, t: 7.6 },   // A5
+            { f: 880.00, d: 0.25, t: 7.85 },  // A5
+            { f: 1046.50, d: 0.6, t: 8.1 },   // C6
+        ];
+
+        // ==========================================
+        // SCHEDULE ALL AUDIO
+        // ==========================================
+
+        // --- INTRO MELODY (romantic, warm triangle wave) ---
+        introMelody.forEach((note) => {
             setTimeout(() => {
-                playNote(note.f, note.d, 'square', 0.15);
-                if (bass[i]) {
-                    playNote(bass[i].f, note.d, 'triangle', 0.12);
-                }
-            }, time);
-            time += note.d * 1000;
+                // Main melody - warm triangle wave
+                playNote(note.f, note.d, 'triangle', 0.14);
+                // Soft harmony octave above
+                playNote(note.f * 1.5, note.d * 0.8, 'triangle', 0.05);
+            }, note.t * 1000);
         });
 
-        // Add arpeggiated chords as a layer (softer, for richness)
-        setTimeout(() => {
-            chords.forEach((note, i) => {
+        // --- BASS LINE (warm sine wave, deep and resonant) ---
+        bassLine.forEach((note) => {
+            setTimeout(() => {
+                playNote(note.f, note.d, 'triangle', 0.13);
+            }, note.t * 1000);
+        });
+
+        // --- BUILD MELODY (gradually increasing intensity) ---
+        buildMelody.forEach((note) => {
+            setTimeout(() => {
+                // Main melody - square wave for more power
+                playNote(note.f, note.d, 'triangle', 0.12);
+                // Harmony below (fifth)
+                playNote(note.f / 1.5, note.d * 0.8, 'triangle', 0.06);
+            }, note.t * 1000);
+        });
+
+        // --- HARMONY LAYERS (add richness during build) ---
+        harmonyMelodies.forEach((note) => {
+            setTimeout(() => {
+                // Subtle harmony - softer than main melody
+                playNote(note.f, note.d * 0.9, 'triangle', 0.06);
+            }, note.t * 1000);
+        });
+
+        // --- CELEBRATION MELODY (grand, full sound) ---
+        celebrationMelody.forEach((note) => {
+            setTimeout(() => {
+                // Main melody - strong square wave
+                playNote(note.f, note.d, 'square', 0.15);
+                // Rich harmony - fifth below
+                playNote(note.f / 1.5, note.d * 0.85, 'triangle', 0.08);
+                // Octave harmony
+                playNote(note.f * 2, note.d * 0.6, 'triangle', 0.04);
+            }, note.t * 1000);
+        });
+
+        // --- VICTORY ARPEGGIOS (sparkling, magical celebration) ---
+        victoryArpeggios.forEach((arp, arpIndex) => {
+            arp.notes.forEach((freq, noteIndex) => {
+                const noteTime = (arp.start + noteIndex * 0.08) * 1000;
                 setTimeout(() => {
-                    playNote(note.f, note.d * 0.8, 'square', 0.06);
-                    playNote(note.f / 2, note.d * 0.8, 'triangle', 0.05);
-                }, i * 150);
+                    // Sparkling high note
+                    playNote(freq, 0.15, 'square', 0.08);
+                    // Subtle octave harmony
+                    if (noteIndex % 2 === 0) {
+                        playNote(freq / 2, 0.12, 'triangle', 0.04);
+                    }
+                }, noteTime);
             });
-        }, 500); // Start chords slightly after melody
+        });
+
+        // --- FINAL GRAND CHORD (sustained, triumphant) ---
+        const finalChordDelay = 8800; // Start at 8.8s
+        setTimeout(() => {
+            // Full romantic chord: C major
+            // Root notes
+            playNote(130.81, 1.5, 'triangle', 0.10); // C3
+            playNote(164.81, 1.5, 'triangle', 0.08); // E3
+            playNote(196.00, 1.5, 'triangle', 0.08); // G3
+            // Upper voices
+            playNote(261.63, 1.2, 'triangle', 0.07); // C4
+            playNote(329.63, 1.0, 'triangle', 0.06); // E4
+            playNote(392.00, 0.8, 'triangle', 0.05); // G4
+            // Melody note
+            playNote(1046.50, 1.5, 'square', 0.16);  // C6 - final victory!
+            // Harmony
+            playNote(1318.51, 1.0, 'triangle', 0.08); // E6
+            playNote(1567.98, 0.8, 'triangle', 0.06); // G6
+        }, finalChordDelay);
+
+        // --- SPARKLING FINALE NOTES (after main chord) ---
+        setTimeout(() => {
+            // Final sparkle sequence - like confetti falling
+            const sparkleNotes = [
+                1567.98, // G6
+                1318.51, // E6
+                1046.50, // C6
+                1318.51, // E6
+                1567.98, // G6
+                2093.00, // C7 - highest sparkle!
+            ];
+            sparkleNotes.forEach((freq, i) => {
+                setTimeout(() => {
+                    playNote(freq, 0.2, 'square', 0.07);
+                    playNote(freq / 2, 0.15, 'triangle', 0.04);
+                }, i * 120);
+            });
+        }, 9200);
     }
 
     /**
@@ -1356,6 +1537,365 @@ const AudioSystem = (function () {
 
             chordIndex++;
         }, chordDuration * 1000);
+
+        currentMusicNodes.push({ type: 'interval', id: typingInterval });
+    }
+
+    /**
+     * Start proposal screen music - ULTRA grand romantic celebratory wedding march chiptune
+     * Features: sweeping melodies, lush harmonies, arpeggiated chords, counter-melodies,
+     * sparkling high notes, building crescendos, and epic finale for maximum romantic impact.
+     * Loops continuously with increasing grandeur and emotional depth.
+     */
+    function startProposalMusic() {
+        if (!audioCtx || currentStage === 7) return;
+        resumeContext();
+
+        // Clean up previous stage's resources (clears intervals and old notes)
+        cleanupPreviousStage();
+        currentStage = 7;
+
+        // Create new master gain for this stage
+        const newMasterGain = audioCtx.createGain();
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.connect(audioCtx.destination);
+
+        // Fade in the new gain node
+        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
+
+        // Update current master gain
+        currentMasterGain = newMasterGain;
+
+        // === ULTRA GRAND ROMANTIC WEDDING MARCH CHIPTUNE ===
+        // Key: C major / A minor (romantic, emotional)
+        // Tempo: ~110 BPM (graceful wedding march pace)
+        // Structure: 24-beat loop with multiple emotional phases that build to epic climax
+
+        // === MAIN MELODY (square wave) - sweeping romantic wedding march theme ===
+        // Inspired by "Here Comes the Bride" and classic wedding march motifs
+        const mainMelody = [
+            // === Phase 1: "Prelude of Love" - gentle, intimate opening (6 beats) ===
+            { freq: 392.00, dur: 200 },  // G4 - soft beginning
+            { freq: 440.00, dur: 150 },  // A4
+            { freq: 493.88, dur: 150 },  // B4
+            { freq: 523.25, dur: 300 },  // C5 - gentle arrival
+            { freq: 587.33, dur: 200 },  // D5 - lifting
+            { freq: 523.25, dur: 200 },  // C5 - tender return
+
+            // === Phase 2: "Love Theme Ascending" - building hope (6 beats) ===
+            { freq: 523.25, dur: 150 },  // C5
+            { freq: 659.25, dur: 150 },  // E5
+            { freq: 783.99, dur: 200 },  // G5
+            { freq: 880.00, dur: 200 },  // A5
+            { freq: 783.99, dur: 150 },  // G5
+            { freq: 659.25, dur: 200 },  // E5
+            { freq: 523.25, dur: 200 },  // C5 - resolution
+
+            // === Phase 3: "Wedding March" - triumphant declaration (6 beats) ===
+            { freq: 783.99, dur: 250 },  // G5 - bold start
+            { freq: 880.00, dur: 150 },  // A5
+            { freq: 1046.50, dur: 300 }, // C6 - TRIUMPHANT!
+            { freq: 987.77, dur: 200 },  // B5
+            { freq: 880.00, dur: 150 },  // A5
+            { freq: 783.99, dur: 200 },  // G5
+            { freq: 659.25, dur: 200 },  // E5
+
+            // === Phase 4: "Grand Finale" - epic celebration (6 beats) ===
+            { freq: 523.25, dur: 150 },  // C5
+            { freq: 659.25, dur: 100 },  // E5
+            { freq: 783.99, dur: 100 },  // G5
+            { freq: 1046.50, dur: 200 }, // C6 - PEAK!
+            { freq: 1174.66, dur: 150 }, // D6
+            { freq: 1318.51, dur: 150 }, // E6
+            { freq: 1567.98, dur: 300 }, // G6 - GRAND CELEBRATION!
+            { freq: 1046.50, dur: 200 }, // C6 - resolve down
+            { freq: 1318.51, dur: 400 }, // E6 - FINAL NOTE!
+        ];
+
+        // === ROMANTIC COUNTER MELODY (triangle wave) - weaves through main melody ===
+        // Creates a conversational, duet-like feel
+        const counterMelody = [
+            // During Phase 1: gentle fills
+            { freq: 523.25, dur: 120, startBeat: 0.5 },  // C5
+            { freq: 659.25, dur: 120, startBeat: 1.5 },  // E5
+            { freq: 783.99, dur: 120, startBeat: 2.5 },  // G5
+
+            // During Phase 2: more active
+            { freq: 698.46, dur: 120, startBeat: 6.5 },  // F5
+            { freq: 880.00, dur: 120, startBeat: 7.5 },  // A5
+            { freq: 783.99, dur: 120, startBeat: 8.5 },  // G5
+            { freq: 659.25, dur: 120, startBeat: 9.5 },  // E5
+
+            // During Phase 3: triumphant response
+            { freq: 880.00, dur: 150, startBeat: 12.5 }, // A5
+            { freq: 1046.50, dur: 150, startBeat: 13.5 }, // C6
+            { freq: 987.77, dur: 120, startBeat: 14.5 }, // B5
+            { freq: 880.00, dur: 120, startBeat: 15.5 }, // A5
+
+            // During Phase 4: epic counterpoint
+            { freq: 1046.50, dur: 100, startBeat: 18.5 }, // C6
+            { freq: 1174.66, dur: 100, startBeat: 19.5 }, // D6
+            { freq: 1318.51, dur: 100, startBeat: 20.5 }, // E6
+            { freq: 1567.98, dur: 100, startBeat: 21.5 }, // G6
+        ];
+
+        // === SECOND COUNTER MELODY (sine wave) - ethereal, dreamy layer ===
+        // Adds depth and romantic atmosphere
+        const secondCounterMelody = [
+            // Soft pads during Phase 1
+            { freq: 261.63, dur: 400, startBeat: 0 },   // C4
+            { freq: 329.63, dur: 400, startBeat: 0 },   // E4
+            { freq: 392.00, dur: 400, startBeat: 0 },   // G4
+
+            // Moving during Phase 2
+            { freq: 293.66, dur: 300, startBeat: 6 },   // D4
+            { freq: 349.23, dur: 300, startBeat: 6 },   // F4
+            { freq: 440.00, dur: 300, startBeat: 6 },   // A4
+
+            // Richer during Phase 3
+            { freq: 329.63, dur: 400, startBeat: 12 },  // E4
+            { freq: 392.00, dur: 400, startBeat: 12 },  // G4
+            { freq: 493.88, dur: 400, startBeat: 12 },  // B4
+
+            // Climactic during Phase 4
+            { freq: 392.00, dur: 300, startBeat: 18 },  // G4
+            { freq: 493.88, dur: 300, startBeat: 18 },  // B4
+            { freq: 523.25, dur: 300, startBeat: 18 },  // C5
+            { freq: 659.25, dur: 300, startBeat: 18 },  // E5
+        ];
+
+        // === GRAND WALKING BASS (sine wave) - emotional foundation ===
+        const grandBass = [
+            // Phase 1: Gentle C foundation
+            { freq: 65.41, dur: 400 },  // C2
+            { freq: 65.41, dur: 200 },  // C2
+            { freq: 73.42, dur: 200 },  // D2 - subtle movement
+            { freq: 82.41, dur: 300 },  // E2
+            { freq: 87.31, dur: 300 },  // F2
+            { freq: 65.41, dur: 300 },  // C2 - resolution
+
+            // Phase 2: Journey through relatives
+            { freq: 87.31, dur: 300 },  // F2
+            { freq: 87.31, dur: 100 },  // F2
+            { freq: 98.00, dur: 200 },  // G2
+            { freq: 110.00, dur: 200 }, // A2
+            { freq: 98.00, dur: 200 },  // G2
+            { freq: 87.31, dur: 200 },  // F2
+            { freq: 82.41, dur: 200 },  // E2
+            { freq: 65.41, dur: 200 },  // C2
+
+            // Phase 3: Dominant build
+            { freq: 98.00, dur: 300 },  // G2
+            { freq: 98.00, dur: 100 },  // G2
+            { freq: 110.00, dur: 200 }, // A2
+            { freq: 123.47, dur: 200 }, // B2
+            { freq: 130.81, dur: 300 }, // C3
+            { freq: 130.81, dur: 200 }, // C3
+
+            // Phase 4: Epic climb and resolution
+            { freq: 146.83, dur: 200 }, // D3
+            { freq: 164.81, dur: 200 }, // E3
+            { freq: 174.61, dur: 200 }, // F3
+            { freq: 196.00, dur: 200 }, // G3
+            { freq: 220.00, dur: 300 }, // A3 - building!
+            { freq: 261.63, dur: 300 }, // C4 - CLIMAX!
+            { freq: 130.81, dur: 200 }, // C3 - back to tonic
+            { freq: 130.81, dur: 300 }, // C3 - final resolution
+        ];
+
+        // === LUSH HARMONY CHORDS (triangle wave) - rich, romantic voicings ===
+        // Extended chords with closer voicings for fuller sound
+        const harmonyChords = [
+            // Phase 1: C major with extensions
+            { freqs: [392.00, 523.25, 659.25, 783.99], dur: 300, beatStart: 0 },   // G3-C4-E4-G4
+            { freqs: [440.00, 587.33, 739.99, 880.00], dur: 300, beatStart: 1 },   // A3-D4-F#4-A4
+            { freqs: [392.00, 523.25, 659.25], dur: 300, beatStart: 2 },   // C major
+
+            // Phase 2: Journey through keys
+            { freqs: [349.23, 440.00, 523.25, 659.25], dur: 250, beatStart: 6 },  // F major
+            { freqs: [392.00, 493.88, 587.33, 739.99], dur: 250, beatStart: 7 },  // G major
+            { freqs: [440.00, 523.25, 659.25, 783.99], dur: 250, beatStart: 8 },  // A minor
+            { freqs: [329.63, 440.00, 523.25, 659.25], dur: 250, beatStart: 9 },  // C major
+
+            // Phase 3: Triumphant chords
+            { freqs: [392.00, 523.25, 659.25, 783.99], dur: 300, beatStart: 12 }, // G major
+            { freqs: [440.00, 587.33, 698.46, 880.00], dur: 250, beatStart: 13 }, // A major
+            { freqs: [523.25, 659.25, 783.99, 987.77], dur: 250, beatStart: 14 }, // C major
+
+            // Phase 4: Epic finale chords
+            { freqs: [523.25, 659.25, 783.99, 1046.50], dur: 200, beatStart: 18 }, // C major
+            { freqs: [587.33, 739.99, 880.00, 1174.66], dur: 200, beatStart: 19 }, // D major
+            { freqs: [659.25, 783.99, 987.77, 1318.51], dur: 200, beatStart: 20 }, // E major
+            { freqs: [783.99, 987.77, 1174.66, 1567.98], dur: 200, beatStart: 21 }, // G major
+            { freqs: [523.25, 659.25, 783.99, 1046.50, 1318.51], dur: 400, beatStart: 22 }, // C major EXTENDED!
+            { freqs: [523.25, 659.25, 783.99, 1046.50], dur: 300, beatStart: 23 }, // C major resolution
+        ];
+
+        // === GRAND ARPEGGIOS (triangle wave) - sweeping, cascading chords ===
+        const arpeggioPatterns = [
+            // Phase 1: Gentle sweeps
+            { notes: [523.25, 659.25, 783.99, 1046.50], beatStart: 0, speed: 100 },
+            // Phase 2: More active arpeggios
+            { notes: [698.46, 880.00, 1046.50, 1318.51], beatStart: 6, speed: 90 },
+            { notes: [783.99, 987.77, 1174.66, 1567.98], beatStart: 8, speed: 90 },
+            // Phase 3: Triumphant sweeps
+            { notes: [392.00, 523.25, 783.99, 987.77, 1174.66], beatStart: 12, speed: 70 },
+            { notes: [440.00, 587.33, 880.00, 1046.50, 1318.51], beatStart: 14, speed: 70 },
+            // Phase 4: Epic cascading finale
+            { notes: [523.25, 659.25, 783.99, 1046.50, 1318.51], beatStart: 18, speed: 60 },
+            { notes: [587.33, 739.99, 880.00, 1174.66, 1567.98], beatStart: 19, speed: 60 },
+            { notes: [659.25, 783.99, 987.77, 1318.51, 1567.98], beatStart: 20, speed: 50 },
+            { notes: [783.99, 987.77, 1174.66, 1567.98, 1760.00, 2093.00], beatStart: 21, speed: 45 },
+            { notes: [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00], beatStart: 22, speed: 35 }, // ULTRA GRAND SWEEP!
+        ];
+
+        // === SPARKLE NOTES (square wave) - wedding fireworks and fairy lights ===
+        const celebrationSparkles = [
+            // Phase 1: Gentle sparkles
+            { freq: 1567.98, dur: 100 },  // G6
+            { freq: 2093.00, dur: 120 },  // C6 - soft sparkle
+            // Phase 2: More sparkles
+            { freq: 1318.51, dur: 80 },   // E6
+            { freq: 1760.00, dur: 100 },  // A6
+            { freq: 2093.00, dur: 120 },  // C6
+            { freq: 2637.02, dur: 120 },  // E6
+            // Phase 3: Building fireworks
+            { freq: 1567.98, dur: 100 },  // G6
+            { freq: 1967.98, dur: 100 },  // B6
+            { freq: 2093.00, dur: 120 },  // C6
+            { freq: 2349.32, dur: 120 },  // D6
+            { freq: 2637.02, dur: 150 },  // E6
+            // Phase 4: MAJOR FIREWORKS DISPLAY!
+            { freq: 2093.00, dur: 150 },  // C7 - FIREWORK!
+            { freq: 2637.02, dur: 150 },  // E7 - FIREWORK!
+            { freq: 3135.96, dur: 200 },  // G7 - SUPER FIREWORK!
+            { freq: 2637.02, dur: 150 },  // E7
+            { freq: 2349.32, dur: 120 },  // D7
+            { freq: 2093.00, dur: 150 },  // C7
+            { freq: 3135.96, dur: 200 },  // G7 - PEAK FIREWORK!
+            { freq: 3520.00, dur: 250 },  // A7 - SUPER PEAK!
+            { freq: 2637.02, dur: 200 },  // E7
+            { freq: 2093.00, dur: 300 },  // C7 - grand resolution
+        ];
+
+        // === CELEBRATION CHORD BLASTS (square wave) - full orchestral hits ===
+        const chordBlasts = [
+            // Phase 3: First triumphant blast
+            { freqs: [392.00, 523.25, 783.99], beatStart: 12, dur: 300 },
+            // Phase 4: Epic finale blasts
+            { freqs: [523.25, 659.25, 783.99, 1046.50], beatStart: 18, dur: 250 },
+            { freqs: [587.33, 739.99, 880.00, 1174.66], beatStart: 19, dur: 250 },
+            { freqs: [659.25, 783.99, 987.77, 1318.51], beatStart: 20, dur: 250 },
+            { freqs: [783.99, 987.77, 1174.66, 1567.98], beatStart: 21, dur: 300 },
+            { freqs: [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98], beatStart: 22, dur: 400 }, // FULL ORCHESTRA!
+        ];
+
+        // === DYNAMIC VOLUME ENVELOPE ===
+        // Music grows dramatically from intimate to epic
+        const getVolumeMultiplier = (beat) => {
+            // Phase 1: Intimate and tender (beats 0-5)
+            if (beat < 6) return 0.6 + (beat / 6) * 0.1;       // 0.6 -> 0.7
+            // Phase 2: Building hope (beats 6-11)
+            if (beat < 12) return 0.7 + ((beat - 6) / 6) * 0.15; // 0.7 -> 0.85
+            // Phase 3: Triumphant (beats 12-17)
+            if (beat < 18) return 0.85 + ((beat - 12) / 6) * 0.1; // 0.85 -> 0.95
+            // Phase 4: EPIC FINALE (beats 18-23)
+            return 0.95 + ((beat - 18) / 5) * 0.05;            // 0.95 -> 1.0 FULL VOLUME!
+        };
+
+        let melodyIndex = 0;
+        let bassIndex = 0;
+        let harmonyIndex = 0;
+        let sparkleIndex = 0;
+        let arpeggioIndex = 0;
+        let currentBeat = 0;
+        let loopCount = 0;
+
+        // Schedule the ultra grand wedding march loop
+        typingInterval = setInterval(() => {
+            const volumeMult = getVolumeMultiplier(currentBeat);
+
+            // === MAIN MELODY (square wave) - bright, soaring wedding march ===
+            const m = mainMelody[melodyIndex % mainMelody.length];
+            const melodyVolume = 0.09 * volumeMult;
+            playNote(m.freq, m.dur * 0.85, 'square', melodyVolume, newMasterGain);
+
+            // === ROMANTIC COUNTER MELODY (triangle wave) - soft, dreamy ===
+            const counter = counterMelody[harmonyIndex % counterMelody.length];
+            if (counter && counter.startBeat === currentBeat) {
+                playNote(counter.freq, counter.dur * 0.7, 'triangle', 0.035 * volumeMult, newMasterGain);
+            }
+
+            // === SECOND COUNTER MELODY (sine wave) - ethereal pads ===
+            const secondCounter = secondCounterMelody[sparkleIndex % secondCounterMelody.length];
+            if (secondCounter && secondCounter.startBeat === currentBeat) {
+                playNote(secondCounter.freq, secondCounter.dur * 0.6, 'sine', 0.015 * volumeMult, newMasterGain);
+            }
+
+            // === GRAND BASS (sine wave) - warm, deep, walking ===
+            const b = grandBass[bassIndex % grandBass.length];
+            const bassVolume = 0.07 * volumeMult;
+            playNote(b.freq, b.dur * 0.75, 'sine', bassVolume, newMasterGain);
+
+            // === LUSH HARMONY CHORDS (triangle wave) - rich, full ===
+            const chord = harmonyChords[harmonyIndex % harmonyChords.length];
+            if (chord && chord.startBeat === currentBeat) {
+                const chordVolume = 0.018 * volumeMult;
+                chord.freqs.forEach(freq => {
+                    playNote(freq, chord.dur * 0.6, 'triangle', chordVolume, newMasterGain);
+                });
+            }
+
+            // === GRAND ARPEGGIOS (triangle wave) - cascading sweeps! ===
+            const arp = arpeggioPatterns[arpeggioIndex % arpeggioPatterns.length];
+            if (arp && arp.beatStart === currentBeat) {
+                const arpVolume = 0.025 * volumeMult;
+                arp.notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        playNote(freq, arp.speed * 0.5, 'triangle', arpVolume, newMasterGain);
+                    }, i * arp.speed);
+                });
+            }
+
+            // === SPARKLE NOTES (square wave) - wedding fireworks! ===
+            const sparkleChance = currentBeat >= 18 ? 0.8 : (currentBeat >= 12 ? 0.5 : (currentBeat >= 6 ? 0.35 : 0.2));
+            if (Math.random() < sparkleChance) {
+                const s = celebrationSparkles[sparkleIndex % celebrationSparkles.length];
+                const sparkleVolume = currentBeat >= 18 ? 0.018 : (currentBeat >= 12 ? 0.014 : 0.01);
+                playNote(s.freq, s.dur * 0.5, 'square', sparkleVolume, newMasterGain);
+                sparkleIndex++;
+            }
+
+            // === CELEBRATION CHORD BLASTS (square wave) - orchestral hits! ===
+            const blast = chordBlasts[chordBlasts.length - 1];
+            if (blast && blast.beatStart === currentBeat) {
+                const blastVolume = currentBeat >= 18 ? 0.025 * volumeMult : 0.02 * volumeMult;
+                blast.freqs.forEach(freq => {
+                    playNote(freq, blast.dur * 0.5, 'square', blastVolume, newMasterGain);
+                });
+            }
+
+            // === EPIC FINALE BLASTS (every loop on last beat) ===
+            if (currentBeat === 23 && Math.random() < 0.7) {
+                // Grand fireworks! Multiple high notes for maximum celebration
+                playNote(2637.02, 250, 'square', 0.01, newMasterGain); // E7
+                playNote(3135.96, 200, 'square', 0.008, newMasterGain); // G7
+                playNote(3520.00, 300, 'square', 0.006, newMasterGain); // A7
+                // Low rumble for drama
+                setTimeout(() => {
+                    playNote(130.81, 400, 'sine', 0.05, newMasterGain); // C2
+                }, 100);
+            }
+
+            // Advance indices
+            melodyIndex++;
+            bassIndex++;
+            harmonyIndex++;
+            arpeggioIndex++;
+            currentBeat = (currentBeat + 1) % 24;
+            if (currentBeat === 0) loopCount++;
+        }, 200); // Schedule every 200ms (~110 BPM wedding march tempo)
 
         currentMusicNodes.push({ type: 'interval', id: typingInterval });
     }
