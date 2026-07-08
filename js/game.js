@@ -343,6 +343,9 @@ async function showStage(n) {
 
     // Treasure screen (stage 6)
     if (n === 6) {
+        // STOP current stage music before playing treasure sound (like other transitions do)
+        AudioSystem.stopAllMusic();
+
         // Show treasure background with portrait support
         const isMobile = window.innerWidth <= 600;
         const treasureImage = isMobile
@@ -362,11 +365,11 @@ async function showStage(n) {
             }, 2000);
         }
 
+        // Play magical treasure discovery sound
+        AudioSystem.playMagicalTreasureSound();
+
         // Start countdown
         startTreasureCountdown();
-
-        // Start treasure music
-        AudioSystem.startStageMusic(6);
 
         state.isTransitioning = false;
         return;
