@@ -362,7 +362,7 @@ async function showStage(n) {
             }, 2000);
         }
 
-        // Start countdown from 5
+        // Start countdown
         startTreasureCountdown();
 
         // Start treasure music
@@ -531,7 +531,7 @@ function handleEnter(event, stageId) {
    ============================================ */
 
 /**
- * Run countdown from 5 to 1 on the treasure screen, then transition to proposal
+ * Run countdown from 8 to 1 on the treasure screen, then transition to proposal
  */
 async function startTreasureCountdown() {
     const countdownEl = document.getElementById('countdown');
@@ -539,7 +539,7 @@ async function startTreasureCountdown() {
 
     countdownEl.style.display = 'block';
 
-    for (let i = 10; i >= 1; i--) {
+    for (let i = 8; i >= 1; i--) {
         countdownEl.textContent = i;
         // Reset animation
         countdownEl.style.animation = 'none';
