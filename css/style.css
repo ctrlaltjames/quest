@@ -223,7 +223,7 @@ body {
 }
 
 .title-subtitle {
-    font-size: clamp(8px, 3vw, 14px);
+    font-size: clamp(12px, 4vw, 18px);
     text-align: center;
     opacity: 0.8;
     line-height: 1.6;
@@ -786,7 +786,7 @@ body {
 }
 
 .proposal-message {
-    font-size: clamp(8px, 2.5vw, 12px);
+    font-size: clamp(16px, 5vw, 28px);
     line-height: 1.8;
     color: #ccc;
     min-height: 40px;
@@ -797,19 +797,6 @@ body {
         0 -2px 0 rgba(0, 0, 0, 0.7),
         0 2px 0 rgba(0, 0, 0, 0.7),
         3px 3px 0 rgba(0, 0, 0, 0.5);
-}
-
-.proposal-question {
-    font-size: clamp(12px, 4vw, 20px);
-    color: var(--bright-gold);
-    text-shadow: 0 0 10px var(--bright-gold), 0 0 20px rgba(255, 215, 0, 0.5);
-    line-height: 1.6;
-    animation: questionGlow 2s ease-in-out infinite;
-}
-
-@keyframes questionGlow {
-    0%, 100% { text-shadow: 0 0 10px var(--bright-gold), 0 0 20px rgba(255, 215, 0, 0.5); }
-    50% { text-shadow: 0 0 15px var(--bright-gold), 0 0 30px rgba(255, 215, 0, 0.7); }
 }
 
 .proposal-buttons {
@@ -1371,9 +1358,6 @@ body::after {
         font-size: clamp(12px, 3vw, 20px);
     }
 
-    .proposal-question {
-        font-size: clamp(10px, 3vw, 16px);
-    }
 }
 
 /* --- Reduced Motion --- */
