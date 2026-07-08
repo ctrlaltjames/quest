@@ -1459,6 +1459,179 @@ const AudioSystem = (function () {
     }
 
     /**
+     * Magical treasure discovery sound - 8 second dreamy, ethereal chiptune sound
+     * A magical, sparkling sound effect for discovering treasure:
+     * - Phase 1 (0-2.5s): Soft, high-pitched twinkling notes ascending slowly
+     * - Phase 2 (2.5-5.5s): Main magical melody emerges with rising arpeggios
+     * - Phase 3 (5.5-8s): Bright, sustained chord progression with sparkle notes
+     */
+    function playMagicalTreasureSound() {
+        resumeContext();
+
+        const now = audioCtx.currentTime;
+
+        // === PHASE 1: Magical Buildup (0-2.5s) ===
+        // Soft, high-pitched twinkling notes ascending slowly
+        const buildupNotes = [
+            { freq: 1046.50, time: 0.0, dur: 0.4 },    // C6 - first sparkle
+            { freq: 1174.66, time: 0.5, dur: 0.4 },    // D6
+            { freq: 1318.51, time: 1.0, dur: 0.5 },    // E6
+            { freq: 1396.00, time: 1.6, dur: 0.5 },    // F6
+            { freq: 1567.98, time: 2.2, dur: 0.6 },    // G6 - reaching up
+        ];
+
+        buildupNotes.forEach((note) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+            gain.gain.setValueAtTime(0, now + note.time);
+            gain.gain.linearRampToValueAtTime(0.06, now + note.time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+            osc.start(now + note.time);
+            osc.stop(now + note.time + note.dur + 0.01);
+        });
+
+        // === PHASE 2: Discovery Melody (2.5-5.5s) ===
+        // Main magical melody emerges - rising arpeggio sequences
+        const melodyNotes = [
+            // Rising sequence 1
+            { freq: 523.25, time: 2.5, dur: 0.3 },     // C5
+            { freq: 659.25, time: 2.8, dur: 0.3 },     // E5
+            { freq: 783.99, time: 3.1, dur: 0.4 },     // G5
+            { freq: 1046.50, time: 3.5, dur: 0.5 },    // C6 - discovery!
+            // Rising sequence 2 (higher)
+            { freq: 659.25, time: 4.0, dur: 0.3 },     // E5
+            { freq: 783.99, time: 4.3, dur: 0.3 },     // G5
+            { freq: 987.77, time: 4.6, dur: 0.4 },     // B5
+            { freq: 1318.51, time: 5.0, dur: 0.6 },    // E6 - higher discovery!
+        ];
+
+        melodyNotes.forEach((note) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+            gain.gain.setValueAtTime(0, now + note.time);
+            gain.gain.linearRampToValueAtTime(0.08, now + note.time + 0.015);
+            gain.gain.setValueAtTime(0.06, now + note.time + note.dur * 0.5);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+            osc.start(now + note.time);
+            osc.stop(now + note.time + note.dur + 0.01);
+        });
+
+        // Harmony layer for melody (triangle wave for warmth)
+        const harmonyNotes = [
+            { freq: 783.99, time: 2.5, dur: 0.5 },     // G5
+            { freq: 1046.50, time: 3.5, dur: 0.6 },    // C6
+            { freq: 987.77, time: 4.0, dur: 0.5 },     // B5
+            { freq: 1318.51, time: 5.0, dur: 0.7 },    // E6
+        ];
+
+        harmonyNotes.forEach((note) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+            gain.gain.setValueAtTime(0, now + note.time);
+            gain.gain.linearRampToValueAtTime(0.04, now + note.time + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+            osc.start(now + note.time);
+            osc.stop(now + note.time + note.dur + 0.01);
+        });
+
+        // === PHASE 3: Treasure Reveal (5.5-8s) ===
+        // Bright, sustained chord progression with sparkle notes
+        const revealChords = [
+            // C major chord
+            { freq: 523.25, time: 5.5, dur: 1.2 },     // C5
+            { freq: 659.25, time: 5.5, dur: 1.2 },     // E5
+            { freq: 783.99, time: 5.5, dur: 1.2 },     // G5
+            // E major chord
+            { freq: 659.25, time: 6.5, dur: 1.0 },     // E5
+            { freq: 783.99, time: 6.5, dur: 1.0 },     // G5
+            { freq: 987.77, time: 6.5, dur: 1.0 },     // B5
+            // Final C major resolution
+            { freq: 523.25, time: 7.3, dur: 1.5 },     // C5
+            { freq: 659.25, time: 7.3, dur: 1.5 },     // E5
+            { freq: 783.99, time: 7.3, dur: 1.5 },     // G5
+            { freq: 1046.50, time: 7.3, dur: 1.5 },    // C6 - final treasure note!
+        ];
+
+        revealChords.forEach((note) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+            gain.gain.setValueAtTime(0, now + note.time);
+            gain.gain.linearRampToValueAtTime(0.05, now + note.time + 0.04);
+            gain.gain.setValueAtTime(0.04, now + note.time + note.dur * 0.5);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+            osc.start(now + note.time);
+            osc.stop(now + note.time + note.dur + 0.01);
+        });
+
+        // Sparkle notes - high-frequency twinkling
+        const sparkleNotes = [
+            { freq: 1567.98, time: 5.8, dur: 0.3 },    // G6
+            { freq: 2093.00, time: 6.2, dur: 0.3 },    // C7
+            { freq: 1567.98, time: 6.6, dur: 0.25 },   // G6
+            { freq: 2093.00, time: 7.0, dur: 0.3 },    // C7
+            { freq: 2637.02, time: 7.6, dur: 0.5 },    // E7 - final sparkle!
+        ];
+
+        sparkleNotes.forEach((note) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+            gain.gain.setValueAtTime(0, now + note.time);
+            gain.gain.linearRampToValueAtTime(0.03, now + note.time + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+            osc.start(now + note.time);
+            osc.stop(now + note.time + note.dur + 0.01);
+        });
+
+        // Deep bass note for foundation
+        const bassOsc = audioCtx.createOscillator();
+        const bassGain = audioCtx.createGain();
+        bassOsc.type = 'sine';
+        bassOsc.frequency.setValueAtTime(130.81, now + 5.5); // C3
+        bassGain.gain.setValueAtTime(0, now + 5.5);
+        bassGain.gain.linearRampToValueAtTime(0.08, now + 5.6);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 8.0);
+        bassOsc.connect(bassGain);
+        bassGain.connect(masterGainNode);
+        bassOsc.start(now + 5.5);
+        bassOsc.stop(now + 8.1);
+    }
+
+    /**
      * Start treasure screen music - REMOVED (audio disabled)
      */
     function startTreasureMusic() {
@@ -1952,6 +2125,7 @@ const AudioSystem = (function () {
         playTreasureFanfare,
         playYesFireworks,
         playCelebrationSong,
+        playMagicalTreasureSound,
 
         // Stage music
         startStageMusic,
