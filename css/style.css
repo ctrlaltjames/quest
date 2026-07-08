@@ -770,6 +770,7 @@ body {
 /* --- Proposal Screen --- */
 #stage-proposal {
     justify-content: space-between !important;
+    padding-top: 40px !important;
     padding-bottom: 40px !important;
 }
 
