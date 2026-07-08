@@ -23,8 +23,8 @@ const CONFIG = {
         },
         {
             id: 2,
-            title: "Chapter 2: Dangerously Close",
-            clue: "Remember when you got dangerously close? That moment changed everything... it was our",
+            title: "Chapter 2: Muah!",
+            clue: "Remember when you got dangerously close? That moment changed everything, it was our...",
             answer: ["first kiss", "our first kiss", "the first kiss"],
         },
         {
