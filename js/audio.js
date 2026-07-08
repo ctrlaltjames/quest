@@ -198,27 +198,21 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Treasure fanfare - Zelda-like triumphant sound
+     * Treasure fanfare - Zelda-like triumphant sound (Rapid Arpeggio)
      */
     function playTreasureFanfare() {
         resumeContext();
-        // Ascending triumphant melody
-        const melody = [
-            { freq: 659.25, dur: 0.1 },  // E5
-            { freq: 783.99, dur: 0.1 },  // G5
-            { freq: 880.00, dur: 0.1 },  // A5
-            { freq: 1046.50, dur: 0.2 }, // C6
-            { freq: 1174.66, dur: 0.1 }, // D6
-            { freq: 1318.51, dur: 0.3 }, // E6
-        ];
-
-        melody.forEach((note, i) => {
+        // Rapidly ascending C major arpeggio (C5, E5, G5, C6, E6)
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        notes.forEach((freq, i) => {
             setTimeout(() => {
-                // Lead melody (square wave)
-                playNote(note.freq, note.dur, 'square', 0.15);
-                // Harmony (triangle wave, octave lower)
-                playNote(note.freq / 2, note.dur, 'triangle', 0.1);
-            }, i * 120);
+                // Lead melody (square wave for that classic 8-bit bite)
+                playNote(freq, 0.15, 'square', 0.15);
+                // Add a subtle triangle harmony for richness on every other note
+                if (i % 2 === 0) {
+                    playNote(freq / 2, 0.15, 'triangle', 0.08);
+                }
+            }, i * 60); // Very fast interval for that classic "brrrp" sound
         });
     }
 
@@ -1465,80 +1459,11 @@ const AudioSystem = (function () {
     }
 
     /**
-     * Start treasure screen music - faster paced, building tension
+     * Start treasure screen music - REMOVED (audio disabled)
      */
     function startTreasureMusic() {
-        if (!audioCtx || currentStage === 6) return;
-        resumeContext();
-
-        // Clean up previous stage's resources (clears intervals and old notes)
-        cleanupPreviousStage();
-        currentStage = 6;
-
-        // Create new master gain for this stage
-        const newMasterGain = audioCtx.createGain();
-        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        newMasterGain.connect(audioCtx.destination);
-
-        // Fade in the new gain node (no crossfade)
-        newMasterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        newMasterGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + fadeInDuration);
-
-        // Update current master gain (no previous gain tracking needed)
-        currentMasterGain = newMasterGain;
-
-        // Ascending chord progression - builds tension toward climax - connect to master gain via playNote chain
-        const chords = [
-            [523.25, 659.25, 783.99],  // C4 major - start humble
-            [587.33, 739.99, 880.00],  // D4 major
-            [659.25, 830.61, 987.77],  // E4 major
-            [698.46, 880.00, 1046.50], // F4 major
-            [783.99, 987.77, 1174.66], // G4 major - building
-            [880.00, 1108.73, 1318.51], // A4 major - peak tension
-            // Loop back but play more intensely
-            [523.25, 659.25, 783.99, 1046.50], // C4 major + C5 (full chord)
-            [659.25, 830.61, 987.77, 1318.51], // E4 major + E5
-            [783.99, 987.77, 1174.66, 1567.98], // G4 major + G5
-            [1046.50, 1318.51, 1567.98, 2093.00], // C5 major - FULL TREASURE CLIMAX
-        ];
-
-        let chordIndex = 0;
-        const chordDuration = 0.8; // Faster chord changes (was 2.0s)
-
-        typingInterval = setInterval(() => {
-            const chord = chords[chordIndex % chords.length];
-            const progress = chordIndex % chords.length; // Position within loop (0-9)
-
-            // Volume swells as we approach the climax
-            const volumeMultiplier = 0.5 + (progress / 10) * 0.5; // 0.5 → 1.0
-
-            // Play chord tones (harmony) - faster arpeggio upward - connect to masterGain for crossfading
-            chord.forEach((freq, i) => {
-                const delay = i * 40; // 40ms between each note
-                setTimeout(() => {
-                    playNote(freq, chordDuration * 0.5, 'triangle', 0.04 * volumeMultiplier, newMasterGain);
-                }, delay);
-            });
-
-            // Bass note - punchier on beat - connect to masterGain for crossfading
-            playNote(chord[0] / 4, chordDuration * 0.7, 'triangle', 0.06 * volumeMultiplier, newMasterGain);
-
-            // More frequent high sparkles as we build tension
-            if (Math.random() < (0.4 + progress * 0.06)) {
-                const sparkle = chord[chord.length - 1] * 1.5;
-                playNote(sparkle, 0.2, 'square', 0.015 * volumeMultiplier, newMasterGain);
-            }
-
-            // Double sparkle on climax chords
-            if (progress >= 8 && Math.random() < 0.5) {
-                const sparkle2 = chord[0] * 3;
-                playNote(sparkle2, 0.3, 'square', 0.01 * volumeMultiplier, newMasterGain);
-            }
-
-            chordIndex++;
-        }, chordDuration * 1000);
-
-        currentMusicNodes.push({ type: 'interval', id: typingInterval });
+        // All audio removed from treasure screen
+        return;
     }
 
     /**
