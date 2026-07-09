@@ -64,7 +64,6 @@ const CONFIG = {
 const state = {
     currentStage: 0,        // 0=title, 1-4=stages, 5=proposal, 6=treasure
     isTransitioning: false,  // Guards against double-submit
-    confettiActive: false,
 };
 
 /* ============================================
@@ -682,19 +681,7 @@ function spawnTreasureSparkles() {
 }
 
 
-/* ============================================
-   CONFETTI MANAGEMENT
-   ============================================ */
 
-function startConfetti() {
-    Confetti.start();
-    state.confettiActive = true;
-}
-
-function stopConfetti() {
-    Confetti.stop();
-    state.confettiActive = false;
-}
 
 /* ============================================
    EVENT BINDING
@@ -1101,120 +1088,9 @@ function createStage3NumberParticles() {
     }
 }
 
-/**
- * Create flower elements for proposal screen
- */
-function createFlowers() {
-    const container = document.querySelector('.flower-container');
-    if (!container) return;
-
-    const emojis = ['🌸', '🌺', '🌹', '🌻', '🌼'];
-
-    for (let i = 0; i < 5; i++) {
-        const flower = document.createElement('span');
-        flower.className = 'flower';
-        flower.textContent = emojis[i % emojis.length];
-        flower.style.animationDelay = (i * 0.2) + 's';
-        container.appendChild(flower);
-    }
-}
-
 /* ============================================
-   PIXEL ART RENDERING (Canvas)
+   INITIALIZATION
    ============================================ */
-
-/**
- * Render a pixel heart on canvas
- */
-function renderHeartCanvas(canvasEl) {
-    const ctx = canvasEl.getContext('2d');
-    const size = 16;
-    canvasEl.width = size;
-    canvasEl.height = size;
-
-    // 16x16 heart pixel grid
-    const grid = [
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,1,1,0,0,0,0,0,1,1,0,0,0,0,0],
-        [0,1,2,1,1,0,0,0,1,1,2,1,0,0,0,0],
-        [1,2,1,1,2,1,0,1,2,1,1,2,1,0,0,0],
-        [1,1,1,1,1,2,1,2,1,1,1,1,1,0,0,0],
-        [0,1,1,1,1,1,2,1,1,1,1,1,0,0,0,0],
-        [0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
-        [0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
-        [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0],
-        [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    ];
-
-    const palette = {
-        0: null,
-        1: '#e63946',
-        2: '#8b0000',
-    };
-
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            const color = palette[grid[y][x]];
-            if (color) {
-                ctx.fillStyle = color;
-                ctx.fillRect(x, y, 1, 1);
-            }
-        }
-    }
-}
-
-/**
- * Render a pixel ring on canvas
- */
-function renderRingCanvas(canvasEl) {
-    const ctx = canvasEl.getContext('2d');
-    const size = 12;
-    canvasEl.width = size;
-    canvasEl.height = size;
-
-    // 12x12 ring pixel grid
-    const grid = [
-        [0,0,0,1,1,1,1,1,0,0,0,0],
-        [0,0,1,2,2,2,2,2,1,0,0,0],
-        [0,1,2,3,3,3,3,2,1,0,0,0],
-        [1,2,3,3,3,3,3,3,2,1,0,0],
-        [1,2,3,3,3,3,3,3,2,1,0,0],
-        [1,2,3,3,3,3,3,3,2,1,0,0],
-        [1,2,3,3,3,3,3,3,2,1,0,0],
-        [1,2,3,3,3,3,3,3,2,1,0,0],
-        [0,1,2,3,3,3,3,2,1,0,0,0],
-        [0,0,1,2,2,2,2,1,0,0,0,0],
-        [0,0,0,1,1,1,1,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0],
-    ];
-
-    const palette = {
-        0: null,
-        1: '#f5a623',
-        2: '#ffd700',
-        3: '#ffffff',
-    };
-
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            const color = palette[grid[y][x]];
-            if (color) {
-                ctx.fillStyle = color;
-                ctx.fillRect(x, y, 1, 1);
-            }
-        }
-    }
-}
-
-/* ============================================
-    INITIALIZATION
-    ============================================ */
 
 /**
  * Initialize blurred background fill for all stages with background images.
@@ -1298,13 +1174,6 @@ function init() {
         // Create ambient effects
         createAmbientParticles();
         createStarField();
-
-        // Render pixel art
-        const heartCanvas = document.getElementById('heart-canvas');
-        if (heartCanvas) renderHeartCanvas(heartCanvas);
-
-        const ringCanvas = document.getElementById('ring-canvas');
-        if (ringCanvas) renderRingCanvas(ringCanvas);
 
         // Initialize blurred background layers for each stage
         initBgBlurLayers();

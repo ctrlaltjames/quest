@@ -847,22 +847,6 @@ body {
     image-rendering: pixelated;
 }
 
-/* --- Flower Container --- */
-.flower-container {
-    display: flex;
-    gap: 16px;
-    font-size: 24px;
-}
-
-.flower-container .flower {
-    animation: flowerGrow 1s ease-out forwards;
-    opacity: 0;
-}
-
-@keyframes flowerGrow {
-    from { transform: scale(0); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
 
 /* --- Heart Burst --- */
 .heart-burst {
@@ -1558,7 +1542,7 @@ body::after {
     }
 
     .heartBob, .ringSpin, .artGlow, .bubbleGlow,
-    .questionGlow, .typingPulse, .flowerGrow,
+    .questionGlow, .typingPulse,
     .heartBurst, .flashAnim, .sparkleAnim,
     .shake, .ambientFloat, .twinkle,
     .heartBob, .ringSpin,
@@ -2327,15 +2311,6 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
         transform: scale(0.8);
         pointer-events: none;
     }
-}
-
-.flower-container.fading-out {
-    animation: flowersFadeOut 800ms ease forwards;
-}
-
-@keyframes flowersFadeOut {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
 }
 
 .after-yes.fading-out {
