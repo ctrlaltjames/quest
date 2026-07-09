@@ -168,6 +168,9 @@ body {
 .stage.active {
     display: flex;
     animation: stageEnter 400ms ease-out forwards;
+    /* Smooth interpolation for background parallax + drift effects */
+    transition: background-position 0.3s ease-out;
+    will-change: background-position;
 }
 
 /* Stage enter animation */
@@ -1304,7 +1307,7 @@ body::after {
     #stage-title.active {
         background-image: url('../images/portrait/intro.jpg') !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, center) !important;
         background-repeat: no-repeat !important;
     }
 
@@ -1357,28 +1360,28 @@ body::after {
     #stage-1.active {
         background-image: url('../images/portrait/stage1.jpg') !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, center) !important;
         background-repeat: no-repeat !important;
     }
 
     #stage-2.active {
         background-image: url('../images/portrait/stage2.jpg') !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, center) !important;
         background-repeat: no-repeat !important;
     }
 
     #stage-3.active {
         background-image: url('../images/portrait/stage3.jpg') !important;
         background-size: contain !important;
-        background-position: center !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, center) !important;
         background-repeat: no-repeat !important;
     }
 
     #stage-4.active {
         background-image: url('../images/portrait/stage4.jpg') !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, center) !important;
         background-repeat: no-repeat !important;
     }
 
@@ -1386,7 +1389,7 @@ body::after {
     #stage-proposal.active {
         background-image: url('../images/portrait/final.jpg') !important;
         background-size: cover !important;
-        background-position: top center !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, top center) !important;
         background-repeat: no-repeat !important;
     }
 

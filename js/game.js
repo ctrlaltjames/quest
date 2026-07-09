@@ -308,6 +308,11 @@ async function showStage(n) {
     // Activate stage
     target.classList.add('active');
 
+    // Activate parallax + drift for this stage (background-parallax.js)
+    if (typeof activateForStage === 'function') {
+        activateForStage(target);
+    }
+
     // Update blurred background visibility for stages with images
     updateBgBlurVisibility();
 
@@ -1178,6 +1183,11 @@ function init() {
 
         // Initialize blurred background layers for each stage
         initBgBlurLayers();
+
+        // Initialize background parallax + ambient drift (background-parallax.js)
+        if (typeof initBackgroundParallax === 'function') {
+            initBackgroundParallax();
+        }
 
         // Show title screen
         showStage(0);
