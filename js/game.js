@@ -375,6 +375,23 @@ async function showStage(n) {
         return;
     }
 
+    // Create twinkling stars for Stage 1
+    if (n === 1) {
+        createStage1Stars();
+    }
+
+    // Create star sparkles and fading hearts for Stage 2 (before typewriter so they start immediately)
+    if (n === 2) {
+        createStage2Stars();
+        createStage2Hearts();
+    }
+
+    // Create floating hearts and number particles for Stage 3 (love counter / infinity theme)
+    if (n === 3) {
+        createStage3Hearts();
+        createStage3NumberParticles();
+    }
+
     if (n >= 1 && n <= 4) {
         // Stage-specific: typewriter clue text
         const clueEl = document.getElementById(`stage-${n}-clue`);
@@ -386,11 +403,6 @@ async function showStage(n) {
             await document.fonts.ready.catch(() => {});
 
             await typewriter(clueEl, clueText, 40);
-        }
-
-        // Create twinkling stars for Stage 1
-        if (n === 1) {
-            createStage1Stars();
         }
 
         // Focus input when entering the stage (desktop only)
@@ -899,6 +911,193 @@ function createStage1Stars() {
     const stage1 = document.getElementById('stage-1');
     if (stage1) {
         stage1.insertBefore(container, stage1.firstChild);
+    }
+}
+
+/**
+ * Create star sparkles for Stage 2 (upper 20% of screen)
+ */
+function createStage2Stars() {
+    // Remove existing star field if present
+    const existing = document.getElementById('stage2-star-field');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'stage2-star-field';
+    container.className = 'stage2-star-field';
+    container.setAttribute('aria-hidden', 'true');
+
+    // ~30 sparkles in the upper 20% of screen
+    const count = window.innerWidth < 768 ? 20 : 30;
+
+    // Track placed positions to avoid clustering (container uses percentage coords)
+    const placedPositions = [];
+    const minDistance = 5; // minimum distance in percentage points between stars
+    const maxRetries = 50; // max attempts per star before accepting any position
+
+    for (let i = 0; i < count; i++) {
+        let x, y, attempts = 0;
+
+        // Generate a random position that is at least minDistance away from all placed stars
+        do {
+            x = Math.random() * 100;
+            y = Math.random() * 100;
+            attempts++;
+        } while (
+            attempts < maxRetries &&
+            placedPositions.some(p => {
+                const dx = p.x - x;
+                const dy = p.y - y;
+                return Math.sqrt(dx * dx + dy * dy) < minDistance;
+            })
+        );
+
+        placedPositions.push({ x, y });
+
+        const star = document.createElement('div');
+        star.className = 'stage2-star';
+        // Spread across full width, within upper 20vh
+        star.style.left = x + '%';
+        star.style.top = y + '%';
+        // Random size variation (1px to 2.5px)
+        const size = 1 + Math.random() * 1.5;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        // Staggered animation timing for natural sparkle effect
+        star.style.animationDelay = (Math.random() * 4) + 's';
+        star.style.animationDuration = (2.5 + Math.random() * 2.5) + 's';
+        container.appendChild(star);
+    }
+
+    // Insert as first child of stage-2 so it sits above background but below content
+    const stage2 = document.getElementById('stage-2');
+    if (stage2) {
+        stage2.insertBefore(container, stage2.firstChild);
+    }
+}
+
+/**
+ * Create fading hearts for Stage 2 (~30% down the screen)
+ */
+function createStage2Hearts() {
+    // Remove existing heart field if present
+    const existing = document.getElementById('stage2-heart-field');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'stage2-heart-field';
+    container.className = 'stage2-heart-field';
+    container.setAttribute('aria-hidden', 'true');
+
+    // 8-12 hearts spread horizontally across the screen at ~30% height
+    const count = window.innerWidth < 768 ? 8 : 12;
+    const heartChars = ['♥', '♡'];
+
+    for (let i = 0; i < count; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'stage2-heart';
+        heart.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+        // Spread horizontally across the screen with even spacing + slight randomness
+        heart.style.left = ((i / (count - 1)) * 90 + 5 + (Math.random() * 5 - 2.5)) + '%';
+        // Slight vertical variation within the band
+        heart.style.top = (30 + Math.random() * 40) + '%';
+        // Vary font size slightly for depth (base ~28px, range 24-36)
+        const fontSize = 24 + Math.random() * 12;
+        heart.style.fontSize = fontSize + 'px';
+        // Staggered animation delay for wave-like fade effect
+        heart.style.animationDelay = (i * 0.4 + Math.random() * 1) + 's';
+        heart.style.animationDuration = (4 + Math.random() * 2) + 's';
+        container.appendChild(heart);
+    }
+
+    // Insert as first child of stage-2
+    const stage2 = document.getElementById('stage-2');
+    if (stage2) {
+        stage2.insertBefore(container, stage2.firstChild);
+    }
+}
+
+/**
+ * Create floating hearts for Stage 3 (love counter theme)
+ */
+function createStage3Hearts() {
+    // Remove existing heart field if present
+    const existing = document.getElementById('stage3-heart-field');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'stage3-heart-field';
+    container.className = 'stage3-heart-field';
+    container.setAttribute('aria-hidden', 'true');
+
+    // 10-15 hearts rising from bottom area of screen
+    const count = window.innerWidth < 768 ? 10 : 15;
+    const heartChars = ['♥', '♡'];
+
+    for (let i = 0; i < count; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'stage3-heart';
+        heart.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+        // Spread horizontally across the screen
+        heart.style.left = (5 + Math.random() * 90) + '%';
+        // Start ~20% up from bottom of visible image area
+        heart.style.top = (48 + Math.random() * 16) + '%';
+        // Vary font size for depth (14-36px)
+        const fontSize = 14 + Math.random() * 22;
+        heart.style.fontSize = fontSize + 'px';
+        // Staggered animation timing for natural floating effect
+        heart.style.animationDelay = (Math.random() * 6) + 's';
+        heart.style.animationDuration = (5 + Math.random() * 3) + 's';
+        container.appendChild(heart);
+    }
+
+    // Insert as first child of stage-3
+    const stage3 = document.getElementById('stage-3');
+    if (stage3) {
+        stage3.insertBefore(container, stage3.firstChild);
+    }
+}
+
+/**
+ * Create number particles for Stage 3 (infinity theme - digits float upward)
+ */
+function createStage3NumberParticles() {
+    // Remove existing number field if present
+    const existing = document.getElementById('stage3-number-field');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'stage3-number-field';
+    container.className = 'stage3-number-field';
+    container.setAttribute('aria-hidden', 'true');
+
+    // 12-18 number particles rising from bottom
+    const count = window.innerWidth < 768 ? 12 : 18;
+    // Weight ∞ higher so it appears more frequently (~25% of particles)
+    const digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '∞', '∞', '∞'];
+
+    for (let i = 0; i < count; i++) {
+        const num = document.createElement('span');
+        num.className = 'stage3-number';
+        const digit = digits[Math.floor(Math.random() * digits.length)];
+        num.textContent = digit;
+        // Spread horizontally across the screen
+        num.style.left = (5 + Math.random() * 90) + '%';
+        // Start ~20% up from bottom of visible image area
+        num.style.top = (50 + Math.random() * 14) + '%';
+        // Infinity symbols are always the largest; regular digits vary for depth
+        const fontSize = digit === '∞' ? 28 : (10 + Math.random() * 8);
+        num.style.fontSize = fontSize + 'px';
+        // Staggered animation timing
+        num.style.animationDelay = (Math.random() * 7) + 's';
+        num.style.animationDuration = (6 + Math.random() * 3) + 's';
+        container.appendChild(num);
+    }
+
+    // Insert as first child of stage-3
+    const stage3 = document.getElementById('stage-3');
+    if (stage3) {
+        stage3.insertBefore(container, stage3.firstChild);
     }
 }
 

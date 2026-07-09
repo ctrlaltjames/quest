@@ -1008,6 +1008,187 @@ body {
 }
 
 /* ============================================
+   STAR SPARKLES & FADING HEARTS (Stage 2 - First Kiss)
+   ============================================ */
+
+/* Star sparkle field - upper 20% of screen */
+.stage2-star-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 20vh;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.stage2-star {
+    position: absolute;
+    background-color: #ffffff;
+    border-radius: 50%;
+    opacity: 0.1;
+    box-shadow:
+        0 0 3px rgba(255, 255, 255, 0.6),
+        0 0 6px rgba(255, 215, 0, 0.3);
+    animation: stage2StarTwinkle 3s ease-in-out infinite;
+}
+
+@keyframes stage2StarTwinkle {
+    0%, 100% {
+        opacity: 0.1;
+        transform: scale(1);
+    }
+    25% {
+        opacity: 0.8;
+        transform: scale(1.5);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    75% {
+        opacity: 0.9;
+        transform: scale(1.4);
+    }
+}
+
+/* Fading heart field - ~30% down the screen */
+.stage2-heart-field {
+    position: absolute;
+    top: 24vh;
+    left: 0;
+    width: 100%;
+    height: 16vh;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.stage2-heart {
+    position: absolute;
+    font-size: 28px;
+    color: #e63946;
+    opacity: 0;
+    animation: stage2HeartFade 5s ease-in-out infinite;
+    text-shadow:
+        0 0 4px rgba(230, 57, 70, 0.6),
+        0 0 8px rgba(230, 57, 70, 0.3);
+}
+
+@keyframes stage2HeartFade {
+    0%, 100% {
+        opacity: 0;
+        transform: translateY(0) scale(0.8);
+    }
+    30% {
+        opacity: 0.7;
+        transform: translateY(-4px) scale(1);
+    }
+    60% {
+        opacity: 0.5;
+        transform: translateY(-2px) scale(0.95);
+    }
+}
+
+/* ============================================
+   FLOATING HEARTS & NUMBER PARTICLES (Stage 3 - Love Counter)
+   ============================================ */
+
+/* Floating heart field - rises from bottom of screen */
+.stage3-heart-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.stage3-heart {
+    position: absolute;
+    font-size: 16px;
+    color: #e63946;
+    opacity: 0;
+    animation: stage3HeartFloat 6s ease-in-out infinite;
+    text-shadow:
+        0 0 4px rgba(230, 57, 70, 0.5),
+        0 0 8px rgba(230, 57, 70, 0.2);
+}
+
+@keyframes stage3HeartFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.6);
+    }
+    15% {
+        opacity: 0.6;
+        transform: translateY(-20px) scale(1);
+    }
+    50% {
+        opacity: 0.4;
+        transform: translateY(-80px) scale(0.9);
+    }
+    85% {
+        opacity: 0.15;
+        transform: translateY(-140px) scale(0.7);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-160px) scale(0.5);
+    }
+}
+
+/* Number particle field - rises from bottom, infinity theme */
+.stage3-number-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.stage3-number {
+    position: absolute;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    color: #f5a623;
+    opacity: 0;
+    animation: stage3NumberFloat 7s ease-in-out infinite;
+    text-shadow:
+        0 0 4px rgba(245, 166, 35, 0.5),
+        0 0 8px rgba(245, 166, 35, 0.2);
+}
+
+@keyframes stage3NumberFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.7);
+    }
+    10% {
+        opacity: 0.5;
+        transform: translateY(-25px) scale(1);
+    }
+    45% {
+        opacity: 0.35;
+        transform: translateY(-90px) scale(0.85);
+    }
+    80% {
+        opacity: 0.1;
+        transform: translateY(-160px) scale(0.6);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-200px) scale(0.4);
+    }
+}
+
+/* ============================================
    SUBTLE SPOTLIGHT FLICKER (Stage 1)
    ============================================ */
 .spotlight-overlay {
@@ -1403,12 +1584,28 @@ body::after {
         animation: none !important;
     }
 
+    /* Stage 2 effects */
+    .stage2-star,
+    .stage2-heart {
+        animation: none !important;
+    }
+
+    /* Stage 3 effects */
+    .stage3-heart,
+    .stage3-number {
+        animation: none !important;
+    }
+
     .clue-text {
         min-height: auto;
     }
 
     .ambient-particles,
-    .star-field {
+    .star-field,
+    .stage2-star-field,
+    .stage2-heart-field,
+    .stage3-heart-field,
+    .stage3-number-field {
         display: none;
     }
 }
