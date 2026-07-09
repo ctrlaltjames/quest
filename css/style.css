@@ -786,9 +786,9 @@ body {
 }
 
 .proposal-message {
-    font-size: clamp(16px, 5vw, 28px);
+    font-size: 16px;
     line-height: 1.8;
-    color: #ccc;
+    color: #f1f1f1;
     min-height: 40px;
     /* Pixel-art text shadow - blocky, no blur for authentic 16-bit feel */
     text-shadow:
@@ -814,7 +814,7 @@ body {
 }
 
 .after-yes {
-    font-size: clamp(10px, 3vw, 16px);
+    font-size: 16px;
     color: var(--green);
     /* Pixel-art text shadow - blocky, no blur for authentic 16-bit feel */
     text-shadow:
@@ -1291,6 +1291,11 @@ body::after {
         height: 120px;
     }
 
+    .proposal-message,
+    .after-yes {
+        font-size: 20px;
+    }
+
     .stage-content {
         max-width: 600px;
     }
@@ -1306,6 +1311,11 @@ body::after {
 
 /* --- Responsive: Large Desktop (1024px+) --- */
 @media (min-width: 1024px) {
+    .proposal-message,
+    .after-yes {
+        font-size: 24px;
+    }
+
     .art-container {
         width: 240px;
         height: 240px;
