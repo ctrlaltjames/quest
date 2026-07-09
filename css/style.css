@@ -2164,6 +2164,15 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     top: auto;
 }
 
+/* ============================================
+   Shared Semi-Transparent Card Style
+   ============================================ */
+.semi-transparent-card {
+    background-color: rgba(26, 26, 46, 0.35);
+    border-radius: 12px;
+    padding: 20px 16px;
+}
+
 /* Coop section at the bottom - separate floating card */
 .coop-section-bottom {
     display: flex;
@@ -2171,12 +2180,6 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     align-items: center;
     width: 100%;
     max-width: 480px;
-    /* Subtle background so it floats above the image */
-    background-color: rgba(26, 26, 46, 0.35);
-    /* border: 3px solid var(--pixel-border); */
-    border-radius: 12px;
-    padding: 20px 16px;
-    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); */
     /* Position at bottom area */
     flex: 0 0 auto;
     margin-bottom: 12px;

@@ -146,7 +146,7 @@
         </div>
 
         <!-- Co-op section at the bottom -->
-        <div class="coop-section-bottom" id="coop-section-4">
+        <div class="semi-transparent-card coop-section-bottom" id="coop-section-4">
             <p class="coop-prompt">Both players tap together!</p>
             <div class="coop-buttons">
                 <!-- Player 1 Column -->
@@ -177,12 +177,16 @@
     <!-- Proposal Screen -->
     <section id="stage-proposal" class="stage" data-portrait="images/portrait/final.jpg">
         <div class="proposal-content">
-            <p class="proposal-message" id="proposal-message"></p>
+            <div class="semi-transparent-card">
+                <p class="proposal-message" id="proposal-message"></p>
+            </div>
         </div>
         <div class="proposal-buttons">
             <button class="btn-yes" id="btn-yes">YES!</button>
         </div>
-        <p class="after-yes" id="after-yes" style="display:none;"></p>
+        <div class="semi-transparent-card" id="after-yes-wrapper" style="display:none;">
+            <p class="after-yes" id="after-yes"></p>
+        </div>
     </section>
 
     <!-- Global confetti container (body-level for full viewport coverage) -->

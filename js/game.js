@@ -605,9 +605,10 @@ async function handleYes() {
     AudioSystem.playCelebrationSong();
 
     // Show after-yes message (do NOT fade it out)
+    const afterYesWrapper = document.getElementById('after-yes-wrapper');
     const afterYesEl = document.getElementById('after-yes');
-    if (afterYesEl) {
-        afterYesEl.style.display = 'block';
+    if (afterYesWrapper && afterYesEl) {
+        afterYesWrapper.style.display = 'block';
         await typewriter(afterYesEl, CONFIG.proposal.afterYes, 60);
     }
 
