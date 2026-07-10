@@ -318,124 +318,279 @@ const AudioSystem = (function () {
         currentMasterGain = newMasterGain;
 
         // === LOOP DURATION (in ms) ===
-        const loopDuration = 10000; // 10-second loop
-        const loopSeconds = loopDuration / 1000; // 10 seconds
+        const loopDuration = 8000; // 8-second loop (faster than before)
+        const loopSeconds = loopDuration / 1000; // 8 seconds
 
         // === NOTE SCHEDULE (absolute time offsets within each loop) ===
         // All notes use absolute offsets from loop start for perfect looping
+        // Key: C major | Tempo: ~120 BPM | Style: Upbeat, celebratory, triumphant
 
-        // --- MELODY: Simple romantic melody (triangle wave, warm and smooth) ---
-        // A gentle, flowing melody that feels like a warm embrace
-        // Uses triangle wave for warmth, longer notes for calm romance
-        // Key: G major | Tempo: ~80 BPM feel | Style: Romantic, intimate, tender
+        // --- MELODY: Bright square wave melody with octave doubling ---
         const melodyLoop = [
-            // Phrase 1: Gentle opening (G major) — "You are my sunshine"
-            { f: 392.00, d: 0.60, t: 0.0 },     // G4 - "You"
-            { f: 440.00, d: 0.60, t: 0.60 },    // A4 - "are"
-            { f: 392.00, d: 0.60, t: 1.20 },    // G4 - "my"
-            { f: 329.63, d: 0.60, t: 1.80 },    // E4 - "sun"
-            { f: 293.66, d: 1.00, t: 2.40 },    // D4 - "-shine" (hold)
+            // Phrase 1: Joyful opening (C major) — ascending energy
+            { f: 523.25, d: 0.35, t: 0.0 },      // C5
+            { f: 587.33, d: 0.35, t: 0.35 },     // D5
+            { f: 659.25, d: 0.35, t: 0.70 },     // E5
+            { f: 783.99, d: 0.35, t: 1.05 },     // G5 — rising!
+            { f: 1046.50, d: 0.60, t: 1.40 },    // C6 — triumphant peak
 
-            // Phrase 2: Gentle rise (Em) — "my love grows"
-            { f: 329.63, d: 0.60, t: 3.40 },    // E4 - "my"
-            { f: 392.00, d: 0.60, t: 4.00 },    // G4 - "love"
-            { f: 440.00, d: 0.60, t: 4.60 },    // A4 - "grows"
-            { f: 392.00, d: 0.60, t: 5.20 },    // G4 - "ev"
-            { f: 329.63, d: 1.00, t: 5.80 },    // E4 - "-ery" (hold)
+            // Phrase 2: Bouncy response (Am → F)
+            { f: 880.00, d: 0.35, t: 2.0 },      // A5
+            { f: 783.99, d: 0.35, t: 2.35 },     // G5
+            { f: 659.25, d: 0.35, t: 2.70 },     // E5
+            { f: 698.46, d: 0.35, t: 3.05 },     // F5 — gentle dip
+            { f: 783.99, d: 0.60, t: 3.40 },     // G5 — back up!
 
-            // Phrase 3: Warm climax (C → D → G) — "forever begins"
-            { f: 349.23, d: 0.60, t: 6.80 },    // F4 - "for"
-            { f: 392.00, d: 0.60, t: 7.40 },    // G4 - "ev"
-            { f: 440.00, d: 0.60, t: 8.00 },    // A4 - "-er"
-            { f: 523.25, d: 0.60, t: 8.60 },    // C5 - "be"
-            { f: 392.00, d: 1.00, t: 9.20 },    // G4 - "gins!" (resolution)
+            // Phrase 3: Climactic build (G → C)
+            { f: 1046.50, d: 0.35, t: 4.0 },     // C6
+            { f: 987.77, d: 0.35, t: 4.35 },     // B5
+            { f: 1046.50, d: 0.35, t: 4.70 },    // C6
+            { f: 1174.66, d: 0.35, t: 5.05 },    // D6 — climbing higher!
+            { f: 1318.51, d: 0.60, t: 5.40 },    // E6 — GRAND peak!
+
+            // Phrase 4: Joyful resolution (C major fanfare)
+            { f: 1046.50, d: 0.35, t: 6.0 },     // C6
+            { f: 783.99, d: 0.35, t: 6.35 },     // G5
+            { f: 1046.50, d: 0.80, t: 6.70 },    // C6 — bright resolution!
         ];
 
-        // --- BASS LINE: One note per chord, sustained (sine wave) ---
+        // --- OCTAVE DOUBLER: High melody an octave up for brightness ---
+        const octaveDoubleLoop = [
+            { f: 1046.50, d: 0.35, t: 0.0 },     // C6
+            { f: 1174.66, d: 0.35, t: 0.35 },    // D6
+            { f: 1318.51, d: 0.35, t: 0.70 },    // E6
+            { f: 1567.98, d: 0.35, t: 1.05 },    // G6
+            { f: 2093.00, d: 0.60, t: 1.40 },    // C7 — sparkling peak!
+
+            { f: 1760.00, d: 0.35, t: 2.0 },     // A6
+            { f: 1567.98, d: 0.35, t: 2.35 },    // G6
+            { f: 1318.51, d: 0.35, t: 2.70 },    // E6
+            { f: 1396.00, d: 0.35, t: 3.05 },    // F6
+            { f: 1567.98, d: 0.60, t: 3.40 },    // G6
+
+            { f: 2093.00, d: 0.35, t: 4.0 },     // C7
+            { f: 1966.00, d: 0.35, t: 4.35 },    // B6 (approx)
+            { f: 2093.00, d: 0.35, t: 4.70 },    // C7
+            { f: 2349.00, d: 0.35, t: 5.05 },    // D7 (approx)
+            { f: 2637.00, d: 0.60, t: 5.40 },    // E7 — GRAND sparkle!
+
+            { f: 2093.00, d: 0.35, t: 6.0 },     // C7
+            { f: 1567.98, d: 0.35, t: 6.35 },    // G6
+            { f: 2093.00, d: 0.80, t: 6.70 },    // C7 — final sparkle!
+        ];
+
+        // --- RHYTHMIC BASS: Oom-pah walking pattern (sine wave) ---
         const bassLoop = [
-            // G major (4 seconds)
-            { f: 98.00, d: 4.0, t: 0.0 },       // G2
-            // E minor (2 seconds)
-            { f: 82.41, d: 2.0, t: 4.0 },       // E2
-            // C major (2 seconds)
-            { f: 65.41, d: 2.0, t: 6.0 },       // C2
-            // D major (2 seconds)
-            { f: 73.42, d: 2.0, t: 8.0 },       // D2
+            // Beat 1: C2 (strong downbeat)
+            { f: 65.41, d: 0.35, t: 0.0 },       // C2
+            // Beat 2: chord strum on off-beat
+            { f: 77.78, d: 0.35, t: 0.35 },      // Eb2 (bass movement)
+            { f: 87.31, d: 0.35, t: 0.70 },      // F2
+            { f: 98.00, d: 0.35, t: 1.05 },      // G2 — walking up!
+            { f: 65.41, d: 0.60, t: 1.40 },      // C2 — resolve
+
+            // Beat 5: A2 (Am chord)
+            { f: 55.00, d: 0.35, t: 2.0 },       // A1
+            { f: 73.42, d: 0.35, t: 2.35 },      // D2
+            { f: 82.41, d: 0.35, t: 2.70 },      // E2
+            { f: 87.31, d: 0.35, t: 3.05 },      // F2 — walking
+            { f: 65.41, d: 0.60, t: 3.40 },      // C2
+
+            // Beat 9: G2 (G chord) building tension
+            { f: 49.00, d: 0.35, t: 4.0 },       // G1
+            { f: 65.41, d: 0.35, t: 4.35 },      // C2
+            { f: 73.42, d: 0.35, t: 4.70 },      // D2
+            { f: 82.41, d: 0.35, t: 5.05 },      // E2 — climbing!
+            { f: 98.00, d: 0.60, t: 5.40 },      // G2 — dominant peak
+
+            // Beat 13: C2 triumphant resolution
+            { f: 65.41, d: 0.35, t: 6.0 },       // C2
+            { f: 77.78, d: 0.35, t: 6.35 },      // Eb2
+            { f: 98.00, d: 0.80, t: 6.70 },      // G2 — bright finish!
         ];
 
-        // --- HARMONY CHORDS: Sparse triad chords (triangle wave) ---
-        // Only 2 notes per chord (root + third) for warm, clean sound
+        // --- HARMONY CHORDS: Full triad strums (triangle wave) ---
         const chordLoop = [
-            // G major: G3 + B3
-            { f: 196.00, d: 4.0, t: 0.0 },      // G3
-            { f: 246.94, d: 4.0, t: 0.0 },      // B3
-            // E minor: E3 + G3
-            { f: 164.81, d: 2.0, t: 4.0 },      // E3
-            { f: 196.00, d: 2.0, t: 4.0 },      // G3
-            // C major: C3 + E3
-            { f: 130.81, d: 2.0, t: 6.0 },      // C3
-            { f: 164.81, d: 2.0, t: 6.0 },      // E3
-            // D major: D3 + A3
-            { f: 146.83, d: 2.0, t: 8.0 },      // D3
-            { f: 220.00, d: 2.0, t: 8.0 },      // A3
+            // C major strum
+            { f: 261.63, d: 0.5, t: 0.0 },       // C4
+            { f: 329.63, d: 0.5, t: 0.0 },       // E4
+            { f: 392.00, d: 0.5, t: 0.0 },       // G4
+
+            // Am strum
+            { f: 220.00, d: 0.5, t: 2.0 },       // A3
+            { f: 261.63, d: 0.5, t: 2.0 },       // C4
+            { f: 329.63, d: 0.5, t: 2.0 },       // E4
+
+            // G major strum
+            { f: 196.00, d: 0.5, t: 4.0 },       // G3
+            { f: 246.94, d: 0.5, t: 4.0 },       // B3
+            { f: 392.00, d: 0.5, t: 4.0 },       // G4
+
+            // C major final strum (full chord!)
+            { f: 261.63, d: 0.8, t: 6.0 },       // C4
+            { f: 329.63, d: 0.8, t: 6.0 },       // E4
+            { f: 392.00, d: 0.8, t: 6.0 },       // G4
         ];
 
-        // --- SPARKLE NOTES: Barely-there high notes (sine wave, very quiet) ---
-        // Only 2 sparkles total, extremely subtle
-        const sparkleLoop = [
-            { f: 783.99, t: 2.0, d: 1.0 },      // G5 - gentle shimmer
-            { f: 987.77, t: 6.0, d: 1.0 },      // D6 - mid shimmer
+        // --- DRUM PATTERN: Kick on 1/3, Snare on 2/4 (chiptune style) ---
+        const drumLoop = [
+            { type: 'kick', t: 0.0 },
+            { type: 'snare', t: 0.5 },
+            { type: 'kick', t: 1.0 },
+            { type: 'hihat', t: 1.25 },
+            { type: 'snare', t: 1.5 },
+            { type: 'kick', t: 2.0 },
+            { type: 'hihat', t: 2.25 },
+            { type: 'snare', t: 2.5 },
+            { type: 'kick', t: 3.0 },
+            { type: 'hihat', t: 3.25 },
+            { type: 'snare', t: 3.5 },
+            { type: 'kick', t: 4.0 },
+            { type: 'hihat', t: 4.25 },
+            { type: 'snare', t: 4.5 },
+            { type: 'kick', t: 5.0 },
+            { type: 'hihat', t: 5.25 },
+            { type: 'snare', t: 5.5 },
+            { type: 'kick', t: 6.0 },
+            { type: 'hihat', t: 6.25 },
+            { type: 'snare', t: 6.5 },
         ];
+
+        // --- SPARKLE NOTES: Frequent high-pitched twinkles (square wave) ---
+        const sparkleLoop = [
+            { f: 1567.98, t: 0.5, d: 0.3 },      // G6
+            { f: 2093.00, t: 1.4, d: 0.4 },      // C7 — peak sparkle!
+            { f: 1318.51, t: 2.5, d: 0.3 },      // E6
+            { f: 1760.00, t: 3.4, d: 0.4 },      // A6
+            { f: 2093.00, t: 4.5, d: 0.3 },      // C7
+            { f: 2637.00, t: 5.4, d: 0.5 },      // E7 — GRAND sparkle!
+            { f: 1966.00, t: 6.0, d: 0.3 },      // B6 (approx)
+            { f: 2093.00, t: 6.7, d: 0.6 },      // C7 — final sparkle!
+        ];
+
+        // === DRUM SOUND GENERATORS ===
+        function playKick(time) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150, time);
+            osc.frequency.exponentialRampToValueAtTime(30, time + 0.12);
+            gain.gain.setValueAtTime(0.25, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+            osc.connect(gain);
+            gain.connect(newMasterGain);
+            osc.start(time);
+            osc.stop(time + 0.16);
+        }
+
+        function playSnare(time) {
+            if (!audioCtx) return;
+            // Noise burst for snare body
+            const bufferSize = audioCtx.sampleRate * 0.08;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+            }
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.12, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 2000;
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(newMasterGain);
+            source.start(time);
+        }
+
+        function playHiHat(time) {
+            if (!audioCtx) return;
+            const bufferSize = audioCtx.sampleRate * 0.04;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+            }
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.06, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 5000;
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(newMasterGain);
+            source.start(time);
+        }
 
         // === SCHEDULE LOOP FUNCTION ===
         function scheduleLoop() {
-            if (currentStage !== 6) return; // Stop if no longer playing celebration music
+            if (currentStage !== 6) return;
 
             const now = audioCtx.currentTime;
             const loopStart = now;
 
-            // Schedule melody (triangle wave, warm and smooth)
+            // Schedule main melody (square wave — bright, triumphant!)
             melodyLoop.forEach((note) => {
                 const noteTime = loopStart + note.t;
                 if (noteTime < now) return;
                 if (noteTime > now + loopSeconds) return;
-
-                // Main melody - triangle wave for warmth
-                playNote(note.f, note.d, 'triangle', 0.16, newMasterGain, noteTime);
+                playNote(note.f, note.d, 'square', 0.12, newMasterGain, noteTime);
             });
 
-            // Schedule bass (sine wave, warm and deep)
+            // Schedule octave doubler (triangle wave — adds sparkle and brightness)
+            octaveDoubleLoop.forEach((note) => {
+                const noteTime = loopStart + note.t;
+                if (noteTime < now) return;
+                if (noteTime > now + loopSeconds) return;
+                playNote(note.f, note.d, 'triangle', 0.04, newMasterGain, noteTime);
+            });
+
+            // Schedule rhythmic bass (sine wave — walking pattern for bounce)
             bassLoop.forEach((note) => {
                 const noteTime = loopStart + note.t;
                 if (noteTime < now) return;
                 if (noteTime > now + loopSeconds) return;
-
-                playNote(note.f, note.d, 'sine', 0.10, newMasterGain, noteTime);
+                playNote(note.f, note.d, 'sine', 0.12, newMasterGain, noteTime);
             });
 
-            // Schedule harmony chords (triangle wave, gentle)
+            // Schedule harmony chords (triangle wave — full triads for warmth)
             chordLoop.forEach((note) => {
                 const noteTime = loopStart + note.t;
                 if (noteTime < now) return;
                 if (noteTime > now + loopSeconds) return;
-
-                playNote(note.f, note.d, 'triangle', 0.04, newMasterGain, noteTime);
+                playNote(note.f, note.d, 'triangle', 0.035, newMasterGain, noteTime);
             });
 
-            // Schedule sparkle notes (high square wave, very subtle)
+            // Schedule drum pattern (kick/snare/hihat — chiptune percussion!)
+            drumLoop.forEach((drum) => {
+                const drumTime = loopStart + drum.t;
+                if (drumTime < now) return;
+                if (drumTime > now + loopSeconds) return;
+                if (drum.type === 'kick') playKick(drumTime);
+                else if (drum.type === 'snare') playSnare(drumTime);
+                else if (drum.type === 'hihat') playHiHat(drumTime);
+            });
+
+            // Schedule sparkle notes (square wave — frequent twinkles!)
             sparkleLoop.forEach((note) => {
                 const noteTime = loopStart + note.t;
                 if (noteTime < now) return;
                 if (noteTime > now + loopSeconds) return;
-
-                playNote(note.f, note.d, 'square', 0.015, newMasterGain, noteTime);
+                playNote(note.f, note.d, 'square', 0.025, newMasterGain, noteTime);
             });
         }
 
         // Schedule the first loop immediately
         scheduleLoop();
 
-        // Then loop every 10 seconds
+        // Then loop every 8 seconds (faster tempo!)
         celebrationSongInterval = setInterval(() => {
             scheduleLoop();
         }, loopDuration);
