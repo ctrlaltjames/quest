@@ -21,11 +21,11 @@ const CONFIG = {
             clue: "We both love zombies... remember the movie we saw that night?",
             answer: ["zombieland", "the zombieland", "zombie land", "zombie-land"],
         },
-        {
+{
             id: 2,
             title: "Chapter 2: Muah!",
-            clue: "Remember when you got dangerously close? That moment changed everything, it was our...",
-            answer: ["first kiss", "our first kiss", "the first kiss"],
+            clue: "Remember when you got dangerously close? That moment changed everything… and sealed with a what?",
+            answer: ["first kiss", "our first kiss", "the first kiss", "kiss", "a kiss", "kissing"],
         },
         {
             id: 3,
