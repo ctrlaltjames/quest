@@ -53,7 +53,7 @@ const CONFIG = {
         message: "Every quest has led to this moment...",
         question: "Will you marry me?",
         buttonYes: "YES!",
-        afterYes: "She said YES! 💕",
+        afterYes: "💕 She said YES! 💕",
     },
 };
 
