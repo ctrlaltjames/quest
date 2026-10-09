@@ -764,12 +764,16 @@ function bindEvents() {
         btnYes.addEventListener('click', handleYes);
     }
 
-    // Keyboard detection for mobile input
+    // Keep stages pinned to the visible area so bottom-anchored content
+    // (e.g. the answer input) stays on screen when the browser UI or
+    // on-screen keyboard changes the visible height
     if ('visualViewport' in window) {
-        window.visualViewport.addEventListener('resize', () => {
-            adjustForKeyboard();
-        });
+        window.visualViewport.addEventListener('resize', syncStagesToViewport);
+        window.visualViewport.addEventListener('scroll', syncStagesToViewport);
     }
+    window.addEventListener('resize', syncStagesToViewport);
+    window.addEventListener('orientationchange', syncStagesToViewport);
+    window.addEventListener('load', syncStagesToViewport);
 
     // Co-op arcade buttons (Stage 4)
     document.querySelectorAll('.arcade-btn').forEach(btn => {
@@ -805,19 +809,26 @@ function bindEvents() {
 }
 
 /**
- * Adjust input position when keyboard is open
+ * Pin all stages (and their blurred background layers) to the visual
+ * viewport so bottom-anchored content (e.g. the answer input) stays
+ * visible when the browser UI or on-screen keyboard changes the
+ * visible area.
  */
-function adjustForKeyboard() {
-    const activeEl = document.activeElement;
-    if (!activeEl || activeEl.className !== 'stage-input') return;
+function syncStagesToViewport() {
+    const vv = window.visualViewport;
+    if (!vv) return;
 
-    const viewportHeight = window.visualViewport.height;
-    const windowHeight = window.innerHeight;
+    const top = vv.offsetTop + 'px';
+    const left = vv.offsetLeft + 'px';
+    const width = vv.width + 'px';
+    const height = vv.height + 'px';
 
-    // If keyboard is open (viewport shrunk)
-    if (viewportHeight < windowHeight - 100) {
-        activeEl.scrollIntoView({ block: 'center' });
-    }
+    document.querySelectorAll('.stage, .bg-blur').forEach(el => {
+        el.style.top = top;
+        el.style.left = left;
+        el.style.width = width;
+        el.style.height = height;
+    });
 }
 
 /* ============================================
@@ -1194,6 +1205,9 @@ function init() {
 
         // Set up the "tap anywhere to begin" overlay for AudioContext
         initAudioWaitingOverlay();
+
+        // Initial pin of stages + blur layers to the current visual viewport
+        syncStagesToViewport();
 
     } catch (err) {
         console.error('Game initialization error:', err);

@@ -657,16 +657,19 @@ You only need to edit the `CONFIG` object in `js/game.js`:
 
 #### Virtual Keyboard Handling
 ```javascript
-// Detect keyboard height and adjust layout
-const adjustForKeyboard = () => {
-  const keyboardHeight = window.visualViewport.height
-    ? window.innerHeight - window.visualViewport.height
-    : 0;
+// Pin stages to the visual viewport so bottom-anchored content (e.g. the
+// answer input) stays visible when the browser UI or keyboard changes
+// the visible area
+const syncStagesToViewport = () => {
+  const vv = window.visualViewport;
+  if (!vv) return;
 
-  if (keyboardHeight > 100) {
-    document.body.style.paddingBottom = keyboardHeight + 'px';
-    activeInput.scrollIntoView({ behavior: 'smooth' });
-  }
+  document.querySelectorAll('.stage, .bg-blur').forEach(el => {
+    el.style.top = vv.offsetTop + 'px';
+    el.style.left = vv.offsetLeft + 'px';
+    el.style.width = vv.width + 'px';
+    el.style.height = vv.height + 'px';
+  });
 };
 ```
 

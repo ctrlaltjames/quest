@@ -263,7 +263,8 @@ PAGE LOAD
   │     │   ├─ .stage-input (all stages) → handleEnter(event)
   │     │   ├─ #btn-yes → handleYes()
   │     │   ├─ #btn-no → handleNo()
-  │     │   └─ window.visualViewport.resize → adjustForKeyboard()
+  │     │   ├─ window.visualViewport.resize/scroll → syncStagesToViewport()
+  │     │   └─ window.resize/orientationchange/load → syncStagesToViewport()
   │     └─ showStage(0) called (title screen init)
   │
   └─ 3. Title screen is visible, animated elements running
