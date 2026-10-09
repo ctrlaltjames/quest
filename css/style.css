@@ -1389,7 +1389,7 @@ body::after {
     #stage-proposal.active {
         background-image: url('../images/portrait/final.jpg') !important;
         background-size: cover !important;
-        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, top center) !important;
+        background-position: var(--parallax-bg-x, center) var(--parallax-bg-y, top) !important;
         background-repeat: no-repeat !important;
     }
 
@@ -2217,10 +2217,14 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     }
 }
 
-/* Very small screens */
+/* Very small screens - tighten coop gap */
 @media (max-width: 360px) {
     .coop-section-bottom {
         padding: 12px 8px;
+    }
+
+    .coop-buttons {
+        gap: 20px;
     }
 }
 
@@ -2406,17 +2410,8 @@ html, body, .btn-primary, .btn-check, .btn-yes, .btn-no, .stage-input {
     }
 }
 
-/* Very small screens - keep 60px buttons */
+/* Very small screens - tighten coop gap (button sizes inherited from 600px breakpoint) */
 @media (max-width: 360px) {
-    .arcade-btn {
-        width: 60px !important;
-        height: 60px !important;
-    }
-
-    .arcade-key {
-        font-size: 19.2px !important;
-    }
-
     .coop-buttons {
         gap: 20px;
     }

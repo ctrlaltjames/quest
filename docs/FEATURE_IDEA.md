@@ -98,7 +98,7 @@ const CONFIG = {
         },
         {
             id: 3,
-            title: "Chapter 3: The Heart",
+            title: "Chapter 3: The Island",
             clue: "Our love counter: x 2,458 → x 10,000 → x 1,000,000 ... What comes next?",
             answer: ["infinity", "inf", "infinite", "x infinity", "x inf", "x infinite"],
             pixelArt: "infinity-counter.png",
